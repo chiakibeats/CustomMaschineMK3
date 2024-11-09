@@ -1,0 +1,2 @@
+LOGGING = True
+LCD_ENABLED = True
