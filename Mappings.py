@@ -114,7 +114,7 @@ def create_mappings(surface):
         keyboard_button = None,
         drum_rack_button = None,
         simpler_button = None,
-        # chord_button = "chord",
+        chord_button = "chords",
         step_button = "step",
         default = dict(
             modes = [
@@ -161,7 +161,10 @@ def create_mappings(surface):
             select_buttons = "upper_group_buttons",
             select_button = "select"
         ),
-        # chord = dict(),
+        chord = dict(
+            component = "VelocityLevels",
+            matrix = "pads"
+        ),
         step = dict(
             component = "Step_Sequence",
             step_buttons = "pads",

@@ -46,6 +46,7 @@ from .CustomMixerComponent import CustomMixerComponent
 from .CustomClipActionsComponent import CustomClipActionsComponent
 from .CustomSlicedSimplerComponent import CustomSlicedSimplerComponent
 from .NoteRepeatComponent import NoteRepeatComponent
+from .VelocityLevelsComponent import VelocityLevelsComponent
 
 from .Logger import logger
 from . import Config
@@ -71,6 +72,7 @@ class Specification(ControlSurfaceSpecification):
     create_mappings_function = create_mappings
     feedback_channels = [1]
     component_map = {
+        "VelocityLevels": VelocityLevelsComponent,
         "NoteRepeat": NoteRepeatComponent,
         "Sliced_Simpler": CustomSlicedSimplerComponent,
         "Drum_Group": CustomDrumGroupComponent,
@@ -168,7 +170,8 @@ class CustomMaschineMK3(ControlSurface):
         inject_dict = {
             "grid_resolution": lambda: self._create_grid_resolution,
             "sequencer_clip": lambda: self._create_sequencer_clip,
-            "note_repeat": const(self._c_instance.note_repeat)
+            "note_repeat": const(self._c_instance.note_repeat),
+            "velocity_levels": const(self._c_instance.velocity_levels)
         }
         
         return inject_dict
