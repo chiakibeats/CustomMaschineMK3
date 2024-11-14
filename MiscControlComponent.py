@@ -32,6 +32,7 @@ class MiscControlComponent(Component):
             if track == selected_track:
                 return (False, index)
 
+        # This is master track
         return (False, -1)            
 
     @new_audio_or_return_track_button.pressed
@@ -57,6 +58,8 @@ class MiscControlComponent(Component):
 
         if is_normal:
             self.song.duplicate_track(track_index)
+        elif track_index != -1:
+            self.song.duplicate_return_track(track_index)
 
     @delete_track_button.pressed
     def _delete_selected_track(self, button):
