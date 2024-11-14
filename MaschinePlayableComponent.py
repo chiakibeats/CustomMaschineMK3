@@ -38,7 +38,6 @@ MODE_PLAYABLE_LISTENABLE = 2
 class PlayableEncoderControl(SendValueEncoderControl):
 
     class State(SendValueEncoderControl.State):
-        _update_display_task = None
 
         def __init__(self, mode = None, *a, **k):
             super().__init__(*a, **k)
@@ -49,18 +48,14 @@ class PlayableEncoderControl(SendValueEncoderControl):
                 MODE_LISTENABLE: ScriptForwarding.exclusive, 
                 MODE_PLAYABLE_LISTENABLE: ScriptForwarding.non_consuming}
             
-            self._update_display_task = self.tasks.add(task.sequence(task.delay(0.2), task.run(self._update_display_value)))
-            self._update_display_task.kill()
-
 
         def set_control_element(self, control_element):
             logger.info(f"set_control_element element = {control_element}")
             super().set_control_element(control_element)
             self._update_script_forwarding()
-            if control_element is not None:
-                self._update_display_task.restart()
-            else:
-                self._update_display_task.kill()
+            if control_element != None:
+                control_element.send_value(self.value, True)
+
 
         def _update_script_forwarding(self):
             if self._control_element:
@@ -78,9 +73,6 @@ class PlayableEncoderControl(SendValueEncoderControl):
             self._call_listener("value", value)
             self.connected_property_value = value
 
-        def _update_display_value(self):
-            self._update_display_task.kill()
-            self._send_current_value()
 
 class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvider, Renderable):
     octave_select_buttons = control_matrix(ButtonControl, color = "Keyboard.Octave", on_color = "Keyboard.OctaveSelected")
@@ -166,7 +158,7 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
         pad_index = inverted_row * self.width + column
         notes = self.available_notes
         target_note = notes[min(self.position + pad_index, len(notes) - 1)]
-        return (target_note, 1)
+        return (target_note, 0)
         #return super()._note_translation_for_button(button)
     
     def _update_led_feedback(self):
