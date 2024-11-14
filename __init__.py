@@ -30,9 +30,9 @@ def get_capabilities():
                 model_name = ["Maschine MK3"])),
         PORTS_KEY: [
             inport(port_name = "Maschine MK3 EXT In", props = [NOTES_CC, SYNC]),
-            inport(port_name = "Maschine MK3 Ctrl In", props = [NOTES_CC, SYNC, REMOTE, SCRIPT]),
+            inport(port_name = "Maschine MK3 Ctrl In", props = [NOTES_CC, SCRIPT, HIDDEN]),
             outport(port_name = "Maschine MK3 EXT Out", props = [NOTES_CC, SYNC]),
-            outport(port_name = "Maschine MK3 Ctrl Out", props = [NOTES_CC, SYNC, REMOTE, SCRIPT])]}
+            outport(port_name = "Maschine MK3 Ctrl Out", props = [NOTES_CC, SCRIPT, HIDDEN])]}
 
 
 def create_instance(c_instance):
