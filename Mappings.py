@@ -124,7 +124,7 @@ def create_mappings(surface):
                     clip_launch_buttons = "pads",
                     scene_launch_buttons = "column3_pads_with_scene",
                     select_button = "select",
-                    delete_button = "shift",
+                    delete_button = "erase",
                     duplicate_button = "duplicate"),
                 dict(component = "Session_Overview",
                     matrix = "group_buttons")
@@ -149,7 +149,8 @@ def create_mappings(surface):
             scroll_page_down_button = "row0_pads_with_shift_raw[2]",
             scroll_page_up_button = "row0_pads_with_shift_raw[3]",
             select_buttons = "group_buttons",
-            select_button = "select"
+            select_button = "select",
+            delete_button = "erase"
         ),
         simpler = dict(
             component = "Sliced_Simpler",
@@ -159,7 +160,8 @@ def create_mappings(surface):
             scroll_page_down_button = "row0_pads_with_shift_raw[2]",
             scroll_page_up_button = "row0_pads_with_shift_raw[3]",
             select_buttons = "upper_group_buttons",
-            select_button = "select"
+            select_button = "select",
+            delete_button = "erase"
         ),
         chord = dict(
             component = "VelocityLevels",
