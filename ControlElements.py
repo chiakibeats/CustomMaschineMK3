@@ -53,6 +53,15 @@ class ControlElements(ElementsBase):
         else:
             default_channel = 0
 
+        # Definition of control
+        # Control element represents actual hardware button, knob or other MIDI control.
+        # Use "add_xxx" methods to add control elements.
+        # These methods create elements and contain as attribute at specified name.
+        # There're some rules related to naming likely to forget.
+        # 1. UPPER CASE LETTERS convert to lower case letters.
+        # 2. Spaces replace to underscore(_).
+        # 3. Matrix control's name must be ends with 's'. (does it means plural form?)
+
         add_button = partial(self.add_button, channel = default_channel)
         add_encoder = partial(self.add_encoder, channel = default_channel)
         add_button_matrix = partial(self.add_button_matrix, channels = default_channel)
@@ -214,6 +223,12 @@ class ControlElements(ElementsBase):
         self.add_submatrix(self.pads, "row3_pads", rows = (3, 4), columns = (0, 4))
         self.add_submatrix(self.pads, "column3_pads", rows = (0, 4), columns = (3, 4))
 
+        # Modified control consists with 2 control elements.
+        # One is modifier, which needs to press first to notify control is to modified.
+        # Other one is control, this is button or knob to be modified.
+        # Name of modified control is "{control_name}_with_{modifier_name}"
+        # Modified control behaves like separate control element along side with original element.
+        # LED feedback(message to hardware) and value change(incoming message) process properly depend on modifier state.
         #self.add_modified_control(self.tempo, self.shift)
         self.add_modified_control(self.left, self.plugin)
         self.add_modified_control(self.right, self.plugin)
