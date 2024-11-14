@@ -1,7 +1,7 @@
 from functools import partial
 from itertools import product
 
-from ableton.v3.base import lazy_attribute
+from ableton.v3.base import lazy_attribute, const
 from ableton.v3.live.util import liveobj_valid
 from ableton.v3.control_surface import (
     ControlSurface,
@@ -25,6 +25,7 @@ from ableton.v3.control_surface.components import (
     GridResolutionComponent,
     SessionComponent
 )
+from ableton.v3.control_surface.elements import SimpleColor, RgbColor, create_rgb_color
 
 from .ControlElements import ControlElements
 from .Mappings import create_mappings
@@ -44,6 +45,7 @@ from .CustomDeviceNavigationComponent import CustomDeviceNavigationComponent
 from .CustomMixerComponent import CustomMixerComponent
 from .CustomClipActionsComponent import CustomClipActionsComponent
 from .CustomSlicedSimplerComponent import CustomSlicedSimplerComponent
+from .NoteRepeatComponent import NoteRepeatComponent
 
 from .Logger import logger
 from . import Config
@@ -69,6 +71,7 @@ class Specification(ControlSurfaceSpecification):
     create_mappings_function = create_mappings
     feedback_channels = [1]
     component_map = {
+        "NoteRepeat": NoteRepeatComponent,
         "Sliced_Simpler": CustomSlicedSimplerComponent,
         "Drum_Group": CustomDrumGroupComponent,
         "Clip_Actions": CustomClipActionsComponent,
@@ -118,10 +121,11 @@ class CustomMaschineMK3(ControlSurface):
 
     def __init__(self, *a, **k):
         super().__init__(Specification, *a, **k)
-        #logger.info(dir(self._c_instance))
+        logger.info(dir(self._c_instance))
         self.register_slot(self.elements.channel, self._on_update_triggered, "is_pressed")
         self.register_slot(self.elements.keyboard, self._on_playable_mode_selected, "is_pressed")
         self.register_slot(self.component_map["Pad_Modes"], self._on_pad_mode_changed, "selected_mode")
+
 
     
     # Sometimes pad leds couldn't update correctly
@@ -163,7 +167,8 @@ class CustomMaschineMK3(ControlSurface):
         # Registered components pass to appropriate components on demand
         inject_dict = {
             "grid_resolution": lambda: self._create_grid_resolution,
-            "sequencer_clip": lambda: self._create_sequencer_clip
+            "sequencer_clip": lambda: self._create_sequencer_clip,
+            "note_repeat": const(self._c_instance.note_repeat)
         }
         
         return inject_dict

@@ -18,7 +18,7 @@ class CustomDrumGroupComponent(DrumGroupComponent):
     select_modifier = ButtonControl()
 
     def __init__(self, *a, **k):
-        super().__init__(*a, translation_channel = 1, **k)
+        super().__init__(translation_channel = 1, *a, **k)
 
     def set_select_buttons(self, matrix):
         self._select_buttons.set_control_element(matrix)
