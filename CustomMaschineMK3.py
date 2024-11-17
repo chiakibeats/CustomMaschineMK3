@@ -1,5 +1,6 @@
 from functools import partial
 from itertools import product
+from time import sleep
 
 from ableton.v3.base import lazy_attribute, const
 from ableton.v3.live.util import liveobj_valid
@@ -138,9 +139,21 @@ class CustomMaschineMK3(ControlSurface):
             logger.info("Display update triggered")
             self.update()
 
-    def _send_midi(self, midi_event_bytes, optimized = True):
-        logger.debug(f"send_midi() bytes = {midi_event_bytes}")
-        return super()._send_midi(midi_event_bytes, optimized)    
+    def _do_send_midi(self, midi_event_bytes):
+        logger.debug(f"_do_send_midi {midi_event_bytes}")
+        # Insert super short wait between each send to make sure LED feedback correctly.
+        # During development, I encountered problem some pads / buttons LEDs not change to current mode value.
+        # This issue not only caused under too frequent mode update, but also  under normal condition.
+        # After investigating several points like state coherence, message send order, receive capacity per certain period and others, I believe it's driver issue! :)
+        # The only thing can do in script is, send message slowly.
+        # Maybe 500us or more wait prevent issue.(specified 50us but total elapsed time is around 600-1000us due to overhead.)
+        # This wait doesn't affect respone speed, unless if you play pads in 999 BPM...
+        sleep(0.00005)
+        super()._do_send_midi(midi_event_bytes)
+
+    # def _send_midi(self, midi_event_bytes, optimized = True):
+    #     logger.debug(f"send_midi() bytes = {midi_event_bytes}")
+    #     return super()._send_midi(midi_event_bytes, optimized)    
 
     # Session ring highlight is enabled only if hardware is identified by identity request
     # But maschine didn't respond to this message, so bypass identification process
