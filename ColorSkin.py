@@ -1,9 +1,20 @@
+from functools import partial
 from ableton.v3.control_surface.skin import Skin, BasicColors
 from ableton.v3.control_surface.elements import SimpleColor, RgbColor, create_rgb_color
 from ableton.v3.live.util import liveobj_valid
 
 
-# constants for making color index
+# Color space use strategy
+# Maschine's indexed colors have 68 (17 x 4) color variations.
+# These colors classified as 17 base colors and 4 brightness levels.
+# For balancing visibility and color matching, We use these rules.
+# Track colors:
+# Live's track colors have 70 variations.
+# We map these colors by using level 2-4 brightness colors except brightest white.
+# Total variation is 17 * 3 - 1 = 50, so some Live's track colors map to same color.
+
+
+# Constants for making color index
 BLACK = 0
 RED = 1
 ORANGE = 2
@@ -33,88 +44,128 @@ def make_color(base, level):
     return SimpleColor(4 * base + level)
 
 LIVE_COLOR_MAP = {
-    0: make_color(FUCHSIA, LEVEL_4), 
-    1: make_color(YELLOW, LEVEL_2), 
-    2: make_color(YELLOW, LEVEL_1), 
-    3: make_color(YELLOW, LEVEL_4), 
-    4: make_color(GREEN, LEVEL_4), 
-    5: make_color(GREEN, LEVEL_3), 
-    6: make_color(MINT, LEVEL_4), 
-    7: make_color(CYAN, LEVEL_4), 
-    8:  make_color(BLUE, LEVEL_4), 
-    9:  make_color(PLUM, LEVEL_1), 
-    10: make_color(PLUM, LEVEL_4), 
-    11: make_color(MAGENTA, LEVEL_4), 
-    12: make_color(MAGENTA, LEVEL_2), 
-    13: make_color(WHITE, LEVEL_4), 
+    0: (FUCHSIA, LEVEL_4), 
+    1: (ORANGE, LEVEL_4), 
+    2: (WARM_YELLOW, LEVEL_2), 
+    3: (YELLOW, LEVEL_4), 
 
-    14: make_color(RED, LEVEL_3), 
-    15: make_color(ORANGE, LEVEL_3), 
-    16: make_color(WARM_YELLOW, LEVEL_1), 
-    17: make_color(YELLOW, LEVEL_3), 
-    18: make_color(GREEN, LEVEL_4), 
-    19: make_color(GREEN, LEVEL_2), 
-    20: make_color(MINT, LEVEL_1), 
-    21: make_color(BLUE, LEVEL_4), 
-    22: make_color(CYAN, LEVEL_2), 
-    23: make_color(CYAN, LEVEL_1), 
-    24: make_color(VIOLET, LEVEL_2), 
-    25: make_color(PURPLE, LEVEL_2), 
-    26: make_color(MAGENTA, LEVEL_3), 
-    27: make_color(WHITE, LEVEL_4), 
+    4: (LIME, LEVEL_3), 
+    5: (GREEN, LEVEL_3), 
+    6: (MINT, LEVEL_3), 
+    7: (TURQUOISE, LEVEL_4), 
 
-    28: make_color(MINT, LEVEL_1), 
-    29: make_color(MINT, LEVEL_2), 
-    30: make_color(MINT, LEVEL_3), 
-    31: make_color(MINT, LEVEL_4), 
-    32: make_color(CYAN, LEVEL_1), 
-    33: make_color(CYAN, LEVEL_2), 
-    34: make_color(CYAN, LEVEL_3), 
-    35: make_color(CYAN, LEVEL_4), 
-    36: make_color(TURQUOISE, LEVEL_1), 
-    37: make_color(TURQUOISE, LEVEL_2), 
-    38: make_color(TURQUOISE, LEVEL_3), 
-    39: make_color(TURQUOISE, LEVEL_4), 
-    40: make_color(BLUE, LEVEL_1), 
-    41: make_color(BLUE, LEVEL_2), 
+    8:  (BLUE, LEVEL_4), 
+    9:  (BLUE, LEVEL_2), 
+    10: (BLUE, LEVEL_4), 
+    11: (MAGENTA, LEVEL_4), 
 
-    42: make_color(BLUE, LEVEL_3), 
-    43: make_color(BLUE, LEVEL_4), 
-    44: make_color(PLUM, LEVEL_1), 
-    45: make_color(PLUM, LEVEL_2), 
-    46: make_color(PLUM, LEVEL_3), 
-    47: make_color(PLUM, LEVEL_4), 
-    48: make_color(VIOLET, LEVEL_1), 
-    49: make_color(VIOLET, LEVEL_2), 
-    50: make_color(VIOLET, LEVEL_3), 
-    51: make_color(VIOLET, LEVEL_4), 
-    52: make_color(PURPLE, LEVEL_1), 
-    53: make_color(PURPLE, LEVEL_2), 
-    54: make_color(PURPLE, LEVEL_3), 
-    55: make_color(PURPLE, LEVEL_4), 
+    12: (MAGENTA, LEVEL_2), 
+    13: (WHITE, LEVEL_3), 
 
-    56: make_color(MAGENTA, LEVEL_1), 
-    57: make_color(MAGENTA, LEVEL_2), 
-    58: make_color(MAGENTA, LEVEL_3), 
-    59: make_color(MAGENTA, LEVEL_4), 
-    60: make_color(FUCHSIA, LEVEL_1), 
-    61: make_color(FUCHSIA, LEVEL_2), 
-    62: make_color(FUCHSIA, LEVEL_3), 
-    63: make_color(FUCHSIA, LEVEL_4), 
-    64: make_color(WHITE, LEVEL_1), 
-    65: make_color(WHITE, LEVEL_2), 
-    66: make_color(WHITE, LEVEL_3), 
-    67: make_color(WHITE, LEVEL_4), 
-    68: make_color(WHITE, LEVEL_1), 
-    69: make_color(WHITE, LEVEL_2)
+
+
+    14: (RED, LEVEL_3), 
+    15: (ORANGE, LEVEL_3), 
+    16: (LIGHT_ORANGE, LEVEL_2), 
+    17: (WARM_YELLOW, LEVEL_4), 
+
+    18: (GREEN, LEVEL_4), 
+    19: (GREEN, LEVEL_2), 
+    20: (MINT, LEVEL_2), 
+    21: (CYAN, LEVEL_3), 
+
+    22: (TURQUOISE, LEVEL_3), 
+    23: (TURQUOISE, LEVEL_2), 
+    24: (PLUM, LEVEL_3), 
+    25: (VIOLET, LEVEL_2), 
+
+    26: (MAGENTA, LEVEL_3), 
+    27: (WHITE, LEVEL_3), 
+
+
+
+    28: (RED, LEVEL_2), 
+    29: (FUCHSIA, LEVEL_4), 
+    30: (WARM_YELLOW, LEVEL_4), 
+    31: (YELLOW, LEVEL_4), 
+
+    32: (LIME, LEVEL_4), 
+    33: (LIME, LEVEL_2), 
+    34: (GREEN, LEVEL_2), 
+    35: (MINT, LEVEL_4), 
+
+    36: (TURQUOISE, LEVEL_4), 
+    37: (BLUE, LEVEL_4), 
+    38: (VIOLET, LEVEL_4), 
+    39: (PLUM, LEVEL_4), 
+
+    40: (MAGENTA, LEVEL_4), 
+    41: (WHITE, LEVEL_2), 
+
+
+
+    42: (MAGENTA, LEVEL_2), 
+    43: (LIGHT_ORANGE, LEVEL_2), 
+    44: (ORANGE, LEVEL_2), 
+    45: (YELLOW, LEVEL_2), 
+
+    46: (LIME, LEVEL_2), 
+    47: (GREEN, LEVEL_2), 
+    48: (CYAN, LEVEL_2), 
+    49: (BLUE, LEVEL_4), 
+
+    50: (TURQUOISE, LEVEL_4), 
+    51: (BLUE, LEVEL_4), 
+    52: (PLUM, LEVEL_4), 
+    53: (VIOLET, LEVEL_4), 
+
+    54: (PURPLE, LEVEL_2), 
+    55: (WHITE, LEVEL_2), 
+
+
+
+    56: (RED, LEVEL_2), 
+    57: (LIGHT_ORANGE, LEVEL_2), 
+    58: (ORANGE, LEVEL_2), 
+    59: (YELLOW, LEVEL_3), 
+
+    60: (LIME, LEVEL_2), 
+    61: (GREEN, LEVEL_2), 
+    62: (MINT, LEVEL_3), 
+    63: (TURQUOISE, LEVEL_2), 
+
+    64: (BLUE, LEVEL_2), 
+    65: (BLUE, LEVEL_3), 
+    66: (PLUM, LEVEL_2), 
+    67: (PURPLE, LEVEL_3), 
+
+    68: (FUCHSIA, LEVEL_3), 
+    69: (WHITE, LEVEL_1)
 }
 
 def make_color_from_element(element):
     if liveobj_valid(element):
-        if element.color_index is not None:
-            return LIVE_COLOR_MAP.get(element.color_index, BasicColors.OFF)
+        if element.color_index != None:
+            return make_color(*LIVE_COLOR_MAP.get(element.color_index, (0, 0)))
+            #return SimpleColor(element.color_index)
     return BasicColors.OFF
 
+def make_keyboard_color(element, accent = False):
+    if liveobj_valid(element):
+        if element.color_index != None:
+            base_color, brightness = LIVE_COLOR_MAP.get(element.color_index, (0, 0))
+            if accent:
+                return make_color(base_color, LEVEL_3 if brightness < LEVEL_4 else LEVEL_2)
+            else:
+                return make_color(base_color, LEVEL_1 if brightness < LEVEL_4 else LEVEL_4)
+    return BasicColors.OFF
+
+def make_velocity_color(element, level = LEVEL_1):
+    if liveobj_valid(element):
+        if element.color_index != None:
+            base_color, brightness = LIVE_COLOR_MAP.get(element.color_index, (0, 0))
+            return make_color(base_color, level)
+    BasicColors.ON
 
 class MaschineLEDColors:
 
@@ -265,7 +316,7 @@ class MaschineLEDColors:
     class DrumGroup:
         PadEmpty = BasicColors.OFF
         PadFilled = make_color_from_element
-        PadSelected = make_color(WHITE, LEVEL_2)
+        PadSelected = make_color(WHITE, LEVEL_3)
         PadMuted = make_color(ORANGE, LEVEL_1)
         PadMutedSelected = make_color(ORANGE, LEVEL_4)
         PadSoloed = make_color(TURQUOISE, LEVEL_1)
@@ -278,6 +329,7 @@ class MaschineLEDColors:
         GroupSelected = make_color(WHITE, LEVEL_4)
         GroupHasFilledPad = make_color(WHITE, LEVEL_2)
         GroupHasFilledPadSelected = make_color(WHITE, LEVEL_4)
+        PadPressed = make_color(WHITE, LEVEL_4)
 
     class SlicedSimpler:
         NoSlice = BasicColors.OFF
@@ -293,15 +345,21 @@ class MaschineLEDColors:
         GroupHasSlice = make_color(WHITE, LEVEL_2)
         GroupHasSliceSelected = make_color(WHITE, LEVEL_4)
 
-
     class Keyboard:
         Note = BasicColors.OFF
         NoNote = BasicColors.OFF
-        ScaleNote = make_color(WHITE, LEVEL_1)
-        RootNote = make_color(WHITE, LEVEL_3)
+        ScaleNote = make_keyboard_color#make_color(WHITE, LEVEL_1)
+        RootNote = partial(make_keyboard_color, accent = True)#make_color(WHITE, LEVEL_3)
         NotePressed = make_color(WHITE, LEVEL_4)
         Octave = make_color(WHITE, LEVEL_1)
         OctaveSelected = make_color(WHITE, LEVEL_4)
+
+    class VelocityLevels:
+        Level1 = BasicColors.OFF
+        Level2 = partial(make_velocity_color, level = LEVEL_1)
+        Level3 = partial(make_velocity_color, level = LEVEL_2)
+        Level4 = partial(make_velocity_color, level = LEVEL_3)
+        Pressed = make_color(WHITE, LEVEL_4)
 
     class Scale:
         On = make_color(PURPLE, LEVEL_3)
@@ -311,7 +369,7 @@ class MaschineLEDColors:
         NoClip = BasicColors.OFF
         StepDisabled = BasicColors.OFF
         StepEmpty = BasicColors.OFF
-        StepFilled = make_color(WHITE, LEVEL_3)
+        StepFilled = make_color_from_element
         StepMuted = make_color(WHITE, LEVEL_1)
 
         class Resolution:
@@ -320,8 +378,8 @@ class MaschineLEDColors:
 
     class LoopSelector:
         InsideLoopSelected = make_color(WHITE, LEVEL_4)
-        InsideLoop = make_color(WHITE, LEVEL_2)
-        OutsideLoopSelected = make_color(WHITE, LEVEL_3)
+        InsideLoop = make_keyboard_color
+        OutsideLoopSelected = make_color(WHITE, LEVEL_4)
         OutsideLoop = BasicColors.OFF
         Playhead = make_color(GREEN, LEVEL_3)
         PlayheadRecord = make_color(RED, LEVEL_3)

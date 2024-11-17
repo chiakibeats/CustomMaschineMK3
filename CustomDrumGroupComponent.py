@@ -3,6 +3,7 @@ from ableton.v3.base import listens, listens_group
 from ableton.v3.control_surface.components import DrumGroupComponent
 from ableton.v3.control_surface.controls import (
     control_matrix,
+    PlayableControl,
     ButtonControl
 )
 
@@ -31,6 +32,11 @@ class CustomDrumGroupComponent(DrumGroupComponent):
         super().set_drum_group_device(drum_group_device)
         self._on_chains_changed.replace_subjects(self._all_drum_pads)
 
+    def set_matrix(self, matrix):
+        super().set_matrix(matrix)
+        for button in self.matrix:
+            button.set_mode(PlayableControl.Mode.playable_and_listenable)
+
     def _update_led_feedback(self):
         super()._update_led_feedback()
         for button, has_chain in zip(self._select_buttons, self._has_chain_list):
@@ -51,6 +57,10 @@ class CustomDrumGroupComponent(DrumGroupComponent):
                 new_color += "Selected"
 
             button.color = new_color
+
+    def _update_button_color(self, button):
+        super()._update_button_color(button)
+        button.pressed_color = "DrumGroup.PadPressed"
 
     def _update_group_info(self):
         button_count = self._select_buttons.control_count

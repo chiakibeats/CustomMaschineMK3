@@ -64,6 +64,7 @@ class Specification(ControlSurfaceSpecification):
     include_returns = True
     include_master = True
     include_auto_arming = True
+    right_align_non_player_tracks = True
     link_session_ring_to_track_selection = True
     link_session_ring_to_scene_selection = True
     continuous_parameter_sensitivity = 2.0
@@ -236,3 +237,8 @@ class CustomMaschineMK3(ControlSurface):
         if update_mode:
             self.component_map["Pad_Modes"].selected_mode = mode
         self.component_map["Step_Sequence"].set_pitch_provider(self.component_map[self._provider_list[mode]])
+        self.component_map["VelocityLevels"].set_pitch_provider(self.component_map[self._provider_list[mode]])
+
+    def refresh_state(self):
+        logger.info("Refresh state")
+        super().refresh_state()

@@ -27,6 +27,8 @@ from ableton.v3.base import (
     task
 )
 
+from ableton.v3.control_surface.skin import LiveObjSkinEntry
+
 from .Logger import logger
 #from ableton.v3.base import 
 
@@ -158,11 +160,13 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
         pad_index = inverted_row * self.width + column
         notes = self.available_notes
         target_note = notes[min(self.position + pad_index, len(notes) - 1)]
-        return (target_note, 0)
+        return (target_note, 1)
         #return super()._note_translation_for_button(button)
     
     def _update_led_feedback(self):
         notes = self.available_notes
+        root_note_color = LiveObjSkinEntry("Keyboard.RootNote", self.song.view.selected_track)
+        scale_note_color = LiveObjSkinEntry("Keyboard.ScaleNote", self.song.view.selected_track)
         for button in self.matrix:
             row, column = button.coordinate
             inverted_row = self.height - row - 1
@@ -170,9 +174,9 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
             if note_index < len(notes):
                 note = notes[note_index]
                 if note in self._octave_root_notes:
-                    button.color = "Keyboard.RootNote"
+                    button.color = root_note_color
                 elif note in self._all_scale_notes:
-                    button.color = "Keyboard.ScaleNote"
+                    button.color = scale_note_color
                 else:
                     button.color = "Keyboard.Note"
             else:
@@ -192,7 +196,11 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
             row, column = button.coordinate
             index = row * self.width + column
 
-            button.is_on = index == selected_index
+            #button.is_on = index == selected_index
+            if index == selected_index:
+                button.color = "Keyboard.OctaveSelected"#root_note_color
+            else:
+                button.color = scale_note_color
 
     def can_scroll_up(self):
         visible_notes_count = self.width * self.height
