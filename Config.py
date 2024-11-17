@@ -1,2 +1,3 @@
 LOGGING = True
+LOG_LEVEL = "INFO"
 LCD_ENABLED = True
