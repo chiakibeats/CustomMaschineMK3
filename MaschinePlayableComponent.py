@@ -78,7 +78,7 @@ class PlayableEncoderControl(SendValueEncoderControl):
 
 
 class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvider, Renderable):
-    octave_select_buttons = control_matrix(ButtonControl, color = "Keyboard.Octave", on_color = "Keyboard.OctaveSelected")
+    octave_select_buttons = control_matrix(ButtonControl)
     octave_up_button = ButtonControl()
     octave_down_button = ButtonControl()
     semitone_up_button = ButtonControl()
