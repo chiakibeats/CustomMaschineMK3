@@ -29,19 +29,16 @@ DEFAULT_NOTE = 60
 
 class VelocityLevelsComponent(PlayableComponent):
     _pitch_provider = None
+    _target_track = None
     _velocity_levels = None
+    _source_notes = list(range(60, 76))
 
-    @depends(velocity_levels = None)
-    def __init__(self, name = "VelocityLevels", matrix_always_listenable = False, velocity_levels = None, *a, **k):
+    @depends(velocity_levels = None, target_track = None)
+    def __init__(self, name = "VelocityLevels", matrix_always_listenable = True, velocity_levels = None, target_track = None, *a, **k):
         super().__init__(name, matrix_always_listenable, *a, **k)
         self._velocity_levels = velocity_levels
-        self._velocity_levels.enabled = False
-        self._velocity_levels.target_note = DEFAULT_NOTE
-        self._velocity_levels.target_channel = 1
-        self._velocity_levels.source_channel = 0
-        self._velocity_levels.notes = list(range(60, 76))
-        logger.info(f"velocity_levels = {self._velocity_levels}")
-        logger.info(f"velocity_levels = {self._velocity_levels.__dir__()}")
+        self._target_track = target_track
+        self._on_target_track_changed.subject = self._target_track
 
     def set_pitch_provider(self, provider):
         self._pitch_provider = provider
@@ -58,27 +55,21 @@ class VelocityLevelsComponent(PlayableComponent):
         else:
             logger.info("Velocity levels mode disabled")
             self._velocity_levels.enabled = False
-        for button in self.matrix:
-            button.set_mode(PlayableControl.Mode.playable_and_listenable)
 
     def _on_matrix_pressed(self, button):
         #super()._on_matrix_pressed(button)
         pass
 
-    def _on_matrix_released(self, button):
-        #super()._on_matrix_released(button)
-        self._update_led_feedback()
-
     def update(self):
         super().update()
         self._velocity_levels.enabled = self.is_enabled()
         if self._pitch_provider != None:
-            self._on_pitches_changed()
+            self._on_pitches_changed(self._pitch_provider.pitches)
         else:
             self._velocity_levels.target_note = DEFAULT_NOTE
         self._velocity_levels.target_channel = 1
         self._velocity_levels.source_channel = 0
-        self._velocity_levels.notes = list(range(60, 76))
+        self._velocity_levels.notes = self._source_notes
 
     def _update_button_color(self, button):
         row, column = button.coordinate
@@ -87,11 +78,18 @@ class VelocityLevelsComponent(PlayableComponent):
         button.color = LiveObjSkinEntry(f"VelocityLevels.Level{level}", self.song.view.selected_track)
         button.pressed_color = LiveObjSkinEntry("VelocityLevels.Pressed", self.song.view.selected_track)
 
-
-
     @listens("pitches")
-    def _on_pitches_changed(self):
+    def _on_pitches_changed(self, pitches):
         pitches = self._pitch_provider.pitches
         self._velocity_levels.target_note = pitches[0] if len(pitches) > 0 else DEFAULT_NOTE
+
+    @listens("target_track")
+    def _on_target_track_changed(self):
+        self._on_track_color_changed.subject = self._target_track.target_track
+        self._update_led_feedback()
+
+    @listens("color_index")
+    def _on_track_color_changed(self):
+        self._update_led_feedback()
 
     
