@@ -4,8 +4,10 @@ from ableton.v3.control_surface.components import SlicedSimplerComponent
 from ableton.v3.control_surface.components.sliced_simpler import DEFAULT_SIMPLER_TRANSLATION_CHANNEL
 from ableton.v3.control_surface.controls import (
     ButtonControl,
+    PlayableControl,
     control_list
 )
+from ableton.v3.control_surface.skin import LiveObjSkinEntry
 
 from .Logger import logger
 
@@ -16,7 +18,7 @@ class CustomSlicedSimplerComponent(SlicedSimplerComponent):
     select_modifier = ButtonControl()
 
     def __init__(self, *a, **k):
-        super().__init__(translation_channel = 1, *a, **k)
+        super().__init__(translation_channel = 1, *a, **k, matrix_always_listenable = True)
 
     def set_select_buttons(self, matrix):
         self._select_buttons.set_control_element(matrix)
@@ -53,7 +55,11 @@ class CustomSlicedSimplerComponent(SlicedSimplerComponent):
             if intersects:
                 new_color += "Selected"
 
-            button.color = new_color
+            button.color = LiveObjSkinEntry(new_color, self._target_track.target_track)
+
+    def _update_button_color(self, button):
+        super()._update_button_color(button)
+        button.pressed_color = LiveObjSkinEntry("SlicedSimpler.SlicePressed", self._target_track.target_track)
 
     def _update_slice_group(self):
         slices = self._slices()
