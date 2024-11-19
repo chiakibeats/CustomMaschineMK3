@@ -333,16 +333,17 @@ class MaschineLEDColors:
 
     class SlicedSimpler:
         NoSlice = BasicColors.OFF
-        SliceNotSelected = make_color(WHITE, LEVEL_2)
-        SliceSelected = make_color(WHITE, LEVEL_4)
+        SliceNotSelected = make_keyboard_color
+        SliceSelected = make_color(WHITE, LEVEL_3)
         NextSlice = make_color(WHITE, LEVEL_1)
         PadAction = make_color(GREEN, LEVEL_3)
         ScrollPressed = BasicColors.ON
         Scroll = BasicColors.OFF
         # Used in custom component
+        SlicePressed = make_color(WHITE, LEVEL_4)
         Group = BasicColors.OFF
         GroupSelected = make_color(WHITE, LEVEL_4)
-        GroupHasSlice = make_color(WHITE, LEVEL_2)
+        GroupHasSlice = make_keyboard_color
         GroupHasSliceSelected = make_color(WHITE, LEVEL_4)
 
     class Keyboard:
@@ -351,7 +352,7 @@ class MaschineLEDColors:
         ScaleNote = make_keyboard_color#make_color(WHITE, LEVEL_1)
         RootNote = partial(make_keyboard_color, accent = True)#make_color(WHITE, LEVEL_3)
         NotePressed = make_color(WHITE, LEVEL_4)
-        Octave = make_color(WHITE, LEVEL_1)
+        Octave = make_keyboard_color
         OctaveSelected = make_color(WHITE, LEVEL_4)
 
     class VelocityLevels:

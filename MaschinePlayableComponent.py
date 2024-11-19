@@ -23,6 +23,7 @@ from ableton.v3.control_surface import ScriptForwarding
 
 from ableton.v3.base import (
     listens,
+    depends,
     listenable_property,
     task
 )
@@ -95,8 +96,8 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
     _all_scale_notes = list(range(128))
     _all_chromatic_scale_notes = list(range(128))
     _select_start_octave = 2
-
     _position = 60
+    _target_track = None
 
     @property
     def position(self):
@@ -117,15 +118,19 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
             return self._all_scale_notes
         else:
             return self._all_chromatic_scale_notes
- 
-    def __init__(self, name = 'MaschinePlayable', matrix_always_listenable = False, *a, **k):
+
+    @depends(target_track = None)
+    def __init__(self, name = 'MaschinePlayable', matrix_always_listenable = True, target_track = None, *a, **k):
         super().__init__(name, matrix_always_listenable, *a, **k)
+        self._target_track = target_track
         self.pitchbend_encoder.value = 8192
         self.register_slot(self.song, self._scale_root_note_changed, "root_note")
         self.register_slot(self.song, self._scale_intervals_changed, "scale_intervals")
         self.register_slot(self.song, self._scale_mode_changed, "scale_mode")
         self.register_slot(self.select_button, self._on_select_button_pressed, "is_pressed")
+        self._on_target_track_changed.subject = self._target_track
         self._update_scale_and_adjust_position(True)
+        self.pitches = [self.available_notes[self.position]]
 
     def set_matrix(self, matrix):
         first_pad_note = self.available_notes[self.position]
@@ -165,24 +170,23 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
     
     def _update_led_feedback(self):
         notes = self.available_notes
-        root_note_color = LiveObjSkinEntry("Keyboard.RootNote", self.song.view.selected_track)
-        scale_note_color = LiveObjSkinEntry("Keyboard.ScaleNote", self.song.view.selected_track)
         for button in self.matrix:
             row, column = button.coordinate
             inverted_row = self.height - row - 1
             note_index = self.position + (inverted_row * self.width + column)
+
+            new_color = "Keyboard.NoNote"
             if note_index < len(notes):
                 note = notes[note_index]
                 if note in self._octave_root_notes:
-                    button.color = root_note_color
+                    new_color = "Keyboard.RootNote"
                 elif note in self._all_scale_notes:
-                    button.color = scale_note_color
+                    new_color = "Keyboard.ScaleNote"
                 else:
-                    button.color = "Keyboard.Note"
-            else:
-                button.color = "Keyboard.NoNote"
+                    new_color = "Keyboard.Note"
 
-            button.pressed_color = "Keyboard.NotePressed"
+            button.color = LiveObjSkinEntry(new_color, self._target_track.target_track)
+            button.pressed_color = LiveObjSkinEntry("Keyboard.NotePressed", self._target_track.target_track)
 
         selectable_octaves = self._octave_root_notes[self._select_start_octave : self._select_start_octave + 8]
         first_note = self.available_notes[self.position]
@@ -198,9 +202,9 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
 
             #button.is_on = index == selected_index
             if index == selected_index:
-                button.color = "Keyboard.OctaveSelected"#root_note_color
+                button.color = LiveObjSkinEntry("Keyboard.OctaveSelected", self._target_track.target_track)
             else:
-                button.color = scale_note_color
+                button.color = LiveObjSkinEntry("Keyboard.Octave", self._target_track.target_track)
 
     def can_scroll_up(self):
         visible_notes_count = self.width * self.height
@@ -310,4 +314,13 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
     @modulation_encoder.value
     def _on_modulation_encoder(self, value, control):
         logger.info(f"Modulation encoder value = {value}")
+
+    @listens("target_track")
+    def _on_target_track_changed(self):
+        self._on_track_color_changed.subject = self._target_track.target_track
+        self._update_led_feedback()
+
+    @listens("color_index")
+    def _on_track_color_changed(self):
+        self._update_led_feedback()
 
