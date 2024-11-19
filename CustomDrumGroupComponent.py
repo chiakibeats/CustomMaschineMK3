@@ -19,7 +19,7 @@ class CustomDrumGroupComponent(DrumGroupComponent):
     select_modifier = ButtonControl()
 
     def __init__(self, *a, **k):
-        super().__init__(translation_channel = 1, *a, **k)
+        super().__init__(translation_channel = 1, *a, **k, matrix_always_listenable = True)
 
     def set_select_buttons(self, matrix):
         self._select_buttons.set_control_element(matrix)
@@ -34,8 +34,8 @@ class CustomDrumGroupComponent(DrumGroupComponent):
 
     def set_matrix(self, matrix):
         super().set_matrix(matrix)
-        for button in self.matrix:
-            button.set_mode(PlayableControl.Mode.playable_and_listenable)
+        # for button in self.matrix:
+        #     button.set_mode(PlayableControl.Mode.playable_and_listenable)
 
     def _update_led_feedback(self):
         super()._update_led_feedback()
