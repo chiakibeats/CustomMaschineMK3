@@ -78,6 +78,7 @@ class Specification(ControlSurfaceSpecification):
         "NoteRepeat": NoteRepeatComponent,
         "Sliced_Simpler": CustomSlicedSimplerComponent,
         "Drum_Group": CustomDrumGroupComponent,
+        "Mixer": CustomMixerComponent,
         "Clip_Actions": CustomClipActionsComponent,
         "GroovePool": GroovePoolComponent,
         "MasterVolume": MasterVolumeComponent,

@@ -156,7 +156,7 @@ class ControlElements(ElementsBase):
         add_button(88, "Variation")
         add_modifier_button(89, "Duplicate")
         add_button(90, "Select")
-        add_button(91, "Solo")
+        add_modifier_button(91, "Solo")
         add_modifier_button(92, "Mute")
 
         add_button_matrix([list(range(22, 30))], "track_buttons")
@@ -240,6 +240,8 @@ class ControlElements(ElementsBase):
         self.add_modified_control(self.track_buttons, self.macro)
         self.add_modified_control(self.track_buttons, self.mute)
         self.add_modified_control(self.track_buttons, self.shift)
+        self.add_modified_control(self.left_half_track_buttons, self.mute)
+        self.add_modified_control(self.left_half_track_buttons, self.solo)
         self.add_modified_control(self.upper_group_buttons, self.perform)
         self.add_modified_control(self.row0_pads, self.shift)
         self.add_modified_control(self.row2_pads, self.shift)

@@ -31,7 +31,7 @@ from ableton.v3.base import (
 from .Logger import logger
 
 class CustomMixerComponent(MixerComponent):
-    def __init__(self, name = 'Mixer', *a, **k):
+    def __init__(self, name = "Mixer", *a, **k):
         super().__init__(name, *a, **k)
 
     

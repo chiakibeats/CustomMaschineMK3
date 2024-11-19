@@ -54,9 +54,11 @@ def create_mappings(surface):
 
     mappings["Encoder_Modes"] = dict(
         default_behaviour = ToggleBehaviour(return_to_default = True),
-        tempo_button = "tempo",
-        swing_button = "swing",
         volume_button = "volume",
+        swing_button = "swing",
+        #position_button = None,
+        tempo_button = "tempo",
+        #scale_button = None,
         default = dict(
             modes = [
                 dict(component = "MiscControl",
@@ -68,19 +70,21 @@ def create_mappings(surface):
                     down_button = "encoderdown",
                     left_button = "encoderleft",
                     right_button = "encoderright")]),
-        tempo = dict(
-            component = "Transport",
-            tempo_coarse_encoder = "encoder",
-            tempo_fine_encoder = "encoder_with_shift"),
-        swing = dict(
-            component = "GroovePool",
-            coarse_groove_amount = "encoder",
-            fine_groove_amount = "encoder_with_shift"),
         volume = dict(
             component = "MasterVolume",
             coarse_volume = "encoder",
             fine_volume = "encoder_with_shift",
-            reset_button = "encoderpush")
+            reset_button = "encoderpush"),
+        swing = dict(
+            component = "GroovePool",
+            coarse_groove_amount = "encoder",
+            fine_groove_amount = "encoder_with_shift"),
+        #position = dict(),
+        tempo = dict(
+            component = "Transport",
+            tempo_coarse_encoder = "encoder",
+            tempo_fine_encoder = "encoder_with_shift"),
+        #scale = dict(),
     )
     
     mappings["TouchStrip_Modes"] = dict(
@@ -181,10 +185,14 @@ def create_mappings(surface):
         device_button = "plugin",
         default = dict(
             component = "Mixer",
-            volume_controls = "right_half_knobs",
+            shift_button = "shift",
+            pan_or_send_controls = "left_half_knobs",
             pan_controls = "left_half_knobs",
-            arm_buttons = "right_half_track_buttons",
-            track_select_buttons = "left_half_track_buttons"),
+            volume_controls = "right_half_knobs",
+            arm_buttons = "left_half_track_buttons",
+            mute_buttons = "left_half_track_buttons_with_mute",
+            solo_buttons = "left_half_track_buttons_with_solo",
+            track_select_buttons = "right_half_track_buttons"),
         device = dict(
             modes = [
                 dict(component = "Device",
@@ -205,6 +213,39 @@ def create_mappings(surface):
                 )
             ])
     )
+
+    # mappings["MixerKnobs_Modes"] = dict(
+    #     default_behaviour = ImmediateBehaviour(),
+    #     default_button = "left",
+    #     send_a_button = None,
+    #     send_b_button = None,
+    #     send_c_button = None,
+    #     send_d_button = None,
+    #     send_e_button = None,
+    #     send_f_button = None,
+    #     send_g_button = None,
+    #     send_h_button = None,
+    #     send_i_button = None,
+    #     send_j_button = None,
+    #     send_k_button = None,
+    #     send_l_button = None,
+    #     default = dict(
+    #         component = "Mixer",
+    #         pan_controls = "left_half_knobs"
+    #     ),
+    #     send_a = dict(),
+    #     send_b = dict(),
+    #     send_c = dict(),
+    #     send_d = dict(),
+    #     send_e = dict(),
+    #     send_f = dict(),
+    #     send_g = dict(),
+    #     send_h = dict(),
+    #     send_i = dict(),
+    #     send_j = dict(),
+    #     send_k = dict(),
+    #     send_l = dict(),
+    # )
 
     mappings["Device"] = dict(device_lock_button = "lock")
 
