@@ -143,12 +143,10 @@ class CustomMaschineMK3(ControlSurface):
         logger.debug(f"_do_send_midi {midi_event_bytes}")
         # Insert super short wait between each send to make sure LED feedback correctly.
         # During development, I encountered problem some pads / buttons LEDs not change to current mode value.
-        # This issue not only caused under too frequent mode update, but also  under normal condition.
-        # After investigating several points like state coherence, message send order, receive capacity per certain period and others, I believe it's driver issue! :)
-        # The only thing can do in script is, send message slowly.
-        # Maybe 500us or more wait prevent issue.(specified 50us but total elapsed time is around 600-1000us due to overhead.)
-        # This wait doesn't affect respone speed, unless if you play pads in 999 BPM...
-        sleep(0.00005)
+        # After several investigations, I found a wait inserted on old Maschine Ableton script.
+        # Maybe 500us or more wait prevent issue.
+        # This wait doesn't affect respone speed, unless if you can play pads at 999 BPM...
+        sleep(0.0005)
         super()._do_send_midi(midi_event_bytes)
 
     # def _send_midi(self, midi_event_bytes, optimized = True):
