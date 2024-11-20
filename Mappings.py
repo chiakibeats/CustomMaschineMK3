@@ -187,7 +187,8 @@ def create_mappings(surface):
             component = "Mixer",
             shift_button = "shift",
             pan_or_send_controls = "left_half_knobs",
-            pan_controls = "left_half_knobs",
+            prev_control_button = "left",
+            next_control_button = "right",
             volume_controls = "right_half_knobs",
             arm_buttons = "left_half_track_buttons",
             mute_buttons = "left_half_track_buttons_with_mute",
@@ -201,9 +202,6 @@ def create_mappings(surface):
                     prev_bank_button = "left",
                     next_bank_button = "right",
                     bank_select_buttons = "track_buttons_with_macro",
-                    # prev_device_button = "left_with_plugin",
-                    # next_device_button = "right_with_plugin",
-                    # quick_jump_buttons = "track_buttons"
                 ),
                 dict(component = "Device_Navigation",
                     device_select_buttons = "track_buttons",
@@ -213,39 +211,6 @@ def create_mappings(surface):
                 )
             ])
     )
-
-    # mappings["MixerKnobs_Modes"] = dict(
-    #     default_behaviour = ImmediateBehaviour(),
-    #     default_button = "left",
-    #     send_a_button = None,
-    #     send_b_button = None,
-    #     send_c_button = None,
-    #     send_d_button = None,
-    #     send_e_button = None,
-    #     send_f_button = None,
-    #     send_g_button = None,
-    #     send_h_button = None,
-    #     send_i_button = None,
-    #     send_j_button = None,
-    #     send_k_button = None,
-    #     send_l_button = None,
-    #     default = dict(
-    #         component = "Mixer",
-    #         pan_controls = "left_half_knobs"
-    #     ),
-    #     send_a = dict(),
-    #     send_b = dict(),
-    #     send_c = dict(),
-    #     send_d = dict(),
-    #     send_e = dict(),
-    #     send_f = dict(),
-    #     send_g = dict(),
-    #     send_h = dict(),
-    #     send_i = dict(),
-    #     send_j = dict(),
-    #     send_k = dict(),
-    #     send_l = dict(),
-    # )
 
     mappings["Device"] = dict(device_lock_button = "lock")
 

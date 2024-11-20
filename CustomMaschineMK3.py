@@ -65,7 +65,6 @@ class Specification(ControlSurfaceSpecification):
     include_returns = True
     include_master = True
     include_auto_arming = True
-    right_align_non_player_tracks = True
     link_session_ring_to_track_selection = True
     link_session_ring_to_scene_selection = True
     continuous_parameter_sensitivity = 2.0
