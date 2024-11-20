@@ -526,7 +526,7 @@
         <reaction>ondown</reaction>
       </button>
       <button version="1" id="Setting">
-        <controller>92</controller>
+        <controller>41</controller>
         <channel>1</channel>
         <off>0</off>
         <on>127</on>
