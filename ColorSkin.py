@@ -366,6 +366,12 @@ class MaschineLEDColors:
         On = make_color(VIOLET, LEVEL_3)
         Off = BasicColors.OFF
 
+    class NoteRepeat:
+        On = BasicColors.ON
+        Off = BasicColors.OFF
+        Rate = make_color(WHITE, LEVEL_2)
+        RateSelected = make_color(WHITE, LEVEL_4)
+
     class NoteEditor:
         NoClip = BasicColors.OFF
         StepDisabled = BasicColors.OFF

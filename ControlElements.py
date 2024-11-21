@@ -20,7 +20,8 @@ from ableton.v3.control_surface import (
     MIDI_CC_TYPE,
     MIDI_NOTE_TYPE,
     MIDI_PB_TYPE,
-    MIDI_SYSEX_TYPE
+    MIDI_SYSEX_TYPE,
+    PrioritizedResource
 )
 
 from .Logger import logger
@@ -32,6 +33,18 @@ from .DisplayDefinitions import (
     make_mcu_display_header,
     make_display_sysex_message
 )
+
+class ForceToggleButtonElement(ButtonElement):
+    _internal_received_value = 0
+    
+    def receive_value(self, value):
+        logger.debug(f"ForceToggle receive_value value = {value}")
+        prev_value = int(self._internal_received_value) > 0
+        self._internal_received_value = value
+        if not prev_value and int(self._internal_received_value) > 0:
+            value = 0 if int(self._last_received_value) > 0 else 1
+            logger.debug(f"Trigger toggle value = {value}")
+            super().receive_value(value)
 
 class HookedButtonElement(ButtonElement):
     button_id = 0
@@ -105,7 +118,13 @@ class ControlElements(ElementsBase):
         add_button(49, "Pitch")
         add_button(50, "Mod")
         add_modifier_button(51, "Perform")
-        add_button(52, "Notes")
+        self.add_element(
+            "Notes",
+            ForceToggleButtonElement,
+            identifier = 52,
+            channel = default_channel,
+            resource_type = PrioritizedResource
+            )
 
         # For simulating pitch bend behaviour, touch strip controls use some trick
         # Touch strip movement("Touchstrip") is mapped to channel 1 pitch bend.
@@ -243,6 +262,7 @@ class ControlElements(ElementsBase):
         self.add_modified_control(self.left_half_track_buttons, self.mute)
         self.add_modified_control(self.left_half_track_buttons, self.solo)
         self.add_modified_control(self.upper_group_buttons, self.perform)
+        self.add_modified_control(self.group_buttons, self.notes)
         self.add_modified_control(self.row0_pads, self.shift)
         self.add_modified_control(self.row2_pads, self.shift)
         self.add_modified_control(self.row3_pads, self.shift)

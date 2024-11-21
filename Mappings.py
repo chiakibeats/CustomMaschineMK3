@@ -108,7 +108,7 @@ def create_mappings(surface):
         pitch_button = "pitch",
         mod_button = "mod",
         perform_button = "perform",
-        notes_button = "notes",
+        #notes_button = "notes",
         pitch = dict(
             component = "MaschinePlayable",
             pitchbend_encoder = "touchstrip",
@@ -122,10 +122,10 @@ def create_mappings(surface):
             component = "Mixer",
             crossfader_control = "touchstrip"
         ),
-        notes = dict(
-            component = "NoteRepeat",
-            rate_selector = "touchstrip"
-        )
+        # notes = dict(
+        #     component = "NoteRepeat",
+        #     rate_selector = "touchstrip"
+        # )
     )
 
     mappings["Pad_Modes"] = dict(
@@ -251,7 +251,9 @@ def create_mappings(surface):
     )
 
     mappings["NoteRepeat"] = dict(
-        repeat_button = "noterep"
+        repeat_button = "noterep",
+        rate_select_mode_button = "notes",
+        rate_select_buttons = "group_buttons_with_notes"
     )
 
     # mapping names not found in component map are recognized as mode definition
