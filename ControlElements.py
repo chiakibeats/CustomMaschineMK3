@@ -116,7 +116,7 @@ class ControlElements(ElementsBase):
         add_button(48, "Lock")
 
         add_button(49, "Pitch")
-        add_button(50, "Mod")
+        add_modifier_button(50, "Mod")
         add_modifier_button(51, "Perform")
         self.add_element(
             "Notes",
@@ -258,7 +258,7 @@ class ControlElements(ElementsBase):
         self.add_modified_control(self.encoderpush, self.shift)
         self.add_modified_control(self.track_buttons, self.macro)
         self.add_modified_control(self.track_buttons, self.mute)
-        self.add_modified_control(self.track_buttons, self.shift)
+        self.add_modified_control(self.track_buttons, self.mod)
         self.add_modified_control(self.left_half_track_buttons, self.mute)
         self.add_modified_control(self.left_half_track_buttons, self.solo)
         self.add_modified_control(self.upper_group_buttons, self.perform)

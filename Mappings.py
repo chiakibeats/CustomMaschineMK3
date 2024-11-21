@@ -115,8 +115,9 @@ def create_mappings(surface):
             pitchbend_reset = "touchstripcap"
         ),
         mod = dict(
-            component = "MaschinePlayable",
-            modulation_encoder = "touchstrip"
+            component = "SelectedParameter",
+            modulation_encoder = "touchstrip",
+            select_buttons = "track_buttons_with_mod"
         ),
         perform = dict(
             component = "Mixer",

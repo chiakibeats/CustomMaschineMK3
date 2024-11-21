@@ -49,6 +49,7 @@ from .CustomSlicedSimplerComponent import CustomSlicedSimplerComponent
 from .NoteRepeatComponent import NoteRepeatComponent
 from .VelocityLevelsComponent import VelocityLevelsComponent
 from .ScaleSystemComponent import ScaleSystemComponent
+from .SelectedParameterControlComponent import SelectedParameterControlComponent
 
 from .Logger import logger
 from . import Config
@@ -74,6 +75,7 @@ class Specification(ControlSurfaceSpecification):
     create_mappings_function = create_mappings
     feedback_channels = [1]
     component_map = {
+        "SelectedParameter": SelectedParameterControlComponent,
         "ScaleSystem": ScaleSystemComponent,
         "VelocityLevels": VelocityLevelsComponent,
         "NoteRepeat": NoteRepeatComponent,
@@ -171,6 +173,10 @@ class CustomMaschineMK3(ControlSurface):
     def _create_sequencer_clip(self):
         self._sequencer_clip = SequencerClip()
         return self._sequencer_clip
+    
+    def _get_knob_mapped_parameter(self, index):
+        if index >= 0 and index < len(self.elements.knobs_raw):
+            return self.elements.knobs_raw[index].mapped_parameter()
 
     def _get_additional_dependencies(self):
         # Dict key name came from @depends decorator of each component classes
@@ -179,7 +185,8 @@ class CustomMaschineMK3(ControlSurface):
             "grid_resolution": lambda: self._create_grid_resolution,
             "sequencer_clip": lambda: self._create_sequencer_clip,
             "note_repeat": const(self._c_instance.note_repeat),
-            "velocity_levels": const(self._c_instance.velocity_levels)
+            "velocity_levels": const(self._c_instance.velocity_levels),
+            "get_knob_mapped_parameter": const(self._get_knob_mapped_parameter)
         }
         
         return inject_dict
