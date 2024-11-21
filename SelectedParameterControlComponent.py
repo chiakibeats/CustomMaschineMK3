@@ -20,11 +20,18 @@ class SelectedParameterControlComponent(Component):
     modulation_encoder = MappedControl()
 
     _get_knob_mapped_parameter = None
+    _show_message = None
 
-    @depends(get_knob_mapped_parameter = None)
-    def __init__(self, name = "SelectedParameter", get_knob_mapped_parameter = None, *a, **k):
+    @depends(get_knob_mapped_parameter = None, show_message = None)
+    def __init__(self, name = "SelectedParameter", get_knob_mapped_parameter = None, show_message = None, *a, **k):
         super().__init__(name, *a, **k)
         self._get_knob_mapped_parameter = get_knob_mapped_parameter
+        self._show_message = show_message
+
+    def set_modulation_encoder(self, encoder):
+        self.modulation_encoder.set_control_element(encoder)
+        if encoder != None:
+            self._show_selected_parameter_message(self.modulation_encoder.mapped_parameter)
 
     @select_buttons.pressed
     def _on_select_buttons_pressed(self, button):
@@ -32,6 +39,21 @@ class SelectedParameterControlComponent(Component):
         logger.info(f"Parameter select {parameter}")
         if liveobj_valid(parameter):
             logger.info(f"Parameter name = {parameter.name}")
+        self._show_selected_parameter_message(parameter)
         self.modulation_encoder.mapped_parameter = parameter
+
+    def _show_selected_parameter_message(self, parameter):
+        if parameter != None:
+            self._show_message(f"Touch Strip Parameter: {self._get_parameter_path(parameter)}")
+        else:
+            self._show_message(f"Touch Strip Parameter: None")
+
+    def _get_parameter_path(self, parameter):
+        parent = parameter.canonical_parent
+        if str.find(str(type(parent)), "MixerDevice") > 0:
+            return f"{parent.canonical_parent.name} > {parameter.name}"
+        else:
+            return f"{parent.name} > {parameter.name}"
+
 
     
