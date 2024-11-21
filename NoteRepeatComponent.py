@@ -18,10 +18,10 @@ REPEAT_RATES = [
     beat_ratio(8),
     beat_ratio(16),
     beat_ratio(32),
-    beat_ratio(3),
     beat_ratio(6),
     beat_ratio(12),
     beat_ratio(24),
+    beat_ratio(48),
 ]
 
 
