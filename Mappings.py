@@ -56,9 +56,9 @@ def create_mappings(surface):
         default_behaviour = ToggleBehaviour(return_to_default = True),
         volume_button = "volume",
         swing_button = "swing",
-        #position_button = None,
+        position_button = "swing_with_shift",
         tempo_button = "tempo",
-        #scale_button = None,
+        scale_button = "tempo_with_shift",
         default = dict(
             modes = [
                 dict(component = "MiscControl",
@@ -79,12 +79,28 @@ def create_mappings(surface):
             component = "GroovePool",
             coarse_groove_amount = "encoder",
             fine_groove_amount = "encoder_with_shift"),
-        #position = dict(),
+        position = dict(
+            component = "Transport",
+            arrangement_position_encoder = "encoder",
+            loop_start_encoder = "encoder_with_shift",
+            set_cue_button = "encoderpush",
+            prev_cue_button = "encoderup",
+            next_cue_button = "encoderdown",
+            rewind_button = "encoderleft",
+            fastforward_button = "encoderright"),
         tempo = dict(
             component = "Transport",
             tempo_coarse_encoder = "encoder",
             tempo_fine_encoder = "encoder_with_shift"),
-        #scale = dict(),
+        scale = dict(
+            component = "ScaleSystem",
+            select_encoder = "encoder",
+            root_note_encoder = "encoder_with_shift",
+            toggle_button = "encoderpush",
+            indicator_button_1 = "encoderup",
+            indicator_button_2 = "encoderdown",
+            indicator_button_3 = "encoderleft",
+            indicator_button_4 = "encoderright"),
     )
     
     mappings["TouchStrip_Modes"] = dict(

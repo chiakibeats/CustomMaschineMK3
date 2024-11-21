@@ -195,11 +195,11 @@ class MaschineLEDColors:
         TapTempo = BasicColors.OFF
         NudgePressed = make_color(WHITE, LEVEL_2)
         Nudge = make_color(WHITE, LEVEL_4)
-        SeekPressed = BasicColors.ON
-        Seek = BasicColors.OFF
+        SeekPressed = make_color(GREEN, LEVEL_3)
+        Seek = make_color(GREEN, LEVEL_1)
         CanReEnableAutomation = BasicColors.ON
         CanCaptureMidi = BasicColors.ON
-        CanJumpToCue = BasicColors.ON
+        CanJumpToCue = make_color(WHITE, LEVEL_3)
         CannotJumpToCue = BasicColors.OFF
         SetCuePressed = BasicColors.ON
         SetCue = BasicColors.OFF
@@ -363,7 +363,7 @@ class MaschineLEDColors:
         Pressed = make_color(WHITE, LEVEL_4)
 
     class Scale:
-        On = make_color(PURPLE, LEVEL_3)
+        On = make_color(VIOLET, LEVEL_3)
         Off = BasicColors.OFF
 
     class NoteEditor:

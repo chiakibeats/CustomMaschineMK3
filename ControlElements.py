@@ -250,3 +250,5 @@ class ControlElements(ElementsBase):
         self.add_modified_control(self.column3_pads, self.scene)
         self.add_modified_control(self.stop, self.scene)
         self.add_modified_control(self.erase, self.shift)
+        self.add_modified_control(self.swing, self.shift)
+        self.add_modified_control(self.tempo, self.shift)

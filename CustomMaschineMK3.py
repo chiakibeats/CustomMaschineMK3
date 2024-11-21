@@ -48,6 +48,7 @@ from .CustomClipActionsComponent import CustomClipActionsComponent
 from .CustomSlicedSimplerComponent import CustomSlicedSimplerComponent
 from .NoteRepeatComponent import NoteRepeatComponent
 from .VelocityLevelsComponent import VelocityLevelsComponent
+from .ScaleSystemComponent import ScaleSystemComponent
 
 from .Logger import logger
 from . import Config
@@ -73,6 +74,7 @@ class Specification(ControlSurfaceSpecification):
     create_mappings_function = create_mappings
     feedback_channels = [1]
     component_map = {
+        "ScaleSystem": ScaleSystemComponent,
         "VelocityLevels": VelocityLevelsComponent,
         "NoteRepeat": NoteRepeatComponent,
         "Sliced_Simpler": CustomSlicedSimplerComponent,
@@ -129,8 +131,6 @@ class CustomMaschineMK3(ControlSurface):
         self.register_slot(self.elements.channel, self._on_update_triggered, "is_pressed")
         self.register_slot(self.elements.keyboard, self._on_playable_mode_selected, "is_pressed")
         self.register_slot(self.component_map["Pad_Modes"], self._on_pad_mode_changed, "selected_mode")
-
-
     
     # Sometimes pad leds couldn't update correctly
     # I don't know why this happens now, push "CHANNEL" button for refresh state
@@ -148,10 +148,6 @@ class CustomMaschineMK3(ControlSurface):
         # This wait doesn't affect respone speed, unless if you can play pads at 999 BPM...
         sleep(0.0005)
         super()._do_send_midi(midi_event_bytes)
-
-    # def _send_midi(self, midi_event_bytes, optimized = True):
-    #     logger.debug(f"send_midi() bytes = {midi_event_bytes}")
-    #     return super()._send_midi(midi_event_bytes, optimized)    
 
     # Session ring highlight is enabled only if hardware is identified by identity request
     # But maschine didn't respond to this message, so bypass identification process
@@ -253,3 +249,4 @@ class CustomMaschineMK3(ControlSurface):
     def refresh_state(self):
         logger.info("Refresh state")
         super().refresh_state()
+
