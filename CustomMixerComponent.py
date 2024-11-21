@@ -122,10 +122,8 @@ class CustomMixerComponent(MixerComponent):
 
     @listens("return_tracks")
     def _on_return_tracks_changed(self):
-        new_control_count = 1 + len(self.song.return_tracks)
-        if new_control_count != self._control_count:
-            self._control_count = new_control_count
-            if self.control_index >= self._control_count:
-                self.control_index = self._control_count - 1
-                self._show_current_control_name()
+        self._control_count = 1 + len(self.song.return_tracks)
+        if self.control_index >= self._control_count:
+            self.control_index = self._control_count - 1
+            self._show_current_control_name()
     
