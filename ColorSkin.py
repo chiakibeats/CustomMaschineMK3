@@ -380,8 +380,8 @@ class MaschineLEDColors:
         StepMuted = make_color(WHITE, LEVEL_1)
 
         class Resolution:
-            Selected = BasicColors.ON
-            NotSelected = BasicColors.OFF
+            Selected = make_color(WHITE, LEVEL_4)
+            NotSelected = make_color(WHITE, LEVEL_2)
 
     class LoopSelector:
         InsideLoopSelected = make_color(WHITE, LEVEL_4)

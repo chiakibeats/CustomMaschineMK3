@@ -191,6 +191,7 @@ def create_mappings(surface):
         step = dict(
             component = "Step_Sequence",
             step_buttons = "pads",
+            resolution_buttons = "group_buttons_with_pattern",
             loop_buttons = "group_buttons"
         ),
     )
