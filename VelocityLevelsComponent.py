@@ -39,6 +39,7 @@ class VelocityLevelsComponent(PlayableComponent):
         self._velocity_levels = velocity_levels
         self._target_track = target_track
         self._on_target_track_changed.subject = self._target_track
+        self._on_target_track_changed()
 
     def set_pitch_provider(self, provider):
         self._pitch_provider = provider
