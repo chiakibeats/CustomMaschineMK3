@@ -69,7 +69,12 @@ def create_mappings(surface):
                     up_button = "encoderup",
                     down_button = "encoderdown",
                     left_button = "encoderleft",
-                    right_button = "encoderright")]),
+                    right_button = "encoderright",
+                    page_up_button = "encoderup_with_shift",
+                    page_down_button = "encoderdown_with_shift",
+                    page_left_button = "encoderleft_with_shift",
+                    page_right_button = "encoderright_with_shift",
+                    )]),
         volume = dict(
             component = "MasterVolume",
             coarse_volume = "encoder",
@@ -146,7 +151,8 @@ def create_mappings(surface):
                     scene_launch_buttons = "column3_pads_with_scene",
                     select_button = "select",
                     delete_button = "erase",
-                    duplicate_button = "duplicate"),
+                    duplicate_button = "duplicate",
+                    copy_button = "variation"),
                 dict(component = "Session_Overview",
                     matrix = "group_buttons")
             ]),
@@ -171,7 +177,8 @@ def create_mappings(surface):
             scroll_page_up_button = "row0_pads_with_shift_raw[3]",
             select_buttons = "group_buttons",
             select_button = "select",
-            delete_button = "erase"
+            delete_button = "erase",
+            copy_button = "variation"
         ),
         simpler = dict(
             component = "Sliced_Simpler",
