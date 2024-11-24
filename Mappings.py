@@ -225,8 +225,9 @@ def create_mappings(surface):
                     bank_select_buttons = "track_buttons_with_macro",
                 ),
                 dict(component = "Device_Navigation",
-                    device_select_buttons = "track_buttons",
-                    device_on_off_buttons = "track_buttons_with_mute",
+                    select_buttons = "track_buttons",
+                    on_off_buttons = "track_buttons_with_mute",
+                    delete_button = "erase",
                     prev_group_button = "left_with_plugin",
                     next_group_button = "right_with_plugin"
                 )
