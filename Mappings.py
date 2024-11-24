@@ -154,10 +154,10 @@ def create_mappings(surface):
             component = "MaschinePlayable",
             matrix = "pads",
             octave_select_buttons = "group_buttons",
-            semitone_down_button = "row0_pads_with_shift_raw[0]",
-            semitone_up_button = "row0_pads_with_shift_raw[1]",
-            octave_down_button = "row0_pads_with_shift_raw[2]",
-            octave_up_button = "row0_pads_with_shift_raw[3]",
+            scroll_down_button = "row0_pads_with_shift_raw[0]",
+            scroll_up_button = "row0_pads_with_shift_raw[1]",
+            scroll_page_down_button = "row0_pads_with_shift_raw[2]",
+            scroll_page_up_button = "row0_pads_with_shift_raw[3]",
             select_button = "select"
         ),
         drum_rack = dict(
@@ -192,7 +192,10 @@ def create_mappings(surface):
             component = "Step_Sequence",
             step_buttons = "pads",
             resolution_buttons = "group_buttons_with_pattern",
-            loop_buttons = "group_buttons"
+            loop_buttons = "group_buttons",
+            loop_delete_button = "erase",
+            prev_page_button = "row0_pads_with_shift_raw[2]",
+            next_page_button = "row0_pads_with_shift_raw[3]"
         ),
     )
     #mappings["Session"] = dict(clip_launch_buttons = "pads")
@@ -254,6 +257,7 @@ def create_mappings(surface):
 
     mappings["NoteRepeat"] = dict(
         repeat_button = "noterep",
+        shift_button = "shift",
         rate_select_mode_button = "notes",
         rate_select_buttons = "group_buttons_with_notes"
     )

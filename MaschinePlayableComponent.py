@@ -1,6 +1,8 @@
 from itertools import product
 from ableton.v3.control_surface.components import (
     PlayableComponent,
+    PageComponent,
+    Pageable,
     ScrollComponent,
     Scrollable,
     PitchProvider
@@ -31,7 +33,6 @@ from ableton.v3.base import (
 from ableton.v3.control_surface.skin import LiveObjSkinEntry
 
 from .Logger import logger
-#from ableton.v3.base import 
 
 MODE_PLAYABLE = 0
 MODE_LISTENABLE = 1
@@ -77,16 +78,10 @@ class PlayableEncoderControl(SendValueEncoderControl):
             self.connected_property_value = value
 
 
-class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvider, Renderable):
+class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, PitchProvider, Renderable):
     octave_select_buttons = control_matrix(ButtonControl)
-    octave_up_button = ButtonControl()
-    octave_down_button = ButtonControl()
-    semitone_up_button = ButtonControl()
-    semitone_down_button = ButtonControl()
-    scale_mode_button = ButtonControl()
     pitchbend_encoder = PlayableEncoderControl()
     pitchbend_reset = PlayableEncoderControl()
-    modulation_encoder = EncoderControl()
 
     _scale_notes_only = False
     _root_note = 0
@@ -95,9 +90,19 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
     _octave_notes_count = 12
     _all_scale_notes = list(range(128))
     _all_chromatic_scale_notes = list(range(128))
+    _first_root_note_index = 0
+    # Add shortage of highest octave for mapping first pad note to highest root note. 
+    _total_position_count = _octave_root_notes[-1] + _octave_notes_count
+
     _select_start_octave = 2
     _position = 60
     _target_track = None
+    _scale_system = None
+
+    # Override Pageable class member
+    @property
+    def position_count(self):
+        return self._total_position_count
 
     @property
     def position(self):
@@ -109,8 +114,16 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
             self._position = pos
             self._update_note_translations()
             #self._update_scroll_buttons()
-            ScrollComponent.update(self)
+            PageComponent.update(self)
             self._update_led_feedback()
+    
+    @property
+    def page_offset(self):
+        return self._first_root_note_index
+        
+    @property
+    def page_length(self):
+        return self._octave_notes_count if self._scale_notes_only else 12
 
     @property
     def available_notes(self):
@@ -120,13 +133,13 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
             return self._all_chromatic_scale_notes
 
     @depends(target_track = None)
-    def __init__(self, name = 'MaschinePlayable', matrix_always_listenable = True, target_track = None, *a, **k):
-        super().__init__(name, matrix_always_listenable, *a, **k)
+    def __init__(self, name = "MaschinePlayable", matrix_always_listenable = True, target_track = None, *a, **k):
+        super().__init__(name = name, matrix_always_listenable = matrix_always_listenable, scroll_skin_name = "Keyboard.Scroll", *a, **k)
         self._target_track = target_track
         self.pitchbend_encoder.value = 8192
         self.register_slot(self.song, self._scale_root_note_changed, "root_note")
         self.register_slot(self.song, self._scale_intervals_changed, "scale_intervals")
-        self.register_slot(self.song, self._scale_mode_changed, "scale_mode")
+        #self.register_slot(self.song, self._scale_mode_changed, "scale_mode")
         self.register_slot(self.select_button, self._on_select_button_pressed, "is_pressed")
         self._on_target_track_changed.subject = self._target_track
         self._update_scale_and_adjust_position(True)
@@ -140,6 +153,11 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
         super().set_matrix(matrix)
         for button in self.matrix:
             button.set_mode(PlayableControl.Mode.playable_and_listenable)
+
+    def set_scale_system(self, scale_system):
+        self._scale_system = scale_system
+        self._scale_mode_changed.subject = scale_system
+        self._scale_mode_changed()
 
     def update(self):
         super().update()
@@ -165,7 +183,8 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
         pad_index = inverted_row * self.width + column
         notes = self.available_notes
         target_note = notes[min(self.position + pad_index, len(notes) - 1)]
-        return (target_note, 1)
+        channel = 1 if self.position + pad_index < len(notes) else 2
+        return (target_note, channel)
         #return super()._note_translation_for_button(button)
     
     def _update_led_feedback(self):
@@ -205,36 +224,7 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
                 button.color = LiveObjSkinEntry("Keyboard.OctaveSelected", self._target_track.target_track)
             else:
                 button.color = LiveObjSkinEntry("Keyboard.Octave", self._target_track.target_track)
-
-    def can_scroll_up(self):
-        visible_notes_count = self.width * self.height
-        return self.position + visible_notes_count < len(self.available_notes)
     
-    def can_scroll_down(self):
-        return 0 < self.position
-    
-    def scroll_up(self):
-        self.position -= self._octave_notes_count
-    
-    def scroll_down(self):
-        self.position += self._octave_notes_count
-    
-    @semitone_down_button.pressed
-    def _on_semitone_down_pressed(self, button):
-        self.position -= 1
-
-    @semitone_up_button.pressed
-    def _on_semitone_up_pressed(self, button):
-        self.position += 1
-
-    @octave_down_button.pressed
-    def _on_octave_down_pressed(self, button):
-        self.position -= self._octave_notes_count if self._scale_notes_only else 12
-
-    @octave_up_button.pressed
-    def _on_octave_up_pressed(self, button):
-        self.position += self._octave_notes_count if self._scale_notes_only else 12
-
     @octave_select_buttons.pressed
     def _on_octave_select_buttons_pressed(self, target_button):
         for button in self.octave_select_buttons:
@@ -259,6 +249,7 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
     def _scale_intervals_changed(self):
         self._update_scale_and_adjust_position(True)
 
+    @listens("scale_mode")
     def _scale_mode_changed(self):
         self._update_scale_and_adjust_position(True)
 
@@ -272,8 +263,10 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
         self._update_led_feedback()
 
     def _update_scale_info(self):
-        if self._scale_notes_only != self.song.scale_mode or self._root_note != self.song.root_note or self._intervals != self.song.scale_intervals:
-            self._scale_notes_only = self.song.scale_mode
+        scale_mode = self._scale_system.scale_mode if self._scale_system != None else False
+        scale_changed = False
+        if self._scale_notes_only != scale_mode or self._root_note != self.song.root_note or self._intervals != self.song.scale_intervals:
+            self._scale_notes_only = scale_mode
             self._root_note = self.song.root_note
             self._intervals = [note for note in self.song.scale_intervals]
             self._all_scale_notes = []
@@ -287,19 +280,20 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
                 octave_notes = filter(lambda note: note >= 0 and note < 128, (octave + interval for interval in self._intervals))
                 self._all_scale_notes += list(octave_notes)
 
-            logger.info(f"Scale mode = {self.song.scale_mode}")
-            logger.info(f"Root note = {self.song.root_note}, Name = {self.song.scale_name}, Intervals = {self.song.scale_intervals}")
-            logger.info(f"All scale notes = {self._all_scale_notes}")
-            logger.info(f"Octave root notes = {self._octave_root_notes}")
+            self._first_root_note_index = self.available_notes.index(self._octave_root_notes[0])
+            self._total_position_count = self.available_notes.index(self._octave_root_notes[-1])
+            self._total_position_count += len(self._intervals) if self._scale_notes_only else 12
 
-            return True
-        else:
+            scale_changed = True
+
+        if not scale_changed:
             logger.info("Scale unchanged")
-            logger.info(f"Scale mode = {self.song.scale_mode}")
-            logger.info(f"Root note = {self.song.root_note}, Name = {self.song.scale_name}, Intervals = {self.song.scale_intervals}")
-            logger.info(f"All scale notes = {self._all_scale_notes}")
-            logger.info(f"Octave root notes = {self._octave_root_notes}")
-            return False
+
+        logger.info(f"Scale Enabled = {scale_mode}, Root = {self.song.root_note}, Name = {self.song.scale_name}, Intervals = {self.song.scale_intervals}")
+        logger.debug(f"All scale notes = {self._all_scale_notes}")
+        logger.debug(f"Octave root notes = {self._octave_root_notes}")
+
+        return scale_changed
 
     def _adjust_position(self, first_pad_note, root_note_only = False):
         # Adjust scroll position near to previous first pad note
@@ -310,10 +304,6 @@ class MaschinePlayableComponent(PlayableComponent, ScrollComponent, PitchProvide
                 nearest_note = note
 
         self.position = self._find_note_index(self.available_notes, nearest_note)
-        
-    @modulation_encoder.value
-    def _on_modulation_encoder(self, value, control):
-        logger.info(f"Modulation encoder value = {value}")
 
     @listens("target_track")
     def _on_target_track_changed(self):

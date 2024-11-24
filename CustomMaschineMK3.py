@@ -94,9 +94,9 @@ class Specification(ControlSurfaceSpecification):
         "Device_Navigation": CustomDeviceNavigationComponent,
         "Step_Sequence": partial(
             StepSequenceComponent,
-            playhead_channels = [1],
             playhead_notes = tuple(playhead_notes),
-            playhead_triplet_notes = tuple(triplet_playhead_notes))
+            playhead_triplet_notes = tuple(triplet_playhead_notes),
+            playhead_channels = [1])
     }
 
 Specification.component_map["Device"] = partial(
@@ -160,13 +160,13 @@ class CustomMaschineMK3(ControlSurface):
 
     def _do_send_midi(self, midi_event_bytes):
         logger.debug(f"_do_send_midi {midi_event_bytes}")
+        super()._do_send_midi(midi_event_bytes)
         # Insert super short wait between each send to make sure LED feedback correctly.
         # During development, I encountered problem some pads / buttons LEDs not change to current mode value.
         # After several investigations, I found a wait inserted on old Maschine Ableton script.
         # Maybe 500us or more wait prevent issue.
-        # This wait doesn't affect respone speed, unless if you can play pads at 999 BPM...
+        # This wait doesn't affect response speed, unless if you can play pads at 999 BPM...
         sleep(0.0005)
-        super()._do_send_midi(midi_event_bytes)
 
     # Session ring highlight is enabled only if hardware is identified by identity request
     # But maschine didn't respond to this message, so bypass identification process
@@ -196,6 +196,7 @@ class CustomMaschineMK3(ControlSurface):
             return self.elements.knobs_raw[index].mapped_parameter()
 
     def _get_additional_dependencies(self):
+        # Register objects to DI container
         # Dict key name came from @depends decorator of each component classes
         # Registered components pass to appropriate components on demand
         inject_dict = {
@@ -213,6 +214,7 @@ class CustomMaschineMK3(ControlSurface):
         self.set_can_auto_arm(True)
         with self.component_guard():
             self.component_map["Pad_Modes"].selected_mode = DEFAULT_MODE
+            self.component_map["MaschinePlayable"].set_scale_system(self.component_map["ScaleSystem"])
 
     def disconnect(self):
         super().disconnect()
@@ -235,9 +237,8 @@ class CustomMaschineMK3(ControlSurface):
 
     def _on_pad_mode_changed(self, component):
         is_playable_enabled = self.get_pad_mode() in self._playable_mode_list
-        on_value = MaschineSkin["DefaultButton.On"].midi_value
-        off_value = MaschineSkin["DefaultButton.Off"].midi_value
-        self.elements.keyboard.send_value(on_value if is_playable_enabled else off_value)
+        state = "On" if is_playable_enabled else "Off"
+        self.elements.keyboard.send_value(MaschineSkin[f"DefaultButton.{state}"].midi_value)
 
     def drum_group_changed(self, drum_group):
         logger.info(f"Drum Group = {drum_group}")

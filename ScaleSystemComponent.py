@@ -9,7 +9,7 @@ from ableton.v3.control_surface.controls import (
 from ableton.v3.live.util import liveobj_valid
 from ableton.v3.base import sign, listens, listenable_property
 from ableton.v3.live import application
-from Live import Song
+from Live import Song # type: ignore
 
 from .Logger import logger
 
@@ -53,6 +53,7 @@ class ScaleSystemComponent(Component):
     def scale_mode(self, mode):
         if self._is_internal:
             self._internal_scale_mode = mode
+            self.notify_scale_mode()
         else:
             self.song.scale_mode = mode
 
@@ -83,7 +84,7 @@ class ScaleSystemComponent(Component):
         self.song.root_note = new_root_note
 
     def _on_scale_mode_changed(self):
-        #self.scale_mode = self.song.scale_mode
+        self.notify_scale_mode()
         self._update_led_feedback()
 
     def _on_scale_name_changed(self):
