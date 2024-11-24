@@ -4,7 +4,6 @@ from . import Config
 
 from datetime import datetime, timedelta, timezone
 
-
 class ISOTimeFormatter(logging.Formatter):
     def formatTime(self, record, datefmt = None):
         time = datetime.fromtimestamp(record.created)

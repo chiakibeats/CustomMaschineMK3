@@ -47,7 +47,7 @@ def create_root_view():
         return content
 
     def notification_content(state, event):
-        logger.info(f"View notification event {event} name = {event.name}")
+        logger.info(f"View notification event {event}")
         main_content = main_view(state)
         return main_content
 
@@ -59,7 +59,7 @@ def protocol(elements):
     def display(content: Content):
         if content:
             elements.display_line_0.display_message("Ableton Template by chiaki")
-            elements.display_line_2.display_message("Version 0.1")
+            elements.display_line_2.display_message("Version 0.5")
 
     return display
 

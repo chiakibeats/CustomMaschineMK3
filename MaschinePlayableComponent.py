@@ -113,7 +113,6 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, Pitc
         if self._position != pos:
             self._position = pos
             self._update_note_translations()
-            #self._update_scroll_buttons()
             PageComponent.update(self)
             self._update_led_feedback()
     
@@ -139,7 +138,6 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, Pitc
         self.pitchbend_encoder.value = 8192
         self.register_slot(self.song, self._scale_root_note_changed, "root_note")
         self.register_slot(self.song, self._scale_intervals_changed, "scale_intervals")
-        #self.register_slot(self.song, self._scale_mode_changed, "scale_mode")
         self.register_slot(self.select_button, self._on_select_button_pressed, "is_pressed")
         self._on_target_track_changed.subject = self._target_track
         self._update_scale_and_adjust_position(True)
@@ -233,7 +231,7 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, Pitc
                 self.position = self._find_note_index(self.available_notes, base_note)
 
     def _on_select_button_pressed(self):
-        logger.info("Select button pressed in keyboard mode")
+        pass
 
     def _find_note_index(self, note_list, target_note):
         for index, note in enumerate(note_list):
@@ -259,6 +257,15 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, Pitc
         if changed:
             self._adjust_position(first_pad_note, root_changed)
         self._update_note_translations()
+        self._update_led_feedback()
+
+    @listens("target_track")
+    def _on_target_track_changed(self):
+        self._on_track_color_changed.subject = self._target_track.target_track
+        self._update_led_feedback()
+
+    @listens("color_index")
+    def _on_track_color_changed(self):
         self._update_led_feedback()
 
     def _update_scale_info(self):
@@ -303,13 +310,4 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, Pitc
                 nearest_note = note
 
         self.position = self._find_note_index(self.available_notes, nearest_note)
-
-    @listens("target_track")
-    def _on_target_track_changed(self):
-        self._on_track_color_changed.subject = self._target_track.target_track
-        self._update_led_feedback()
-
-    @listens("color_index")
-    def _on_track_color_changed(self):
-        self._update_led_feedback()
 
