@@ -322,8 +322,8 @@ class MaschineLEDColors:
         PadSoloed = make_color(TURQUOISE, LEVEL_1)
         PadSoloedSelected = make_color(TURQUOISE, LEVEL_4)
         PadAction = make_color(WHITE, LEVEL_4)
-        ScrollPressed = BasicColors.ON
-        Scroll = BasicColors.ON
+        ScrollPressed = make_color(WHITE, LEVEL_2)
+        Scroll = make_color(WHITE, LEVEL_4)
         # Used in custom component
         Group = BasicColors.OFF
         GroupSelected = make_color(WHITE, LEVEL_4)
@@ -337,8 +337,8 @@ class MaschineLEDColors:
         SliceSelected = make_color(WHITE, LEVEL_3)
         NextSlice = make_color(WHITE, LEVEL_1)
         PadAction = make_color(GREEN, LEVEL_3)
-        ScrollPressed = BasicColors.ON
-        Scroll = BasicColors.OFF
+        ScrollPressed = (WHITE, LEVEL_2)
+        Scroll = make_color(WHITE, LEVEL_4)
         # Used in custom component
         SlicePressed = make_color(WHITE, LEVEL_4)
         Group = BasicColors.OFF
@@ -354,6 +354,8 @@ class MaschineLEDColors:
         NotePressed = make_color(WHITE, LEVEL_4)
         Octave = make_keyboard_color
         OctaveSelected = make_color(WHITE, LEVEL_4)
+        Scroll = make_color(WHITE, LEVEL_4)
+        ScrollPressed = make_color(WHITE, LEVEL_2)
 
     class VelocityLevels:
         Level1 = BasicColors.OFF
@@ -390,8 +392,8 @@ class MaschineLEDColors:
         OutsideLoop = BasicColors.OFF
         Playhead = make_color(GREEN, LEVEL_3)
         PlayheadRecord = make_color(RED, LEVEL_3)
-        NavigationPressed = make_color(WHITE, LEVEL_4)
-        Navigation = make_color(WHITE, LEVEL_2)
+        NavigationPressed = make_color(WHITE, LEVEL_2)
+        Navigation = make_color(WHITE, LEVEL_4)
 
     class Clipboard:
         Empty = BasicColors.OFF
