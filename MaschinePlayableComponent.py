@@ -207,19 +207,18 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, Pitc
             button.color = LiveObjSkinEntry(new_color, self._target_track.target_track)
             button.pressed_color = LiveObjSkinEntry("Keyboard.NotePressed", self._target_track.target_track)
 
-        selectable_octaves = self._octave_root_notes[self._select_start_octave : self._select_start_octave + 8]
+        selectable_octaves = self._octave_root_notes[self._select_start_octave : self._select_start_octave + self.octave_select_buttons.control_count]
         first_note = self.available_notes[self.position]
-        selected_octave = list(filter(lambda note: note + (self._octave_notes_count - 1) - first_note >= 0, selectable_octaves))
+        selected_index = -1
 
-        selected_index = self._find_note_index(selectable_octaves, selected_octave[0]) if len(selected_octave) > 0 else -1
-
-        logger.info(f"Selected index {selected_octave}")
+        for index, octave_root in enumerate(selectable_octaves):
+            if first_note >= octave_root and first_note < octave_root + 12:
+                selected_index = index
 
         for button in self.octave_select_buttons:
             row, column = button.coordinate
             index = row * self.width + column
 
-            #button.is_on = index == selected_index
             if index == selected_index:
                 button.color = LiveObjSkinEntry("Keyboard.OctaveSelected", self._target_track.target_track)
             else:
