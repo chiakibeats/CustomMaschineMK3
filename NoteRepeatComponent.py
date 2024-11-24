@@ -24,8 +24,6 @@ REPEAT_RATES = [
     beat_ratio(48),
 ]
 
-
-
 class CustomSendValueEncoderControl(SendValueEncoderControl):
     class State(SendValueEncoderControl.State):
         def _notify_encoder_value(self, value, *a, **k):
@@ -44,12 +42,14 @@ class CustomSendValueEncoderControl(SendValueEncoderControl):
 # repeat_rate: Interval of repetition, type is float, 1.0 means 1/4 synced length in ableton
 class NoteRepeatComponent(Component):
     repeat_button = ButtonControl(color = "NoteRepeat.Off", on_color = "NoteRepeat.On")
+    shift_button = ButtonControl()
     rate_select_mode_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
     rate_select_buttons = control_matrix(ButtonControl, color = "NoteRepeat.Rate", on_color = "NoteRepeat.RateSelected")
 
     _note_repeat = None
     _enabled = False
     _selected_index = 0
+    _toggle_enabled = False
 
     @depends(note_repeat = None)
     def __init__(self, name = "NoteRepeat", note_repeat = None, *a, **k):
@@ -59,9 +59,22 @@ class NoteRepeatComponent(Component):
 
     @repeat_button.pressed
     def _on_repeat_button_pressed(self, button):
-        self._enabled = not self._enabled
-        self._note_repeat.enabled = self._enabled
-        self.repeat_button.is_on = self._enabled
+        if self.shift_button.is_pressed and not self._enabled:
+            self._toggle_enabled = True
+            self._enabled = True
+        elif self._enabled:
+            self._toggle_enabled = False
+            self._enabled = False
+        else:
+            self._enabled = True
+        self._update_note_repeat_state()
+
+    @repeat_button.released
+    def _on_repeat_button_released(self, button):
+        if not self._toggle_enabled:
+            self._enabled = False
+            self._update_note_repeat_state()
+        
 
     @rate_select_mode_button.pressed
     def _on_rate_select_mode_button_pressed(self, button):
@@ -85,6 +98,10 @@ class NoteRepeatComponent(Component):
             row, column = button.coordinate
             index = row * self.rate_select_buttons.width + column
             button.is_on = index == self._selected_index
+
+    def _update_note_repeat_state(self):
+        self._note_repeat.enabled = self._enabled
+        self.repeat_button.is_on = self._enabled
 
     def update(self):
         super().update()
