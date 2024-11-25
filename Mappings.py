@@ -164,7 +164,8 @@ def create_mappings(surface):
             scroll_up_button = "row0_pads_with_shift_raw[1]",
             scroll_page_down_button = "row0_pads_with_shift_raw[2]",
             scroll_page_up_button = "row0_pads_with_shift_raw[3]",
-            select_button = "select"
+            select_button = "select",
+            note_select_button = "events"
         ),
         drum_rack = dict(
             component = "Drum_Group",
@@ -178,7 +179,8 @@ def create_mappings(surface):
             select_buttons = "group_buttons",
             select_button = "select",
             delete_button = "erase",
-            copy_button = "variation"
+            copy_button = "variation",
+            note_select_button = "events"
         ),
         simpler = dict(
             component = "Sliced_Simpler",
@@ -189,7 +191,8 @@ def create_mappings(surface):
             scroll_page_up_button = "row0_pads_with_shift_raw[3]",
             select_buttons = "upper_group_buttons",
             select_button = "select",
-            delete_button = "erase"
+            delete_button = "erase",
+            note_select_button = "events"
         ),
         chord = dict(
             component = "VelocityLevels",

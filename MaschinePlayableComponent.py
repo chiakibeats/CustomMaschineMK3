@@ -36,6 +36,7 @@ from ableton.v3.base import (
 from ableton.v3.control_surface.skin import LiveObjSkinEntry
 
 from .Logger import logger
+from .ClipNotesSelectMixin import ClipNotesSelectMixin
 
 MODE_PLAYABLE = 0
 MODE_LISTENABLE = 1
@@ -81,7 +82,7 @@ class PlayableEncoderControl(SendValueEncoderControl):
             self.connected_property_value = value
 
 
-class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, PitchProvider, Renderable):
+class MaschinePlayableComponent(ClipNotesSelectMixin, PlayableComponent, PageComponent, Pageable, PitchProvider, Renderable):
     octave_select_buttons = control_matrix(ButtonControl)
     pitchbend_encoder = PlayableEncoderControl()
     pitchbend_reset = PlayableEncoderControl()
@@ -179,6 +180,7 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, Pitc
         self._update_led_feedback()
 
     def _on_matrix_pressed(self, target_button):
+        self.process_pad_pressed(target_button)
         if self._takeover_pads:
             pitch, _ = self._note_translation_for_button(target_button)
             self.pitches = [pitch]

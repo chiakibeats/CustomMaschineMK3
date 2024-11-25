@@ -8,15 +8,14 @@ from ableton.v3.control_surface.controls import (
 )
 
 from .Logger import logger
+from .ClipNotesSelectMixin import ClipNotesSelectMixin
 
 DEFAULT_GROUP_SIZE = 16
 
-class CustomDrumGroupComponent(DrumGroupComponent):
+class CustomDrumGroupComponent(ClipNotesSelectMixin, DrumGroupComponent):
     _select_buttons = control_matrix(ButtonControl, color = None)
     _group_start_notes = list(range(4, 128, DEFAULT_GROUP_SIZE))
     _has_chain_list = []
-
-    select_modifier = ButtonControl()
 
     def __init__(self, *a, **k):
         super().__init__(translation_channel = 1, *a, **k, matrix_always_listenable = True)
@@ -36,6 +35,10 @@ class CustomDrumGroupComponent(DrumGroupComponent):
         super().set_matrix(matrix)
         # for button in self.matrix:
         #     button.set_mode(PlayableControl.Mode.playable_and_listenable)
+
+    def _on_matrix_pressed(self, button):
+        self.process_pad_pressed(button)
+        return super()._on_matrix_pressed(button)
 
     def _update_led_feedback(self):
         super()._update_led_feedback()

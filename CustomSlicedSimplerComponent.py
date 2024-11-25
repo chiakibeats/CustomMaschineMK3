@@ -10,12 +10,11 @@ from ableton.v3.control_surface.controls import (
 from ableton.v3.control_surface.skin import LiveObjSkinEntry
 
 from .Logger import logger
+from .ClipNotesSelectMixin import ClipNotesSelectMixin
 
-class CustomSlicedSimplerComponent(SlicedSimplerComponent):
+class CustomSlicedSimplerComponent(ClipNotesSelectMixin, SlicedSimplerComponent):
     _select_buttons = control_list(ButtonControl, control_count = 4, color = None)
     _has_slice_list = [False] * 4
-
-    select_modifier = ButtonControl()
 
     def __init__(self, *a, **k):
         super().__init__(translation_channel = 1, *a, **k, matrix_always_listenable = True)
@@ -32,6 +31,9 @@ class CustomSlicedSimplerComponent(SlicedSimplerComponent):
                 self.position = button.index * 4
                 logger.info(f"Slice group selected index = {button.index}")
 
+    def _on_matrix_pressed(self, button):
+        self.process_pad_pressed(button)
+        return super()._on_matrix_pressed(button)
 
     def set_simpler_device(self, simpler_device):
         sample = self._simpler_device.sample if liveobj_valid(self._simpler_device) else None
@@ -63,7 +65,7 @@ class CustomSlicedSimplerComponent(SlicedSimplerComponent):
 
     def _update_slice_group(self):
         slices = self._slices()
-        logger.info(f"Update slice group slices = {slices}, length = {len(slices)}")
+        logger.debug(f"Update slice group slices = {slices}, length = {len(slices)}")
         for index in range(self._select_buttons.control_count):
             self._has_slice_list[index] = len(slices) > index * 16
 
