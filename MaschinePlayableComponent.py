@@ -21,7 +21,10 @@ from ableton.v3.control_surface.controls import (
     control_matrix
 )
 
-from ableton.v3.control_surface import ScriptForwarding
+from ableton.v3.control_surface import (
+    ScriptForwarding,
+    MOMENTARY_DELAY
+)
 
 from ableton.v3.base import (
     listens,
@@ -99,6 +102,9 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, Pitc
     _target_track = None
     _scale_system = None
 
+    _select_pitch_task = None
+    _last_played_note = 60
+
     # Override Pageable class member
     @property
     def position_count(self):
@@ -140,8 +146,11 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, Pitc
         self.register_slot(self.song, self._scale_intervals_changed, "scale_intervals")
         self.register_slot(self.select_button, self._on_select_button_pressed, "is_pressed")
         self._on_target_track_changed.subject = self._target_track
+        self._on_target_track_changed()
         self._update_scale_and_adjust_position(True)
         self.pitches = [self.available_notes[self.position]]
+        self._select_pitch_task = self._tasks.add(task.sequence(task.wait(MOMENTARY_DELAY), task.run(self._delayed_select_pitch)))
+        self._select_pitch_task.kill()
 
     def set_matrix(self, matrix):
         first_pad_note = self.available_notes[self.position]
@@ -164,12 +173,19 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, Pitc
         self._adjust_position(first_pad_note)
         self._update_led_feedback()
 
+    def _delayed_select_pitch(self):
+        self._select_pitch_task.kill()
+        self.pitches = [self._last_played_note]
+        self._update_led_feedback()
+
     def _on_matrix_pressed(self, target_button):
         if self._takeover_pads:
-            for button in self.matrix:
-                if button == target_button:
-                    pitch, _ = self._note_translation_for_button(button)
-                    self.pitches = [pitch]
+            pitch, _ = self._note_translation_for_button(target_button)
+            self.pitches = [pitch]
+            self._update_led_feedback()
+        else:
+            self._last_played_note = self._note_translation_for_button(target_button)[0]
+            self._select_pitch_task.restart()
 
     def _on_matrix_released(self, button):
         super()._on_matrix_released(button)
@@ -187,6 +203,7 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, Pitc
     
     def _update_led_feedback(self):
         notes = self.available_notes
+        selected_pitch = self.pitches[0] if len(self.pitches) > 0 else -1
         for button in self.matrix:
             row, column = button.coordinate
             inverted_row = self.height - row - 1
@@ -195,7 +212,9 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, Pitc
             new_color = "Keyboard.NoNote"
             if note_index < len(notes):
                 note = notes[note_index]
-                if note in self._octave_root_notes:
+                if self.select_button.is_pressed and note == selected_pitch:
+                    new_color = "Keyboard.NoteSelected"
+                elif note in self._octave_root_notes:
                     new_color = "Keyboard.RootNote"
                 elif note in self._all_scale_notes:
                     new_color = "Keyboard.ScaleNote"
@@ -231,7 +250,7 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, Pageable, Pitc
                 self.position = self._find_note_index(self.available_notes, base_note)
 
     def _on_select_button_pressed(self):
-        pass
+        self._update_led_feedback()
 
     def _find_note_index(self, note_list, target_note):
         for index, note in enumerate(note_list):

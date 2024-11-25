@@ -27,19 +27,33 @@ from .Logger import logger
 
 DEFAULT_NOTE = 60
 
+
+
 class VelocityLevelsComponent(PlayableComponent):
     _pitch_provider = None
     _target_track = None
     _velocity_levels = None
     _source_notes = list(range(60, 76))
+    # Simulate Live's internal velocity calculation
+    _levels = list(range(127, 0, -8))[::-1]
+    _selected_level = 0
+    _selected_coordinate = (-1, -1)
+
+    @property
+    def selected_velocity(self):
+        return self._selected_level
 
     @depends(velocity_levels = None, target_track = None)
     def __init__(self, name = "VelocityLevels", matrix_always_listenable = True, velocity_levels = None, target_track = None, *a, **k):
         super().__init__(name, matrix_always_listenable, *a, **k)
         self._velocity_levels = velocity_levels
+        self._on_played_level_changed.subject = self._velocity_levels
+        self._selected_level = self._levels[12]
+        self._selected_coordinate = (0, 0)
         self._target_track = target_track
         self._on_target_track_changed.subject = self._target_track
         self._on_target_track_changed()
+        self.register_slot(self.select_button, self._on_select_button_pressed, "is_pressed")
 
     def set_pitch_provider(self, provider):
         self._pitch_provider = provider
@@ -58,8 +72,16 @@ class VelocityLevelsComponent(PlayableComponent):
             self._velocity_levels.enabled = False
 
     def _on_matrix_pressed(self, button):
-        #super()._on_matrix_pressed(button)
-        pass
+        self._selected_coordinate = button.coordinate
+        row, column = button.coordinate
+        index = (self.height - row - 1) * self.matrix.width + column
+        if len(self._velocity_levels.levels) > 0:
+            self._selected_level = self._velocity_levels.levels[index]
+        else:
+            self._selected_level = self._levels[index]
+
+    def _on_select_button_pressed(self):
+        self._update_led_feedback()
 
     def update(self):
         super().update()
@@ -76,7 +98,12 @@ class VelocityLevelsComponent(PlayableComponent):
         row, column = button.coordinate
         level = self.height - row
 
-        button.color = LiveObjSkinEntry(f"VelocityLevels.Level{level}", self.song.view.selected_track)
+        if self.select_button.is_pressed and button.coordinate == self._selected_coordinate:
+            color_name = "VelocityLevels.Selected"
+        else:
+            color_name = f"VelocityLevels.Level{level}"
+
+        button.color = LiveObjSkinEntry(color_name, self.song.view.selected_track)
         button.pressed_color = LiveObjSkinEntry("VelocityLevels.Pressed", self.song.view.selected_track)
 
     @listens("pitches")
@@ -92,5 +119,10 @@ class VelocityLevelsComponent(PlayableComponent):
     @listens("color_index")
     def _on_track_color_changed(self):
         self._update_led_feedback()
+
+    @listens("last_played_level")
+    def _on_played_level_changed(self):
+        self._selected_level = self._velocity_levels.last_played_level
+
 
     

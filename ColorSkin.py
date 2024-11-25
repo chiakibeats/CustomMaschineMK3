@@ -352,6 +352,7 @@ class MaschineLEDColors:
         ScaleNote = make_keyboard_color#make_color(WHITE, LEVEL_1)
         RootNote = partial(make_keyboard_color, accent = True)#make_color(WHITE, LEVEL_3)
         NotePressed = make_color(WHITE, LEVEL_4)
+        NoteSelected = make_color(WHITE, LEVEL_4)
         Octave = make_keyboard_color
         OctaveSelected = make_color(WHITE, LEVEL_4)
         Scroll = make_color(WHITE, LEVEL_4)
@@ -363,6 +364,7 @@ class MaschineLEDColors:
         Level3 = partial(make_velocity_color, level = LEVEL_2)
         Level4 = partial(make_velocity_color, level = LEVEL_3)
         Pressed = make_color(WHITE, LEVEL_4)
+        Selected = make_color(WHITE, LEVEL_4)
 
     class Scale:
         On = make_color(VIOLET, LEVEL_3)

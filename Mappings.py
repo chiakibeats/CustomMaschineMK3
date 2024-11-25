@@ -193,7 +193,8 @@ def create_mappings(surface):
         ),
         chord = dict(
             component = "VelocityLevels",
-            matrix = "pads"
+            matrix = "pads",
+            select_button = "select"
         ),
         step = dict(
             component = "Step_Sequence",
