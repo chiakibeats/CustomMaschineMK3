@@ -206,7 +206,8 @@ def create_mappings(surface):
             loop_buttons = "group_buttons",
             loop_delete_button = "erase",
             prev_page_button = "row0_pads_with_shift_raw[2]",
-            next_page_button = "row0_pads_with_shift_raw[3]"
+            next_page_button = "row0_pads_with_shift_raw[3]",
+            select_button = "select"
         ),
     )
     #mappings["Session"] = dict(clip_launch_buttons = "pads")

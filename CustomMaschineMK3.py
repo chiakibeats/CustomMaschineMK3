@@ -54,7 +54,7 @@ from .NoteRepeatComponent import NoteRepeatComponent
 from .VelocityLevelsComponent import VelocityLevelsComponent
 from .ScaleSystemComponent import ScaleSystemComponent
 from .SelectedParameterControlComponent import SelectedParameterControlComponent
-from .CustomNoteEditorComponent import CustomNoteEditorComponent
+from .CustomNoteEditorComponent import CustomNoteEditorComponent, CustomStepSequenceComponent
 
 from .Logger import logger
 from . import Config
@@ -94,7 +94,7 @@ class Specification(ControlSurfaceSpecification):
         "MiscControl": MiscControlComponent,
         "Device_Navigation": CustomDeviceNavigationComponent,
         "Step_Sequence": partial(
-            StepSequenceComponent,
+            CustomStepSequenceComponent,
             note_editor_component_type = CustomNoteEditorComponent,
             playhead_notes = tuple(playhead_notes),
             playhead_triplet_notes = tuple(triplet_playhead_notes),
