@@ -216,6 +216,7 @@ def create_mappings(surface):
         default_behaviour = LatchingBehaviour(),
         default_button = "mixer",
         device_button = "plugin",
+        clip_button = "sampling",
         default = dict(
             component = "Mixer",
             shift_button = "shift",
@@ -243,7 +244,12 @@ def create_mappings(surface):
                     prev_group_button = "left_with_plugin",
                     next_group_button = "right_with_plugin"
                 )
-            ])
+            ]),
+        clip = dict(
+            component = "ClipEditor",
+            control_buttons = "track_buttons",
+            control_encoders = "knobs"
+        )
     )
 
     mappings["Device"] = dict(device_lock_button = "lock")

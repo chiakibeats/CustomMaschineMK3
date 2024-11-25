@@ -55,6 +55,7 @@ from .VelocityLevelsComponent import VelocityLevelsComponent
 from .ScaleSystemComponent import ScaleSystemComponent
 from .SelectedParameterControlComponent import SelectedParameterControlComponent
 from .CustomNoteEditorComponent import CustomNoteEditorComponent, CustomStepSequenceComponent
+from .ClipEditorComponent import ClipEditorComponent
 
 from .Logger import logger
 from . import Config
@@ -80,6 +81,7 @@ class Specification(ControlSurfaceSpecification):
     create_mappings_function = create_mappings
     feedback_channels = [1]
     component_map = {
+        "ClipEditor": ClipEditorComponent,
         "SelectedParameter": SelectedParameterControlComponent,
         "ScaleSystem": ScaleSystemComponent,
         "VelocityLevels": VelocityLevelsComponent,
@@ -152,6 +154,7 @@ class CustomMaschineMK3(ControlSurface):
         self.register_slot(self.elements.channel, self._on_update_triggered, "is_pressed")
         self.register_slot(self.elements.keyboard, self._on_playable_mode_selected, "is_pressed")
         self.register_slot(self.component_map["Pad_Modes"], self._on_pad_mode_changed, "selected_mode")
+        self.register_slot(self.component_map["ButtonsAndKnobs_Modes"], self._on_upper_section_mode_changed, "selected_mode")
     
     # Sometimes pad leds couldn't update correctly
     # I don't know why this happens now, push "CHANNEL" button for refresh state
@@ -242,6 +245,22 @@ class CustomMaschineMK3(ControlSurface):
         is_playable_enabled = self.get_pad_mode() in self._playable_mode_list
         state = "On" if is_playable_enabled else "Off"
         self.elements.keyboard.send_value(MaschineSkin[f"DefaultButton.{state}"].midi_value)
+
+    def _on_upper_section_mode_changed(self, component):
+        mode = self.component_map["ButtonsAndKnobs_Modes"].selected_mode
+        if mode == "default":
+            return
+        elif mode == "device":
+            target_view = "Detail/DeviceChain"
+        elif mode == "clip":
+            target_view = "Detail/Clip"
+        else:
+            return
+        
+        if not self.application.view.is_view_visible(target_view):
+            self.application.view.show_view(target_view)
+
+        self.application.view.focus_view(target_view)
 
     def drum_group_changed(self, drum_group):
         logger.info(f"Drum Group = {drum_group}")
