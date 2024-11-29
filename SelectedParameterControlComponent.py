@@ -17,6 +17,7 @@ from .Logger import logger
 
 class SelectedParameterControlComponent(Component):
     select_buttons = control_list(ButtonControl, control_count = DEFAULT_BANK_SIZE)
+    reset_value_button = ButtonControl(color = None)
     modulation_encoder = MappedControl()
 
     _get_knob_mapped_parameter = None
@@ -41,6 +42,12 @@ class SelectedParameterControlComponent(Component):
             logger.info(f"Parameter name = {parameter.name}")
         self._show_selected_parameter_message(parameter)
         self.modulation_encoder.mapped_parameter = parameter
+
+    @reset_value_button.pressed
+    def _on_value_reset_button_pressed(self, button):
+        parameter = self.modulation_encoder.mapped_parameter
+        if liveobj_valid(parameter) and not parameter.is_quantized:
+            parameter.value = parameter.default_value
 
     def _show_selected_parameter_message(self, parameter):
         if parameter != None:

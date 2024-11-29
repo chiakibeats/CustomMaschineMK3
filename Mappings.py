@@ -18,6 +18,7 @@ def create_mappings(surface):
         overdub_button = "erase_with_shift"
     )
 
+    # mapping names not found in component map are recognized as mode definition
     mappings["Transport_Modes"] = dict(
         default_behaviour = MomentaryBehaviour(),
         shift_button = "shift",
@@ -227,7 +228,10 @@ def create_mappings(surface):
             arm_buttons = "left_half_track_buttons",
             mute_buttons = "left_half_track_buttons_with_mute",
             solo_buttons = "left_half_track_buttons_with_solo",
-            track_select_buttons = "right_half_track_buttons"),
+            track_select_buttons = "right_half_track_buttons",
+            volume_touch_controls = "right_half_knob_touch_buttons",
+            pan_or_send_touch_controls = "left_half_knob_touch_buttons",
+            erase_button = "erase"),
         device = dict(
             modes = [
                 dict(component = "Device",
@@ -236,6 +240,7 @@ def create_mappings(surface):
                     prev_bank_button = "left",
                     next_bank_button = "right",
                     bank_select_buttons = "track_buttons_with_macro",
+                    erase_button = "erase"
                 ),
                 dict(component = "Device_Navigation",
                     select_buttons = "track_buttons",
@@ -274,6 +279,10 @@ def create_mappings(surface):
         accent_button = "fixedvel"
     )
 
+    mappings["SelectedParameter"] = dict(
+        reset_value_button = "mod_with_erase"
+    )
+
     mappings["NoteRepeat"] = dict(
         repeat_button = "noterep",
         shift_button = "shift",
@@ -281,6 +290,5 @@ def create_mappings(surface):
         rate_select_buttons = "group_buttons_with_notes"
     )
 
-    # mapping names not found in component map are recognized as mode definition
     #mappings["Transport_Modes"] = dict()
     return mappings

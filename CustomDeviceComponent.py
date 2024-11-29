@@ -44,6 +44,7 @@ from .Logger import logger
 
 class CustomDeviceComponent(DeviceComponent):
     _parameter_touch_controls = control_list(ButtonControl, DEFAULT_BANK_SIZE)
+    erase_button = ButtonControl(color = None)
     _current_touched_index = -1
     
     def __init__(self, name="Device", *a, **k):
@@ -55,18 +56,22 @@ class CustomDeviceComponent(DeviceComponent):
     @_parameter_touch_controls.pressed
     def _on_parameter_touch_pressed(self, button):
         if self._current_touched_index == -1:
-            for x in range(DEFAULT_BANK_SIZE):
-                if self._parameter_touch_controls[x] == button:
-                    self._current_touched_index = x
-                    touched_parameter = self.parameters[x]
+            self._current_touched_index = button.index
+            touched_parameter = self.parameters[button.index]
 
-                    if touched_parameter is not None:
-                        name = touched_parameter.name
-                        self._show_message(f"Knob {x + 1} Parameter Name: {name}")
-
-                    break
+            if touched_parameter is not None:
+                name = touched_parameter.name
+                self._show_message(f"Knob {button.index + 1} Parameter Name: {name}")
     
     @_parameter_touch_controls.released
     def _on_parameter_touch_released(self, button):
         if button == self._parameter_touch_controls[self._current_touched_index]:
             self._current_touched_index = -1
+
+    @_parameter_touch_controls.double_clicked
+    def _on_parameter_touch_double_clicked(self, button):
+        if self.erase_button.is_pressed:
+            if button.index < len(self.parameters):
+                parameter = self.parameters[button.index].parameter
+                if liveobj_valid(parameter) and not parameter.is_quantized:
+                    parameter.value = parameter.default_value

@@ -40,6 +40,9 @@ class CustomMixerComponent(MixerComponent):
     pan_or_send_controls = control_list(MappedControl)
     prev_control_button = ButtonControl()
     next_control_button = ButtonControl()
+    volume_touch_controls = control_list(ButtonControl)
+    pan_or_send_touch_controls = control_list(ButtonControl)
+    erase_button = ButtonControl(color = None)
 
     _control_index = 0
     _control_count = 1
@@ -65,6 +68,15 @@ class CustomMixerComponent(MixerComponent):
 
     def set_next_control_button(self, button):
         self.next_control_button.set_control_element(button)
+
+    def set_volume_touch_controls(self, buttons):
+        self.volume_touch_controls.set_control_element(buttons)
+
+    def set_pan_or_send_touch_controls(self, buttons):
+        self.pan_or_send_touch_controls.set_control_element(buttons)
+
+    def set_erase_button(self, button):
+        self.erase_button.set_control_element(button)
 
     @property
     def control_index(self):
@@ -94,6 +106,20 @@ class CustomMixerComponent(MixerComponent):
             self.control_index += 1
 
         self._show_current_control_name()
+
+    @volume_touch_controls.double_clicked
+    def _on_volume_touch_double_clicked(self, button):
+        if self.erase_button.is_pressed:
+            parameter = self.channel_strip(button.index).volume_control.mapped_parameter
+            if liveobj_valid(parameter) and not parameter.is_quantized:
+                parameter.value = parameter.default_value
+
+    @pan_or_send_touch_controls.double_clicked
+    def _on_pan_or_send_touch_double_clicked(self, button):
+        if self.erase_button.is_pressed:
+            parameter = self.pan_or_send_controls[button.index].mapped_parameter
+            if liveobj_valid(parameter) and not parameter.is_quantized:
+                parameter.value = parameter.default_value
 
     def _update_control_mapped_parameter(self, index):
         map_range = range(min(self._track_count, self.pan_or_send_controls.control_count))

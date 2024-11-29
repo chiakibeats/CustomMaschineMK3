@@ -234,6 +234,8 @@ class ControlElements(ElementsBase):
 
         self.add_submatrix(self.knobs, "left_half_knobs", columns = (0, 4))
         self.add_submatrix(self.knobs, "right_half_knobs", columns = (4, 8))
+        self.add_submatrix(self.knob_touch_buttons, "left_half_knob_touch_buttons", columns = (0, 4))
+        self.add_submatrix(self.knob_touch_buttons, "right_half_knob_touch_buttons", columns = (4, 8))
         self.add_submatrix(self.track_buttons, "left_half_track_buttons", columns = (0, 4))
         self.add_submatrix(self.track_buttons, "right_half_track_buttons", columns = (4, 8))
         self.add_submatrix(self.group_buttons, "upper_group_buttons", rows = (0, 1))
@@ -267,7 +269,8 @@ class ControlElements(ElementsBase):
         self.add_modified_control(self.left_half_track_buttons, self.solo)
         self.add_modified_control(self.upper_group_buttons, self.perform)
         self.add_modified_control(self.group_buttons, self.notes)
-        self.add_modified_control(self.group_buttons, self.pattern)        
+        self.add_modified_control(self.group_buttons, self.pattern)
+        self.add_modified_control(self.mod, self.erase)
         self.add_modified_control(self.row0_pads, self.shift)
         self.add_modified_control(self.row2_pads, self.shift)
         self.add_modified_control(self.row3_pads, self.shift)
