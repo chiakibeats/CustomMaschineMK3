@@ -58,8 +58,8 @@ def protocol(elements):
 
     def display(content: Content):
         if content:
-            elements.display_line_0.display_message("Ableton Template by chiaki")
-            elements.display_line_2.display_message("Version 0.5")
+            elements.display_line_0.display_message("CustomMaschineMK3 by chiaki")
+            elements.display_line_2.display_message("Version 0.8")
 
     return display
 
