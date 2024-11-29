@@ -1,7 +1,6 @@
 from functools import partial
-from re import S
 from ableton.v2.base import nop
-from ableton.v2.control_surface import WrappingParameter, EnumWrappingParameter
+from ableton.v2.control_surface import WrappingParameter, EnumWrappingParameter, IntegerParameter
 from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.components.device import DEFAULT_BANK_SIZE
 from ableton.v3.control_surface.controls import (
@@ -13,7 +12,101 @@ from ableton.v3.control_surface.controls import (
 from ableton.v3.base import depends, listens
 from ableton.v3.live.util import liveobj_valid
 
+from Live.Clip import ( # type: ignore
+    ClipLaunchQuantization,
+    LaunchMode,
+    WarpMode,
+)
+
 from .Logger import logger
+
+class ClipLaunchQuantizationList():
+    values = [
+        ClipLaunchQuantization.q_global,
+        ClipLaunchQuantization.q_none,
+        ClipLaunchQuantization.q_8_bars,
+        ClipLaunchQuantization.q_4_bars,
+        ClipLaunchQuantization.q_2_bars,
+        ClipLaunchQuantization.q_bar,
+        ClipLaunchQuantization.q_half,
+        ClipLaunchQuantization.q_half_triplet,
+        ClipLaunchQuantization.q_quarter,
+        ClipLaunchQuantization.q_quarter_triplet,
+        ClipLaunchQuantization.q_eighth,
+        ClipLaunchQuantization.q_eighth_triplet,
+        ClipLaunchQuantization.q_sixteenth,
+        ClipLaunchQuantization.q_sixteenth_triplet,
+        ClipLaunchQuantization.q_thirtysecond,
+    ]
+
+    value_strings = [
+        "Global",
+        "None",
+        "8 Bars",
+        "4 Bars",
+        "2 Bars",
+        "1 Bar",
+        "1/2",
+        "1/2T",
+        "1/4",
+        "1/4T",
+        "1/8",
+        "1/8T",
+        "1/16",
+        "1/16T",
+        "1/32",
+    ]
+
+    @staticmethod
+    def to_string(value):
+        index = ClipLaunchQuantizationList.values.index(value)
+        return ClipLaunchQuantizationList.value_strings[index]
+
+class LaunchModeList():
+    values = [
+        LaunchMode.trigger,
+        LaunchMode.gate,
+        LaunchMode.toggle,
+        LaunchMode.repeat,
+    ]
+
+    value_strings = [
+        "Trigger",
+        "Gate",
+        "Toggle",
+        "Repeat",
+    ]
+
+    @staticmethod
+    def to_string(value):
+        index = LaunchModeList.values.index(value)
+        return LaunchModeList.value_strings[index]
+
+class WarpModeList():
+    values = [
+        WarpMode.beats,
+        WarpMode.tones,
+        WarpMode.texture,
+        WarpMode.repitch,
+        WarpMode.complex,
+        WarpMode.rex,
+        WarpMode.complex_pro,
+    ]
+
+    value_strings = [
+        "Beats",
+        "Tones",
+        "Texture",
+        "Re-Pitch",
+        "Complex",
+        "Rex",
+        "Complex Pro",
+    ]
+
+    @staticmethod
+    def to_string(value):
+        index = WarpModeList.values.index(value)
+        return WarpModeList.value_strings[index]
 
 def bool_to_display_value(value, off_value, on_value):
     return on_value if value else off_value
@@ -56,6 +149,18 @@ class BoolWrappingParameter(WrappingParameter):
     @property
     def max(self):
         return 1
+    
+def make_index_value_converter(values):
+    def to_index(x):
+        return values[x]
+    
+    def from_index(x):
+        for index, value in enumerate(values):
+            if x == value:
+                return index
+        return 0
+        
+    return to_index, from_index
 
 def make_bool_wrapper(name, converter = None, invert = False, *a, **k):
     return lambda obj: BoolWrappingParameter(
@@ -65,17 +170,28 @@ def make_bool_wrapper(name, converter = None, invert = False, *a, **k):
         invert = invert,
         parent = obj, *a, **k)
 
-def make_enum_wrapper(name):
-    return lambda obj: EnumWrappingParameter(
-        parent = obj,
-        index_property_host = obj,
-        index_property = name,
-        values_host = None,
-        values_property = None,
-        value_type = int,
+def make_enum_wrapper(name, values_name, values_host = None, make_converter = False, *a, **k):
+    def make_wrapper(obj):
+        to_index, from_index = make_index_value_converter(getattr(values_host or obj, values_name)) if make_converter else (None, None)
+        return EnumWrappingParameter(
+            parent = obj,
+            index_property_host = obj,
+            index_property = name,
+            values_host = values_host or obj,
+            values_property = values_name,
+            value_type = int,
+            to_index_conversion = to_index,
+            from_index_conversion = from_index, *a, **k)
+    
+    return make_wrapper
 
-        
-    )
+def make_int_wrapper(name, min, max, *a, **k):
+    return lambda obj: IntegerParameter(
+        integer_value_host = obj,
+        integer_value_property_name = name,
+        min_value = min,
+        max_value = max,
+        show_as_quantized = True, *a, **k)
 
 TEST_CLIP_BUTTON_MAPPINGS = [
     make_bool_wrapper("muted", bool_on_off, True),
@@ -98,6 +214,17 @@ AUDIO_CLIP_BUTTON_MAPPINGS = [
     None,
     None,
     make_bool_wrapper("warping", bool_on_off),
+]
+
+TEST_CLIP_ENCODER_MAPPINGS = [
+    None,
+    None,
+    None,
+    None,
+    make_enum_wrapper("launch_mode", "values", LaunchModeList),
+    make_enum_wrapper("launch_quantization", "values", ClipLaunchQuantizationList),
+    make_int_wrapper("pitch_coarse", -48, 48),
+    make_enum_wrapper("warp_mode", "available_warp_modes", None, True),
 ]
 
 AUDIO_CLIP_ENCODER_MAPPINGS = [
@@ -137,8 +264,8 @@ MIDI_CLIP_ENCODER_MAPPINGS = [
     "loop_end",
     "launch_mode",
     "launch_quantization",
-    "pitch_coarse",
-    "warp_mode",
+    None,
+    None,
 
     "signature_numerator",
     "signature_denominator",
@@ -178,11 +305,13 @@ class ClipEditorComponent(Component):
         clip = self._target_track.target_clip
         if liveobj_valid(clip):
             if clip.is_audio_clip:
+                #logger.info(f"Warp modes = {[mode for mode in clip.available_warp_modes]}")
                 self._map_parameters_to_control(clip, self.control_buttons, AUDIO_CLIP_BUTTON_MAPPINGS)
-                #self._map_parameters_to_control(clip, self.control_encoders, AUDIO_CLIP_ENCODER_MAPPINGS)
+                self._map_parameters_to_control(clip, self.control_encoders, TEST_CLIP_ENCODER_MAPPINGS)
             else:
                 self._map_parameters_to_control(clip, self.control_buttons, MIDI_CLIP_BUTTON_MAPPINGS)
                 #self._map_parameters_to_control(clip, self.control_encoders, MIDI_CLIP_ENCODER_MAPPINGS)
+            self._dump_clip(clip)
         else:
             self._map_parameters_to_control(clip, self.control_buttons, [None] * self.bank_size)
             self._map_parameters_to_control(clip, self.control_encoders, [None] * self.bank_size)
@@ -194,3 +323,13 @@ class ClipEditorComponent(Component):
                 control.mapped_parameter = wrapper_factory(liveobj)
             else:
                 control.mapped_parameter = None
+
+    def _dump_clip(self, clip):
+        for attr in dir(clip):
+            if not attr.startswith("__"):
+                value = getattr(clip, attr)
+                if not callable(value):
+                    try:
+                        logger.info(f"clip.{attr} = {value}, type = {type(value)}")
+                    finally:
+                        pass
