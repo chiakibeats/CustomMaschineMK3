@@ -103,8 +103,8 @@ class VelocityLevelsComponent(PlayableComponent):
         else:
             color_name = f"VelocityLevels.Level{level}"
 
-        button.color = LiveObjSkinEntry(color_name, self.song.view.selected_track)
-        button.pressed_color = LiveObjSkinEntry("VelocityLevels.Pressed", self.song.view.selected_track)
+        button.color = LiveObjSkinEntry(color_name, self._target_track.target_track)
+        button.pressed_color = LiveObjSkinEntry("VelocityLevels.Pressed", self._target_track.target_track)
 
     @listens("pitches")
     def _on_pitches_changed(self, pitches):

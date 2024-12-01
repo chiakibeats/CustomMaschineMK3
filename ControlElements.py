@@ -271,6 +271,7 @@ class ControlElements(ElementsBase):
         self.add_modified_control(self.group_buttons, self.notes)
         self.add_modified_control(self.group_buttons, self.pattern)
         self.add_modified_control(self.mod, self.erase)
+        self.add_modified_control(self.lock, self.plugin)
         self.add_modified_control(self.row0_pads, self.shift)
         self.add_modified_control(self.row2_pads, self.shift)
         self.add_modified_control(self.row3_pads, self.shift)

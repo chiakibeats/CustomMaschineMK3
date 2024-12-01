@@ -257,8 +257,6 @@ def create_mappings(surface):
         )
     )
 
-    mappings["Device"] = dict(device_lock_button = "lock")
-
     mappings["View_Toggle"] = dict(
         main_view_toggle_button = "arranger",
         clip_view_toggle_button = "sampling",
@@ -281,6 +279,14 @@ def create_mappings(surface):
 
     mappings["SelectedParameter"] = dict(
         reset_value_button = "mod_with_erase"
+    )
+
+    mappings["Target_Track"] = dict(
+        lock_button = "lock"
+    )
+
+    mappings["Device"] = dict(
+        device_lock_button = "lock_with_plugin"
     )
 
     mappings["NoteRepeat"] = dict(
