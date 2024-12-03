@@ -152,8 +152,7 @@ def create_mappings(surface):
                     scene_launch_buttons = "column3_pads_with_scene",
                     select_button = "select",
                     delete_button = "erase",
-                    duplicate_button = "duplicate",
-                    copy_button = "variation"),
+                    copy_button = "duplicate"),
                 dict(component = "Session_Overview",
                     matrix = "group_buttons")
             ]),
@@ -180,7 +179,7 @@ def create_mappings(surface):
             select_buttons = "group_buttons",
             select_button = "select",
             delete_button = "erase",
-            copy_button = "variation",
+            copy_button = "duplicate",
             note_select_button = "events"
         ),
         simpler = dict(
