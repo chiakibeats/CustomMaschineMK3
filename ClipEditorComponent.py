@@ -1,6 +1,7 @@
 from functools import partial
 from ableton.v2.base import nop
 from ableton.v2.control_surface import WrappingParameter, EnumWrappingParameter, IntegerParameter
+from ableton.v3.control_surface import ParameterInfo
 from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.components.device import DEFAULT_BANK_SIZE
 from ableton.v3.control_surface.controls import (
@@ -9,13 +10,14 @@ from ableton.v3.control_surface.controls import (
     MappedSensitivitySettingControl,
     control_list
 )
-from ableton.v3.base import depends, listens
+from ableton.v3.base import depends, listens, listenable_property, EventObject
 from ableton.v3.live.util import liveobj_valid
 
 from Live.Clip import ( # type: ignore
     ClipLaunchQuantization,
     LaunchMode,
     WarpMode,
+    WarpMarker
 )
 
 from .Logger import logger
@@ -100,7 +102,7 @@ class WarpModeList():
         "Re-Pitch",
         "Complex",
         "Rex",
-        "Complex Pro",
+        "Pro",
     ]
 
     @staticmethod
@@ -118,9 +120,9 @@ class BoolWrappingParameter(WrappingParameter):
     is_quantized = True
 
     def __init__(self,
-        property_host = None,
-        source_property = None,
-        display_value_conversion = None,
+        property_host,
+        source_property,
+        display_value_conversion,
         invert = False, *a, **k):
         super().__init__(
             property_host,
@@ -129,6 +131,7 @@ class BoolWrappingParameter(WrappingParameter):
             self._to_bool_invert if invert else self._to_bool,
             display_value_conversion,
             [], *a, **k)
+        self._parent = property_host
 
     def _to_bool(self, value, parent):
         return bool(value)
@@ -149,6 +152,33 @@ class BoolWrappingParameter(WrappingParameter):
     @property
     def max(self):
         return 1
+    
+# Max clip length is 1 year in 120BPM (taken from Push 2)
+MAX_CLIP_LENGTH = 365 * 24 * 3600 * 2.0
+    
+class BeatOrTimeWrappingParameter(WrappingParameter):
+    min = -MAX_CLIP_LENGTH
+    max = MAX_CLIP_LENGTH
+
+    def __init__(self, property_host, source_property, display_value_conversion, *a, **k):
+        super().__init__(
+            property_host = property_host,
+            source_property = source_property,
+            display_value_conversion = display_value_conversion, *a, **k)
+        self._parent = property_host
+
+    @listens("signature_denominator")
+    def _on_denominator_changed(self):
+        pass
+
+    @listens("signature_numerator")
+    def _on_numerator_changed(self):
+        pass
+
+    @listens("warping")
+    def _on_warping_changed(self):
+        pass
+
     
 def make_index_value_converter(values):
     def to_index(x):
@@ -193,11 +223,17 @@ def make_int_wrapper(name, min, max, *a, **k):
         max_value = max,
         show_as_quantized = True, *a, **k)
 
+def make_beat_or_time_wrapper(name, converter = nop):
+    def make_wrapper(obj):
+        return BeatOrTimeWrappingParameter(obj, name, converter)
+    
+    return make_wrapper
+
 TEST_CLIP_BUTTON_MAPPINGS = [
     make_bool_wrapper("muted", bool_on_off, True),
     make_bool_wrapper("looping", bool_on_off),
-    make_bool_wrapper("legato", bool_on_off),
     None,
+    make_bool_wrapper("legato", bool_on_off),
     None,
     None,
     None,
@@ -208,23 +244,24 @@ TEST_CLIP_BUTTON_MAPPINGS = [
 AUDIO_CLIP_BUTTON_MAPPINGS = [
     make_bool_wrapper("muted", bool_on_off, True),
     make_bool_wrapper("looping", bool_on_off),
+    None,
+    make_enum_wrapper("launch_mode", "values", LaunchModeList),
     make_bool_wrapper("legato", bool_on_off),
+    make_bool_wrapper("warping", bool_on_off),
     make_bool_wrapper("ram_mode", bool_on_off),
     None,
     None,
-    None,
-    make_bool_wrapper("warping", bool_on_off),
 ]
 
 TEST_CLIP_ENCODER_MAPPINGS = [
-    None,
-    None,
-    None,
-    None,
-    make_enum_wrapper("launch_mode", "values", LaunchModeList),
+    make_beat_or_time_wrapper("position"),
+    make_beat_or_time_wrapper("loop_start"),
+    make_beat_or_time_wrapper("loop_end"),
     make_enum_wrapper("launch_quantization", "values", ClipLaunchQuantizationList),
     make_int_wrapper("pitch_coarse", -48, 48),
+    make_int_wrapper("pitch_fine", -50, 50),
     make_enum_wrapper("warp_mode", "available_warp_modes", None, True),
+    None,
 ]
 
 AUDIO_CLIP_ENCODER_MAPPINGS = [
@@ -250,9 +287,9 @@ AUDIO_CLIP_ENCODER_MAPPINGS = [
 MIDI_CLIP_BUTTON_MAPPINGS = [
     make_bool_wrapper("muted", bool_on_off, True),
     make_bool_wrapper("looping", bool_on_off),
+    None,
+    make_enum_wrapper("launch_mode", "values", LaunchModeList),
     make_bool_wrapper("legato", bool_on_off),
-    None,
-    None,
     None,
     None,
     None,
@@ -276,6 +313,31 @@ MIDI_CLIP_ENCODER_MAPPINGS = [
     None,
     None,
 ]
+
+class ClipWrapper(EventObject):
+    _clip = None
+    _loop_length = 0.0
+
+    @property
+    def clip(self):
+        return self._clip
+    
+    @clip.setter
+    def clip(self, new_clip):
+        self._clip = new_clip
+
+    @listenable_property
+    def loop_length(self):
+        return self._loop_length
+    
+    @loop_length.setter
+    def loop_length(self, value):
+        self._loop_length = value
+        self._clip.loop_end = self._clip.loop_start + self._loop_length
+    
+
+
+
 
 class ClipEditorComponent(Component):
     bank_size = DEFAULT_BANK_SIZE
@@ -327,9 +389,15 @@ class ClipEditorComponent(Component):
     def _dump_clip(self, clip):
         for attr in dir(clip):
             if not attr.startswith("__"):
-                value = getattr(clip, attr)
-                if not callable(value):
-                    try:
-                        logger.info(f"clip.{attr} = {value}, type = {type(value)}")
-                    finally:
-                        pass
+                try:
+                    value = getattr(clip, attr)
+                    if not callable(value):
+                            logger.info(f"clip.{attr} = {value}, type = {type(value)}")
+                    if type(value) is not str and hasattr(value, "__iter__"):
+                        for index, item in enumerate(value):
+                            if type(item) is WarpMarker:
+                                logger.info(f"clip.{attr}[{index}]: beat_time = {item.beat_time}, sample_time = {item.sample_time}")
+                            else:
+                                logger.info(f"clip.{attr}[{index}] = {item}, type = {type(item)}")
+                except Exception as ex:
+                    logger.error(f"Exception ex = {ex}")
