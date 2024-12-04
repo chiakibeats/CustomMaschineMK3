@@ -42,6 +42,8 @@ MODE_PLAYABLE = 0
 MODE_LISTENABLE = 1
 MODE_PLAYABLE_LISTENABLE = 2
 
+SELECT_PITCH_DELAY = 0.25
+
 # This control class is just for bypass pitch bend message
 class PlayableEncoderControl(SendValueEncoderControl):
 
@@ -150,7 +152,7 @@ class MaschinePlayableComponent(ClipNotesSelectMixin, PlayableComponent, PageCom
         self._on_target_track_changed()
         self._update_scale_and_adjust_position(True)
         self.pitches = [self.available_notes[self.position]]
-        self._select_pitch_task = self._tasks.add(task.sequence(task.wait(MOMENTARY_DELAY), task.run(self._delayed_select_pitch)))
+        self._select_pitch_task = self._tasks.add(task.sequence(task.wait(SELECT_PITCH_DELAY), task.run(self._delayed_select_pitch)))
         self._select_pitch_task.kill()
 
     def set_matrix(self, matrix):
