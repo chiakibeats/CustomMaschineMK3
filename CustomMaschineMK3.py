@@ -56,6 +56,7 @@ from .ScaleSystemComponent import ScaleSystemComponent
 from .SelectedParameterControlComponent import SelectedParameterControlComponent
 from .CustomNoteEditorComponent import CustomNoteEditorComponent, CustomStepSequenceComponent
 from .ClipEditorComponent import ClipEditorComponent
+from .BrowserComponent import BrowserComponent
 
 from .Logger import logger
 from . import Config
@@ -81,6 +82,7 @@ class Specification(ControlSurfaceSpecification):
     create_mappings_function = create_mappings
     feedback_channels = [1]
     component_map = {
+        "Browser": BrowserComponent,
         "ClipEditor": ClipEditorComponent,
         "SelectedParameter": SelectedParameterControlComponent,
         "ScaleSystem": ScaleSystemComponent,

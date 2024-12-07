@@ -10,6 +10,7 @@ from ableton.v3.control_surface.elements_base import (
 from ableton.v3.control_surface.elements import (
     ButtonElement,
     EncoderElement,
+    TouchElement,
     ButtonMatrixElement,
     DisplayLineElement,
 )
@@ -251,6 +252,7 @@ class ControlElements(ElementsBase):
         # Modified control behaves like separate control element along side with original element.
         # LED feedback(message to hardware) and value change(incoming message) process properly depend on modifier state.
         #self.add_modified_control(self.tempo, self.shift)
+        self.add_modified_control(self.browser, self.shift)
         self.add_modified_control(self.left, self.plugin)
         self.add_modified_control(self.right, self.plugin)
         self.add_modified_control(self.file, self.shift)
@@ -272,12 +274,13 @@ class ControlElements(ElementsBase):
         self.add_modified_control(self.group_buttons, self.pattern)
         self.add_modified_control(self.mod, self.erase)
         self.add_modified_control(self.lock, self.plugin)
+        self.add_modified_control(self.duplicate, self.shift)
         self.add_modified_control(self.row0_pads, self.shift)
         self.add_modified_control(self.row2_pads, self.shift)
         self.add_modified_control(self.row3_pads, self.shift)
         self.add_modified_control(self.row3_pads, self.mute)
         self.add_modified_control(self.column3_pads, self.scene)
-        self.add_modified_control(self.stop, self.scene)
+        self.add_modified_control(self.stop, self.shift)
         self.add_modified_control(self.erase, self.shift)
         self.add_modified_control(self.swing, self.shift)
         self.add_modified_control(self.tempo, self.shift)

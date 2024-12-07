@@ -146,7 +146,6 @@ def create_mappings(surface):
         default = dict(
             modes = [
                 dict(component = "Session",
-                    stop_all_clips_button = "stop_with_scene",
                     stop_track_clip_buttons = "row3_pads_with_mute",
                     clip_launch_buttons = "pads",
                     scene_launch_buttons = "column3_pads_with_scene",
@@ -210,13 +209,13 @@ def create_mappings(surface):
             select_button = "select"
         ),
     )
-    #mappings["Session"] = dict(clip_launch_buttons = "pads")
 
     mappings["ButtonsAndKnobs_Modes"] = dict(
         default_behaviour = LatchingBehaviour(),
         default_button = "mixer",
         device_button = "plugin",
         clip_button = "sampling",
+        browser_button = "browser",
         default = dict(
             component = "Mixer",
             shift_button = "shift",
@@ -253,13 +252,18 @@ def create_mappings(surface):
             component = "ClipEditor",
             control_buttons = "track_buttons",
             control_encoders = "knobs"
+        ),
+        browser = dict(
+            component = "Browser",
+            select_encoder = "encoder"
         )
     )
 
+    mappings["Session"] = dict(stop_all_clips_button = "stop_with_shift")
+
     mappings["View_Toggle"] = dict(
         main_view_toggle_button = "arranger",
-        clip_view_toggle_button = "sampling",
-        browser_view_toggle_button = "browser"
+        browser_view_toggle_button = "browser_with_shift",
     )
 
     mappings["Undo_Redo"] = dict(
@@ -268,6 +272,7 @@ def create_mappings(surface):
     )
 
     mappings["Clip_Actions"] = dict(
+        double_button = "duplicate_with_shift",
         quantize_button = "row2_pads_with_shift_raw[0]",
         half_quantize_button = "row2_pads_with_shift_raw[1]"
     )
@@ -295,5 +300,4 @@ def create_mappings(surface):
         rate_select_buttons = "group_buttons_with_notes"
     )
 
-    #mappings["Transport_Modes"] = dict()
     return mappings
