@@ -148,7 +148,10 @@ def make_color_from_element(element):
         if element.color_index != None:
             return make_color(*LIVE_COLOR_MAP.get(element.color_index, (0, 0)))
             #return SimpleColor(element.color_index)
-    return BasicColors.OFF
+        else:
+            return make_color(WHITE, LEVEL_4)
+    else:
+        return BasicColors.OFF
 
 def make_keyboard_color(element, accent = False):
     if liveobj_valid(element):
@@ -268,8 +271,8 @@ class MaschineLEDColors:
         ClipTriggeredRecord = make_color(RED, LEVEL_1)
         ClipPlaying = make_color(GREEN, LEVEL_3)
         ClipRecording = make_color(RED, LEVEL_3)
-        Scene = make_color(WHITE, LEVEL_2)
-        SceneTriggered = make_color(WHITE, LEVEL_4)
+        Scene = make_color_from_element
+        SceneTriggered = make_color(GREEN, LEVEL_3)
         NoScene = BasicColors.OFF
         StopClipTriggered = make_color(WHITE, LEVEL_2)
         StopClip = make_color(WHITE, LEVEL_4)
