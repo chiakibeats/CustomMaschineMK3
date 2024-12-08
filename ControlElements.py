@@ -25,6 +25,10 @@ from ableton.v3.control_surface import (
     PrioritizedResource
 )
 
+from ableton.v2.control_surface.elements.encoder import ENCODER_VALUE_NORMALIZER
+from ableton.v3.base import in_range
+import Live # type: ignore
+
 from .Logger import logger
 from .SysexShiftButton import SysexShiftButton
 from . import Config
@@ -34,6 +38,24 @@ from .DisplayDefinitions import (
     make_mcu_display_header,
     make_display_sysex_message
 )
+
+# There's a miscalculation in signed_bit_delta function.
+# The original version chooses different acceleration factor between increment and decrement side.
+# To fix problem, replace function to correct one.
+SIGNED_BIT_DEFAULT_DELTA = 20.0
+SIGNED_BIT_VALUE_MAP = (1, 2, 3, 4, 5, 8, 10, 20, 50)
+
+def fixed_signed_bit_delta(value):
+    delta = SIGNED_BIT_DEFAULT_DELTA
+    is_increment = value <= 64
+    index = (value if is_increment else value - 64) - 1 # Original subtracts 1 only increment side
+    if in_range(index, 0, len(SIGNED_BIT_VALUE_MAP)):
+        delta = SIGNED_BIT_VALUE_MAP[index]
+    if is_increment:
+        return delta
+    return -delta
+
+ENCODER_VALUE_NORMALIZER[Live.MidiMap.MapMode.relative_signed_bit] = fixed_signed_bit_delta
 
 class ForceToggleButtonElement(ButtonElement):
     _internal_received_value = 0
