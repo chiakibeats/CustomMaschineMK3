@@ -149,7 +149,7 @@ def make_color_from_element(element):
             return make_color(*LIVE_COLOR_MAP.get(element.color_index, (0, 0)))
             #return SimpleColor(element.color_index)
         else:
-            return make_color(WHITE, LEVEL_4)
+            return make_color(WHITE, LEVEL_3)
     else:
         return BasicColors.OFF
 
