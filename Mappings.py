@@ -250,8 +250,17 @@ def create_mappings(surface):
             ]),
         clip = dict(
             component = "ClipEditor",
-            control_buttons = "track_buttons",
-            control_encoders = "knobs"
+            #control_buttons = "track_buttons",
+            mute_button = "track_buttons_raw[0]",
+            loop_button = "track_buttons_raw[1]",
+            crop_button = "track_buttons_raw[2]",
+            launch_mode_button = "track_buttons_raw[3]",
+            legato_button = "track_buttons_raw[4]",
+            warp_button = "track_buttons_raw[5]",
+            ram_mode_button = "track_buttons_raw[6]",
+            fine_grain_button = "macro",
+            control_encoders = "knobs",
+            encoder_touch_buttons = "knob_touch_buttons"
         ),
         browser = dict(
             component = "Browser",
