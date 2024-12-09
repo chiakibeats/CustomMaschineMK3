@@ -225,6 +225,7 @@ class CustomMaschineMK3(ControlSurface):
             self.component_map["Pad_Modes"].selected_mode = DEFAULT_MODE
             self.component_map["MaschinePlayable"].set_scale_system(self.component_map["ScaleSystem"])
             self.component_map["Step_Sequence"]._note_editor.set_velocity_levels(self.component_map["VelocityLevels"])
+            self.component_map["ClipEditor"].set_step_sequence(self.component_map["Step_Sequence"])
 
     def disconnect(self):
         super().disconnect()

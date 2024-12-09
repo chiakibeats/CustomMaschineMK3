@@ -281,8 +281,14 @@ class ClipEditorComponent(Component):
     _warp_mode_value_stepper = CustomValueStepper(4)
     _gain_value_stepper = CustomValueStepper(64)
 
+    _nudge_offset_value_stepper = CustomValueStepper(32)
+    _note_length_value_stepper = CustomValueStepper(32)
+    _note_pitch_value_stepper = CustomValueStepper(16)
+    _note_velocity_value_stepper = CustomValueStepper(32)
+
     _target_track = None
     _clip = None
+    _step_sequence = None
 
     _empty_encoder_callbacks = [EncoderCallbackSet()] * bank_size
 
@@ -346,10 +352,10 @@ class ClipEditorComponent(Component):
             EncoderCallbackSet(self._change_loop_end),
             EncoderCallbackSet(self._change_start_marker),
             EncoderCallbackSet(self._change_launch_quantization),
-            EncoderCallbackSet(), # nudge_offset
-            EncoderCallbackSet(), # note_length
-            EncoderCallbackSet(), # pitch
-            EncoderCallbackSet(), # velocity
+            EncoderCallbackSet(self._change_note_nudge_offset),
+            EncoderCallbackSet(self._change_note_length),
+            EncoderCallbackSet(self._change_note_pitch),
+            EncoderCallbackSet(self._change_note_velocity),
         ]
 
         self._nonlooped_midi_clip_encoder_callbacks = [
@@ -357,10 +363,10 @@ class ClipEditorComponent(Component):
             EncoderCallbackSet(self._change_loop_end),
             EncoderCallbackSet(),
             EncoderCallbackSet(self._change_launch_quantization),
-            EncoderCallbackSet(), # nudge_offset
-            EncoderCallbackSet(), # note_length
-            EncoderCallbackSet(), # pitch
-            EncoderCallbackSet(), # velocity
+            EncoderCallbackSet(self._change_note_nudge_offset),
+            EncoderCallbackSet(self._change_note_length),
+            EncoderCallbackSet(self._change_note_pitch),
+            EncoderCallbackSet(self._change_note_velocity),
         ]
 
     @listenable_property
@@ -381,6 +387,9 @@ class ClipEditorComponent(Component):
     
     def _get_one_beat_length(self):
         return 4.0 / self._clip.signature_denominator
+    
+    def set_step_sequence(self, step_sequence):
+        self._step_sequence = step_sequence
 
     @crop_button.pressed
     def _on_crop_button_pressed(self, button):
@@ -533,6 +542,26 @@ class ClipEditorComponent(Component):
             use_fine_grain = self.fine_grain_button.is_pressed
             new_value = self._clip.gain + step * (0.001 if use_fine_grain else 0.005)
             self._clip.gain = clamp(new_value, 0.0, 1.0)
+
+    def _change_note_nudge_offset(self, value, encoder):
+        step = self._nudge_offset_value_stepper.update(value)
+        if step != 0 and self._step_sequence != None:
+            self._step_sequence.note_editor.set_nudge_offset(step / 128.0)
+
+    def _change_note_length(self, value, encoder):
+        step = self._note_length_value_stepper.update(value)
+        if step != 0 and self._step_sequence != None:
+            self._step_sequence.note_editor.set_duration_offset(step / 128.0)
+
+    def _change_note_pitch(self, value, encoder):
+        step = self._note_pitch_value_stepper.update(value)
+        if step != 0 and self._step_sequence != None:
+            self._step_sequence.note_editor.set_pitch_offset(step)
+
+    def _change_note_velocity(self, value, encoder):
+        step = self._note_velocity_value_stepper.update(value)
+        if step != 0 and self._step_sequence != None:
+            self._step_sequence.note_editor.set_velocity_offset(step)
     
     def _dump_clip(self, clip):
         for attr in dir(clip):
