@@ -1,6 +1,8 @@
 from ableton.v3.control_surface.component_map import ComponentMap
 from ableton.v3.control_surface.mode import ToggleBehaviour, MomentaryBehaviour, LatchingBehaviour, ImmediateBehaviour
 
+from . import Config
+
 def create_mappings(surface):
     mappings = {}
     mappings["Transport"] = dict(
@@ -200,7 +202,7 @@ def create_mappings(surface):
         ),
         step = dict(
             component = "Step_Sequence",
-            step_buttons = "pads",
+            step_buttons = "pads" if Config.REVERSE_STEP_PADS else "original_order_pads",
             resolution_buttons = "group_buttons_with_pattern",
             loop_buttons = "group_buttons",
             loop_delete_button = "erase",

@@ -61,7 +61,9 @@ from .BrowserComponent import BrowserComponent
 from .Logger import logger
 from . import Config
 
-pad_row_notes = list(range(60, 76, 4))[::-1]
+pad_row_notes = list(range(60, 76, 4))
+if Config.REVERSE_STEP_PADS:
+    pad_row_notes = pad_row_notes[::-1]
 playhead_notes = [base_note + offset for base_note, offset in product(pad_row_notes, range(4))]
 triplet_playhead_notes = [base_note + offset for base_note, offset in product(pad_row_notes, range(3))]
 

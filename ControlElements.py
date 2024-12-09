@@ -266,6 +266,10 @@ class ControlElements(ElementsBase):
         self.add_submatrix(self.pads, "row2_pads", rows = (2, 3), columns = (0, 4))
         self.add_submatrix(self.pads, "row3_pads", rows = (3, 4), columns = (0, 4))
         self.add_submatrix(self.pads, "column3_pads", rows = (0, 4), columns = (3, 4))
+        self.original_order_pads = self.pads.submatrix[(slice(0, 4), slice(None, None, -1))]
+        self.original_order_pads.name = "original_order_pads"
+        self.original_order_pads.is_private = True
+
 
         # Modified control consists with 2 control elements.
         # One is modifier, which needs to press first to notify control is to modified.
