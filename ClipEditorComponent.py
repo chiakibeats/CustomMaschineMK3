@@ -324,8 +324,8 @@ class ClipEditorComponent(Component):
             EncoderCallbackSet(self._change_loop_end),
             EncoderCallbackSet(self._change_start_marker),
             EncoderCallbackSet(self._change_launch_quantization),
-            EncoderCallbackSet(self._change_pitch),
             EncoderCallbackSet(self._change_warp_mode),
+            EncoderCallbackSet(self._change_pitch),
             EncoderCallbackSet(self._change_gain),
             EncoderCallbackSet(),
         ]
@@ -335,8 +335,8 @@ class ClipEditorComponent(Component):
             EncoderCallbackSet(self._change_loop_end),
             EncoderCallbackSet(),
             EncoderCallbackSet(self._change_launch_quantization),
-            EncoderCallbackSet(self._change_pitch),
             EncoderCallbackSet(self._change_warp_mode),
+            EncoderCallbackSet(self._change_pitch),
             EncoderCallbackSet(self._change_gain),
             EncoderCallbackSet(),
         ]
@@ -375,6 +375,12 @@ class ClipEditorComponent(Component):
             if value == mode:
                 return index
         return 0
+    
+    def _get_one_bar_length(self):
+        return self._clip.signature_numerator * (4.0 / self._clip.signature_denominator)
+    
+    def _get_one_beat_length(self):
+        return 4.0 / self._clip.signature_denominator
 
     @crop_button.pressed
     def _on_crop_button_pressed(self, button):
@@ -451,19 +457,34 @@ class ClipEditorComponent(Component):
     def _change_position(self, value, encoder):
         step = self._position_value_stepper.update(value)
         if step != 0:
-            self._clip.position += step
+            use_fine_grain = self.fine_grain_button.is_pressed
+            if self._clip.is_midi_clip or self._clip.warping:
+                self._clip.position += step * (self._get_one_beat_length() if use_fine_grain else self._get_one_bar_length())
+            else:
+                self._clip.position += step * (0.01 if use_fine_grain else 0.1)
+            
             self._clip.view.show_loop()
 
     def _change_loop_start(self, value, encoder):
         step = self._loop_start_value_stepper.update(value)
         if step != 0:
-            self._clip.loop_start += step * 0.1
+            use_fine_grain = self.fine_grain_button.is_pressed
+            if self._clip.is_midi_clip or self._clip.warping:
+                self._clip.loop_start += step * (self._get_one_beat_length() if use_fine_grain else self._get_one_bar_length())
+            else:
+                self._clip.loop_start += step * (0.01 if use_fine_grain else 0.1)
+            
             self._clip.view.show_loop()
 
     def _change_loop_end(self, value, encoder):
         step = self._loop_end_value_stepper.update(value)
         if step != 0:
-            self._clip.loop_end += step
+            use_fine_grain = self.fine_grain_button.is_pressed
+            if self._clip.is_midi_clip or self._clip.warping:
+                self._clip.loop_end += step * (self._get_one_beat_length() if use_fine_grain else self._get_one_bar_length())
+            else:
+                self._clip.loop_end += step * (0.01 if use_fine_grain else 0.1)
+            
             self._clip.view.show_loop()
 
     def _change_loop_length(self, value, encoder):
@@ -476,7 +497,11 @@ class ClipEditorComponent(Component):
     def _change_start_marker(self, value, encoder):
         step = self._start_marker_value_stepper.update(value)
         if step != 0:
-            self._clip.start_marker += step
+            use_fine_grain = self.fine_grain_button.is_pressed
+            if self._clip.is_midi_clip or self._clip.warping:
+                self._clip.start_marker += step * (self._get_one_beat_length() if use_fine_grain else self._get_one_bar_length())
+            else:
+                self._clip.start_marker += step * (0.01 if use_fine_grain else 0.1)
 
     def _change_launch_quantization(self, value, encoder):
         step = self._launch_quantization_value_stepper.update(value)
@@ -505,7 +530,8 @@ class ClipEditorComponent(Component):
     def _change_gain(self, value, encoder):
         step = self._gain_value_stepper.update(value)
         if step != 0:
-            new_value = self._clip.gain + step * 0.005
+            use_fine_grain = self.fine_grain_button.is_pressed
+            new_value = self._clip.gain + step * (0.001 if use_fine_grain else 0.005)
             self._clip.gain = clamp(new_value, 0.0, 1.0)
     
     def _dump_clip(self, clip):
