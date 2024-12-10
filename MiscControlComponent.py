@@ -16,7 +16,7 @@ class MiscControlComponent(Component):
     arm_button = ButtonControl(color = None)
     _selected_track = None
 
-    def __init__(self, name = "MiscControl", *a, **k):
+    def __init__(self, name = "Misc_Control", *a, **k):
         super().__init__(name, *a, **k)
 
     def _get_selected_track_info(self):

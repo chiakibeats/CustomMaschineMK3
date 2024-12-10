@@ -141,7 +141,7 @@ class MaschinePlayableComponent(ClipNotesSelectMixin, PlayableComponent, PageCom
             return self._all_chromatic_scale_notes
 
     @depends(target_track = None)
-    def __init__(self, name = "MaschinePlayable", matrix_always_listenable = True, target_track = None, *a, **k):
+    def __init__(self, name = "Maschine_Playable", matrix_always_listenable = True, target_track = None, *a, **k):
         super().__init__(name = name, matrix_always_listenable = matrix_always_listenable, scroll_skin_name = "Keyboard.Scroll", *a, **k)
         self._target_track = target_track
         self.pitchbend_encoder.value = 8192

@@ -301,7 +301,7 @@ class ClipEditorComponent(Component):
     _encoder_callbacks = _empty_encoder_callbacks
 
     @depends(target_track = None)
-    def __init__(self, name = "ClipEditor", target_track = None, *a, **k):
+    def __init__(self, name = "Clip_Editor", target_track = None, *a, **k):
         super().__init__(name, *a, **k)
         self._target_track = target_track
 

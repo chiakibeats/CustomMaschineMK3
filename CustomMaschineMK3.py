@@ -85,19 +85,19 @@ class Specification(ControlSurfaceSpecification):
     feedback_channels = [1]
     component_map = {
         "Browser": BrowserComponent,
-        "ClipEditor": ClipEditorComponent,
-        "SelectedParameter": SelectedParameterControlComponent,
-        "ScaleSystem": ScaleSystemComponent,
-        "VelocityLevels": VelocityLevelsComponent,
-        "NoteRepeat": NoteRepeatComponent,
+        "Clip_Editor": ClipEditorComponent,
+        "Selected_Parameter": SelectedParameterControlComponent,
+        "Scale_System": ScaleSystemComponent,
+        "Velocity_Levels": VelocityLevelsComponent,
+        "Note_Repeat": NoteRepeatComponent,
         "Sliced_Simpler": CustomSlicedSimplerComponent,
         "Drum_Group": CustomDrumGroupComponent,
         "Mixer": CustomMixerComponent,
         "Clip_Actions": CustomClipActionsComponent,
-        "GroovePool": GroovePoolComponent,
-        "MasterVolume": MasterVolumeComponent,
-        "MaschinePlayable": MaschinePlayableComponent,
-        "MiscControl": MiscControlComponent,
+        "Groove_Pool": GroovePoolComponent,
+        "Master_Volume": MasterVolumeComponent,
+        "Maschine_Playable": MaschinePlayableComponent,
+        "Misc_Control": MiscControlComponent,
         "Device_Navigation": CustomDeviceNavigationComponent,
         "Step_Sequence": partial(
             CustomStepSequenceComponent,
@@ -145,7 +145,7 @@ class CustomMaschineMK3(ControlSurface):
     _step_sequencer = None
     _playable_mode_list = (KEYBOARD_MODE, DRUMRACK_MODE, SIMPLER_MODE)
     _provider_list = {
-        KEYBOARD_MODE: "MaschinePlayable",
+        KEYBOARD_MODE: "Maschine_Playable",
         DRUMRACK_MODE: "Drum_Group",
         SIMPLER_MODE: "Sliced_Simpler"
     }
@@ -158,7 +158,7 @@ class CustomMaschineMK3(ControlSurface):
         self.register_slot(self.elements.channel, self._on_update_triggered, "is_pressed")
         self.register_slot(self.elements.keyboard, self._on_playable_mode_selected, "is_pressed")
         self.register_slot(self.component_map["Pad_Modes"], self._on_pad_mode_changed, "selected_mode")
-        self.register_slot(self.component_map["ButtonsAndKnobs_Modes"], self._on_upper_section_mode_changed, "selected_mode")
+        self.register_slot(self.component_map["Buttons_And_Knobs_Modes"], self._on_upper_section_mode_changed, "selected_mode")
     
     # Sometimes pad leds couldn't update correctly
     # I don't know why this happens now, push "CHANNEL" button for refresh state
@@ -223,9 +223,9 @@ class CustomMaschineMK3(ControlSurface):
         self.set_can_auto_arm(True)
         with self.component_guard():
             self.component_map["Pad_Modes"].selected_mode = DEFAULT_MODE
-            self.component_map["MaschinePlayable"].set_scale_system(self.component_map["ScaleSystem"])
-            self.component_map["Step_Sequence"]._note_editor.set_velocity_levels(self.component_map["VelocityLevels"])
-            self.component_map["ClipEditor"].set_step_sequence(self.component_map["Step_Sequence"])
+            self.component_map["Maschine_Playable"].set_scale_system(self.component_map["Scale_System"])
+            self.component_map["Step_Sequence"]._note_editor.set_velocity_levels(self.component_map["Velocity_Levels"])
+            self.component_map["Clip_Editor"].set_step_sequence(self.component_map["Step_Sequence"])
 
     def disconnect(self):
         super().disconnect()
@@ -252,7 +252,7 @@ class CustomMaschineMK3(ControlSurface):
         self.elements.keyboard.send_value(MaschineSkin[f"DefaultButton.{state}"].midi_value)
 
     def _on_upper_section_mode_changed(self, component):
-        mode = self.component_map["ButtonsAndKnobs_Modes"].selected_mode
+        mode = self.component_map["Buttons_And_Knobs_Modes"].selected_mode
         if mode == "default":
             return
         elif mode == "device":
@@ -296,7 +296,7 @@ class CustomMaschineMK3(ControlSurface):
         if update_mode:
             self.component_map["Pad_Modes"].selected_mode = mode
         self.component_map["Step_Sequence"].set_pitch_provider(self.component_map[self._provider_list[mode]])
-        self.component_map["VelocityLevels"].set_pitch_provider(self.component_map[self._provider_list[mode]])
+        self.component_map["Velocity_Levels"].set_pitch_provider(self.component_map[self._provider_list[mode]])
 
     def refresh_state(self):
         logger.info("Refresh state")

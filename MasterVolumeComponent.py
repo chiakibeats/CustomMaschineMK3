@@ -13,7 +13,7 @@ class MasterVolumeComponent(Component):
     _target_track = None
 
     @depends(target_track = None)
-    def __init__(self, name = "MasterVolume", target_track = None, *a, **k):
+    def __init__(self, name = "Master_Volume", target_track = None, *a, **k):
         super().__init__(name, *a, **k)
         self._target_track = target_track
 

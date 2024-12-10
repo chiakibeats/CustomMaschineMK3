@@ -44,7 +44,7 @@ class VelocityLevelsComponent(PlayableComponent):
         return self._selected_level
 
     @depends(velocity_levels = None, target_track = None)
-    def __init__(self, name = "VelocityLevels", matrix_always_listenable = True, velocity_levels = None, target_track = None, *a, **k):
+    def __init__(self, name = "Velocity_Levels", matrix_always_listenable = True, velocity_levels = None, target_track = None, *a, **k):
         super().__init__(name, matrix_always_listenable, *a, **k)
         self._velocity_levels = velocity_levels
         self._on_played_level_changed.subject = self._velocity_levels

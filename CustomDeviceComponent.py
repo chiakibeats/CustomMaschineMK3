@@ -47,7 +47,7 @@ class CustomDeviceComponent(DeviceComponent):
     erase_button = ButtonControl(color = None)
     _current_touched_index = -1
     
-    def __init__(self, name="Device", *a, **k):
+    def __init__(self, name = "Device", *a, **k):
         super().__init__(name, *a, **k)
 
     def set_parameter_touch_controls(self, controls):

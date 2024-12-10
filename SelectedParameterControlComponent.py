@@ -24,7 +24,7 @@ class SelectedParameterControlComponent(Component):
     _show_message = None
 
     @depends(get_knob_mapped_parameter = None, show_message = None)
-    def __init__(self, name = "SelectedParameter", get_knob_mapped_parameter = None, show_message = None, *a, **k):
+    def __init__(self, name = "Selected_Parameter", get_knob_mapped_parameter = None, show_message = None, *a, **k):
         super().__init__(name, *a, **k)
         self._get_knob_mapped_parameter = get_knob_mapped_parameter
         self._show_message = show_message

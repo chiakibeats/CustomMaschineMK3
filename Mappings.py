@@ -48,7 +48,7 @@ def create_mappings(surface):
             capture_midi_button = "rec"),
     )
 
-    mappings["MiscControl"] = dict(
+    mappings["Misc_Control"] = dict(
         new_audio_or_return_track_button = "file",
         new_midi_track_button = "file_with_shift",
         duplicate_track_button = "file_with_duplicate",
@@ -64,7 +64,7 @@ def create_mappings(surface):
         scale_button = "tempo_with_shift",
         default = dict(
             modes = [
-                dict(component = "MiscControl",
+                dict(component = "Misc_Control",
                     select_track_encoder = "encoder",
                     exclusive_arm_button = "encoderpush",
                     arm_button = "encoderpush_with_shift"),
@@ -77,14 +77,14 @@ def create_mappings(surface):
                     page_down_button = "encoderdown_with_shift",
                     page_left_button = "encoderleft_with_shift",
                     page_right_button = "encoderright_with_shift",
-                    )]),
+                )]),
         volume = dict(
-            component = "MasterVolume",
+            component = "Master_Volume",
             coarse_volume = "encoder",
             fine_volume = "encoder_with_shift",
             reset_button = "encoderpush"),
         swing = dict(
-            component = "GroovePool",
+            component = "Groove_Pool",
             coarse_groove_amount = "encoder",
             fine_groove_amount = "encoder_with_shift"),
         position = dict(
@@ -101,7 +101,7 @@ def create_mappings(surface):
             tempo_coarse_encoder = "encoder",
             tempo_fine_encoder = "encoder_with_shift"),
         scale = dict(
-            component = "ScaleSystem",
+            component = "Scale_System",
             select_encoder = "encoder",
             root_note_encoder = "encoder_with_shift",
             toggle_button = "encoderpush",
@@ -118,12 +118,12 @@ def create_mappings(surface):
         perform_button = "perform",
         #notes_button = "notes",
         pitch = dict(
-            component = "MaschinePlayable",
+            component = "Maschine_Playable",
             pitchbend_encoder = "touchstrip",
             pitchbend_reset = "touchstripcap"
         ),
         mod = dict(
-            component = "SelectedParameter",
+            component = "Selected_Parameter",
             modulation_encoder = "touchstrip",
             select_buttons = "track_buttons_with_mod"
         ),
@@ -158,7 +158,7 @@ def create_mappings(surface):
                     matrix = "group_buttons")
             ]),
         keyboard = dict(
-            component = "MaschinePlayable",
+            component = "Maschine_Playable",
             matrix = "pads",
             octave_select_buttons = "group_buttons",
             scroll_down_button = "row0_pads_with_shift_raw[0]",
@@ -196,7 +196,7 @@ def create_mappings(surface):
             note_select_button = "events"
         ),
         chord = dict(
-            component = "VelocityLevels",
+            component = "Velocity_Levels",
             matrix = "pads",
             select_button = "select"
         ),
@@ -212,7 +212,7 @@ def create_mappings(surface):
         ),
     )
 
-    mappings["ButtonsAndKnobs_Modes"] = dict(
+    mappings["Buttons_And_Knobs_Modes"] = dict(
         default_behaviour = LatchingBehaviour(),
         default_button = "mixer",
         device_button = "plugin",
@@ -251,7 +251,7 @@ def create_mappings(surface):
                 )
             ]),
         clip = dict(
-            component = "ClipEditor",
+            component = "Clip_Editor",
             #control_buttons = "track_buttons",
             mute_button = "track_buttons_raw[0]",
             loop_button = "track_buttons_raw[1]",
@@ -297,7 +297,7 @@ def create_mappings(surface):
         accent_button = "fixedvel"
     )
 
-    mappings["SelectedParameter"] = dict(
+    mappings["Selected_Parameter"] = dict(
         reset_value_button = "mod_with_erase"
     )
 
@@ -309,7 +309,7 @@ def create_mappings(surface):
         device_lock_button = "lock_with_plugin"
     )
 
-    mappings["NoteRepeat"] = dict(
+    mappings["Note_Repeat"] = dict(
         repeat_button = "noterep",
         shift_button = "shift",
         rate_select_mode_button = "notes",

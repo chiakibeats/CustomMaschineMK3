@@ -52,7 +52,7 @@ class NoteRepeatComponent(Component):
     _toggle_enabled = False
 
     @depends(note_repeat = None)
-    def __init__(self, name = "NoteRepeat", note_repeat = None, *a, **k):
+    def __init__(self, name = "Note_Repeat", note_repeat = None, *a, **k):
         super().__init__(name, *a, **k)
         self._note_repeat = note_repeat
         self.update()

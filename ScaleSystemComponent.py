@@ -28,7 +28,7 @@ class ScaleSystemComponent(Component):
     _is_internal = False
     _internal_scale_mode = False
 
-    def __init__(self, name = "ScaleSystem", *a, **k):
+    def __init__(self, name = "Scale_System", *a, **k):
         super().__init__(name, *a, **k)
         if application().get_major_version() == 11:
             # Live 11 don't have access to scale mode state.

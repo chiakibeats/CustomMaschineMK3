@@ -8,7 +8,7 @@ class GroovePoolComponent(Component, Renderable):
     coarse_groove_amount = StepEncoderControl(num_steps = 64)
     fine_groove_amount = StepEncoderControl(num_steps = 64)
 
-    def __init__(self, name = "GroovePool", *a, **k):
+    def __init__(self, name = "Groove_Pool", *a, **k):
         super().__init__(name, *a, **k)
         self.coarse_groove_amount.connect_property(
             self.song,

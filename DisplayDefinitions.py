@@ -54,7 +54,7 @@ def create_root_view():
         content.selected_device = try_get_attr(state.device.device, "name", "---")
         content.selected_folder = try_get_attr(state.browser.parent_folder, "name", "---")
         content.selected_browser_item = try_get_attr(state.browser.selected_item, "name", "---")
-        content.display_mode = state.buttonsandknobs_modes.selected_mode
+        content.display_mode = state.buttons_and_knobs_modes.selected_mode
 
         return content
 
