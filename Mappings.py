@@ -266,7 +266,12 @@ def create_mappings(surface):
         ),
         browser = dict(
             component = "Browser",
-            select_encoder = "encoder"
+            select_encoder = "encoder",
+            load_button = "encoderpush",
+            shift_button = "shift",
+            enter_folder_button = "encoderright",
+            leave_folder_button = "encoderleft",
+            select_folder_buttons = "track_buttons"
         )
     )
 

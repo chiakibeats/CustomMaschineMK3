@@ -21,6 +21,8 @@ class Content:
     selected_parameter_bank = None
     current_tracks_in_ring = []
     selected_clip = None
+    selected_folder = None
+    selected_browser_item = None
     selected_pitches = []
     tempo = 0.0
     is_scale_enabled = False
@@ -28,12 +30,18 @@ class Content:
     scale_root_note = "C"
     groove_amount = 0.0
     selected_grid = None
+    display_mode = None
 
 class Notifications(DefaultNotifications):
 
     class Device(DefaultNotifications.Device):
         bank = DefaultNotifications.DefaultText()
 
+def try_get_attr(obj, attr, default = None):
+    if obj != None:
+        return getattr(obj, attr)
+    else:
+        return default
 
 def create_root_view():
     logger.info("Init display")
@@ -41,8 +49,12 @@ def create_root_view():
     def main_view(state):
         content = Content()
 
-        content.selected_track = state.target_track.target_track
-        content.selected_device = state.device.device or "-"
+        content.selected_track = state.target_track.target_track.name
+        content.selected_clip = try_get_attr(state.target_track.target_clip, "name", "---")
+        content.selected_device = try_get_attr(state.device.device, "name", "---")
+        content.selected_folder = try_get_attr(state.browser.parent_folder, "name", "---")
+        content.selected_browser_item = try_get_attr(state.browser.selected_item, "name", "---")
+        content.display_mode = state.buttonsandknobs_modes.selected_mode
 
         return content
 
@@ -60,6 +72,13 @@ def protocol(elements):
         if content:
             elements.display_line_0.display_message("CustomMaschineMK3 by chiaki")
             elements.display_line_2.display_message("Version 0.8")
+            if content.display_mode == "browser":
+                #logger.info(f"folder = {content.selected_folder}, type = {type(content.selected_folder)}")
+                elements.display_line_1.display_message(f"In:{content.selected_folder}")
+                elements.display_line_3.display_message(f">{content.selected_browser_item}")
+            else:
+                elements.display_line_1.display_message(f"Track:{content.selected_track}")
+                elements.display_line_3.display_message(f"Clip:{content.selected_clip}")
 
     return display
 
