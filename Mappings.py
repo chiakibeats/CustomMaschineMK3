@@ -268,10 +268,11 @@ def create_mappings(surface):
             component = "Browser",
             select_encoder = "encoder",
             load_button = "encoderpush",
-            shift_button = "shift",
             enter_folder_button = "encoderright",
             leave_folder_button = "encoderleft",
-            select_folder_buttons = "track_buttons"
+            preview_toggle_button = "track_buttons_raw[0]",
+            preview_volume_encoder = "knobs_raw[0]",
+            select_folder_buttons = "track_buttons_with_macro"
         )
     )
 
