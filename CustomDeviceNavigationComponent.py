@@ -175,5 +175,3 @@ class CustomDeviceNavigationComponent(ScrollComponent):
     def _update_select_button_state(self):
         for button in self.select_buttons:
             button.is_on = button.index + self.scroll_position == self.selected_index
-
-

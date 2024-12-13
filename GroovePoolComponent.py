@@ -19,6 +19,3 @@ class GroovePoolComponent(Component, Renderable):
             self.song,
             "groove_amount",
             transform = lambda x: clamp(self.song.groove_amount + sign(x) / 100, 0, 1.3))
-
-
-

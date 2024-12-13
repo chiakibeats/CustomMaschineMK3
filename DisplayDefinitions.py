@@ -67,7 +67,6 @@ def create_root_view():
 
     return CompoundView(NotificationView(notification_content), main_view)
 
-
 def protocol(elements):
 
     def display_clip_info(content: Content):
@@ -147,7 +146,6 @@ def protocol(elements):
                 elements.display_line_2.display_message(f"Clip:{content.selected_clip}")
 
     return display
-
 
 MaschineDisplay = DisplaySpecification(
     create_root_view = create_root_view,

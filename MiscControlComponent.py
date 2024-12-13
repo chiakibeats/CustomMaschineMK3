@@ -117,7 +117,3 @@ class MiscControlComponent(Component):
     def _on_arm_button_pressed(self, button):
         selected_track = self.song.view.selected_track
         selected_track.arm = not selected_track.arm
-
-
-
-

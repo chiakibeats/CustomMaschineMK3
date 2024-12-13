@@ -32,9 +32,3 @@ class MasterVolumeComponent(Component):
     def _on_reset_button_pressed(self, button):
         volume_parameter = self._target_track.target_track.mixer_device.volume
         volume_parameter.value = volume_parameter.default_value
-
-
-    
-
-
-

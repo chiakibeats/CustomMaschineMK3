@@ -172,4 +172,3 @@ class CustomMixerComponent(MixerComponent):
         if self.control_index >= self._control_count:
             self.control_index = self._control_count - 1
             self._show_current_control_name()
-    

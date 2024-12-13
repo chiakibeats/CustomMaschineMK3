@@ -246,6 +246,4 @@ class BrowserComponent(Component, Renderable):
         
         logger.info(f"Select folder {self.parent_folder.name}")
         self._set_item_index(0, True)
-        
-
-        
+     

@@ -61,6 +61,3 @@ class SelectedParameterControlComponent(Component):
             return f"{parent.canonical_parent.name} > {parameter.name}"
         else:
             return f"{parent.name} > {parameter.name}"
-
-
-    

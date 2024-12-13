@@ -108,4 +108,3 @@ class NoteRepeatComponent(Component):
         self._note_repeat.enabled = self._enabled
         self._note_repeat.repeat_rate = REPEAT_RATES[self._selected_index]
         self._update_led_feedback()
-

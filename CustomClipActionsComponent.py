@@ -15,4 +15,3 @@ class CustomClipActionsComponent(ClipActionsComponent):
     def _update_quantize_button(self):
         super()._update_quantize_button()
         self.half_quantize_button.enabled = self._get_target_clip() is not None
-

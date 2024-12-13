@@ -115,7 +115,6 @@ Specification.component_map["Device"] = partial(
     quantized_parameter_sensitivity = Specification.quantized_parameter_sensitivity)
     # ,bank_navigation_component_type=CustomDeviceBankNavigationComponent)
 
-
 class BypassIdentification(IdentificationComponent):
     def request_identity(self):
         self.is_identified = True
@@ -136,7 +135,6 @@ CUSTOM_GRID_RESOLUTIONS = (
     GridResolution("1/32t", 0.08333333333333333, GridQuantization.g_thirtysecond, True),
 )
 GRID_DEFAULT_INDEX = 2
-
 
 class CustomMaschineMK3(ControlSurface):
     _grid_resolution = None
@@ -301,4 +299,3 @@ class CustomMaschineMK3(ControlSurface):
     def refresh_state(self):
         logger.info("Refresh state")
         super().refresh_state()
-

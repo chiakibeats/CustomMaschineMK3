@@ -123,6 +123,3 @@ class VelocityLevelsComponent(PlayableComponent):
     @listens("last_played_level")
     def _on_played_level_changed(self):
         self._selected_level = self._velocity_levels.last_played_level
-
-
-    

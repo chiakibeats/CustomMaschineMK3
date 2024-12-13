@@ -34,7 +34,6 @@ def get_capabilities():
             outport(port_name = "Maschine MK3 EXT Out", props = [NOTES_CC, SYNC]),
             outport(port_name = "Maschine MK3 Ctrl Out", props = [NOTES_CC, SCRIPT, HIDDEN])]}
 
-
 def create_instance(c_instance):
     logger.info("Create instance")
     return CustomMaschineMK3(c_instance = c_instance)

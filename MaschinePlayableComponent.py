@@ -333,4 +333,3 @@ class MaschinePlayableComponent(ClipNotesSelectMixin, PlayableComponent, PageCom
                 nearest_note = note
 
         self.position = self._find_note_index(self.available_notes, nearest_note)
-
