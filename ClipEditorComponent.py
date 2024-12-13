@@ -79,10 +79,22 @@ class LaunchModeList():
         "Repeat",
     ]
 
+    short_value_strings = [
+        "Trig",
+        "Gate",
+        "Tgle",
+        "Rept",
+    ]
+
     @staticmethod
     def to_string(value):
         index = LaunchModeList.values.index(value)
         return LaunchModeList.value_strings[index]
+
+    @staticmethod
+    def to_short_string(value):
+        index = LaunchModeList.values.index(value)
+        return LaunchModeList.short_value_strings[index]
 
 class WarpModeList():
     values = [
