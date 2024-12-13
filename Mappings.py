@@ -155,7 +155,10 @@ def create_mappings(surface):
                     delete_button = "erase",
                     copy_button = "duplicate"),
                 dict(component = "Session_Overview",
-                    matrix = "group_buttons")
+                    matrix = "group_buttons"),
+                dict(component = "Mixer",
+                    clear_all_solo_button = "solo_with_erase",
+                    clear_all_mute_button = "mute_with_erase"),
             ]),
         keyboard = dict(
             component = "Maschine_Playable",
@@ -181,7 +184,9 @@ def create_mappings(surface):
             select_button = "select",
             delete_button = "erase",
             copy_button = "duplicate",
-            note_select_button = "events"
+            note_select_button = "events",
+            clear_all_solo_button = "solo_with_erase",
+            clear_all_mute_button = "mute_with_erase"
         ),
         simpler = dict(
             component = "Sliced_Simpler",

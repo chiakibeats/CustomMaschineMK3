@@ -301,6 +301,8 @@ class ControlElements(ElementsBase):
         self.add_modified_control(self.mod, self.erase)
         self.add_modified_control(self.lock, self.plugin)
         self.add_modified_control(self.duplicate, self.shift)
+        self.add_modified_control(self.solo, self.erase)
+        self.add_modified_control(self.mute, self.erase)
         self.add_modified_control(self.row0_pads, self.shift)
         self.add_modified_control(self.row2_pads, self.shift)
         self.add_modified_control(self.row3_pads, self.shift)

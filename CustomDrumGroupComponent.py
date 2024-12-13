@@ -13,7 +13,10 @@ from .ClipNotesSelectMixin import ClipNotesSelectMixin
 DEFAULT_GROUP_SIZE = 16
 
 class CustomDrumGroupComponent(ClipNotesSelectMixin, DrumGroupComponent):
-    _select_buttons = control_matrix(ButtonControl, color = None)
+    select_buttons = control_matrix(ButtonControl, color = None)
+    clear_all_solo_button = ButtonControl(color = None)
+    clear_all_mute_button = ButtonControl(color = None)
+
     _group_start_notes = list(range(4, 128, DEFAULT_GROUP_SIZE))
     _has_chain_list = []
 
@@ -21,8 +24,8 @@ class CustomDrumGroupComponent(ClipNotesSelectMixin, DrumGroupComponent):
         super().__init__(translation_channel = 1, *a, **k, matrix_always_listenable = True)
 
     def set_select_buttons(self, matrix):
-        self._select_buttons.set_control_element(matrix)
-        self._has_chain_list = [False] * self._select_buttons.control_count
+        self.select_buttons.set_control_element(matrix)
+        self._has_chain_list = [False] * self.select_buttons.control_count
         if matrix is not None:
             self._update_group_info()
             self._update_led_feedback()
@@ -42,7 +45,7 @@ class CustomDrumGroupComponent(ClipNotesSelectMixin, DrumGroupComponent):
 
     def _update_led_feedback(self):
         super()._update_led_feedback()
-        for button, has_chain in zip(self._select_buttons, self._has_chain_list):
+        for button, has_chain in zip(self.select_buttons, self._has_chain_list):
             row, column = button.coordinate
 
             # check visible pads window intersects each group regions
@@ -66,7 +69,7 @@ class CustomDrumGroupComponent(ClipNotesSelectMixin, DrumGroupComponent):
         button.pressed_color = "DrumGroup.PadPressed"
 
     def _update_group_info(self):
-        button_count = self._select_buttons.control_count
+        button_count = self.select_buttons.control_count
         groups = list(zip(range(button_count), self._group_start_notes))
         has_chain_list = [False] * button_count
         logger.info(f"Update group info groups = {groups}")
@@ -83,16 +86,27 @@ class CustomDrumGroupComponent(ClipNotesSelectMixin, DrumGroupComponent):
         logger.info(f"has_chain_list = {has_chain_list}")
         self._has_chain_list = has_chain_list
 
-
-    @_select_buttons.pressed
+    @select_buttons.pressed
     def _on_group_select_buttons_pressed(self, target_button):
-        for button in self._select_buttons:
+        for button in self.select_buttons:
             if button == target_button:
                 logger.info(f"Drum group select index = {button.coordinate}")
                 row, column = button.coordinate
                 position = self._get_actual_group_scroll_position(row * self.width + column)
                 logger.info(f"Scroll position = {position}")
                 self._drum_group_scroller.position = position
+
+    @clear_all_solo_button.pressed
+    def _on_clear_all_solo_pressed(self, button):
+        for pad in self._all_drum_pads:
+            if pad.solo:
+                pad.solo = False
+
+    @clear_all_mute_button.pressed
+    def _on_clear_all_mute_pressed(self, button):
+        for pad in self._all_drum_pads:
+            if pad.mute:
+                pad.mute = False
 
     @listens_group("chains")
     def _on_chains_changed(self, subject):

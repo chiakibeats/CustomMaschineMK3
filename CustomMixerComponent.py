@@ -43,6 +43,8 @@ class CustomMixerComponent(MixerComponent):
     volume_touch_controls = control_list(ButtonControl)
     pan_or_send_touch_controls = control_list(ButtonControl)
     erase_button = ButtonControl(color = None)
+    clear_all_solo_button = ButtonControl(color = None)
+    clear_all_mute_button = ButtonControl(color = None)
 
     _control_index = 0
     _control_count = 1
@@ -77,6 +79,12 @@ class CustomMixerComponent(MixerComponent):
 
     def set_erase_button(self, button):
         self.erase_button.set_control_element(button)
+
+    def set_clear_all_solo_button(self, button):
+        self.clear_all_solo_button.set_control_element(button)
+
+    def set_clear_all_mute_button(self, button):
+        self.clear_all_mute_button.set_control_element(button)
 
     @property
     def control_index(self):
@@ -120,6 +128,18 @@ class CustomMixerComponent(MixerComponent):
             parameter = self.pan_or_send_controls[button.index].mapped_parameter
             if liveobj_valid(parameter) and not parameter.is_quantized:
                 parameter.value = parameter.default_value
+
+    @clear_all_solo_button.pressed
+    def _on_clear_all_solo_pressed(self, button):
+        for track in self.song.visible_tracks:
+            if track.solo:
+                track.solo = False
+
+    @clear_all_mute_button.pressed
+    def _on_clear_all_mute_pressed(self, button):
+        for track in self.song.visible_tracks:
+            if track.mute:
+                track.mute = False
 
     def _update_control_mapped_parameter(self, index):
         map_range = range(min(self._track_count, self.pan_or_send_controls.control_count))
