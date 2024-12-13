@@ -126,7 +126,13 @@ class ControlElements(ElementsBase):
 
         add_encoder(7, "Encoder", map_mode = MapMode.LinearTwoCompliment, is_feedback_enabled = False)
         add_button(8, "EncoderPush", is_feedback_enabled = False)
-        add_button(9, "EncoderCap", is_feedback_enabled = False)
+        self.add_element(
+            "EncoderCap",
+            TouchElement,
+            identifier = 9,
+            channel = default_channel,
+            is_feedback_enabled = False,
+            encoder = self.encoder)
         add_button(30, "EncoderUp")
         add_button(31, "EncoderRight")
         add_button(32, "EncoderDown")
@@ -146,8 +152,7 @@ class ControlElements(ElementsBase):
             ForceToggleButtonElement,
             identifier = 52,
             channel = default_channel,
-            resource_type = PrioritizedResource
-            )
+            resource_type = PrioritizedResource)
 
         # For simulating pitch bend behaviour, touch strip controls use some trick
         # Touch strip movement("Touchstrip") is mapped to channel 1 pitch bend.
@@ -202,7 +207,6 @@ class ControlElements(ElementsBase):
         add_modifier_button(92, "Mute")
 
         add_button_matrix([list(range(22, 30))], "track_buttons")
-        add_button_matrix([list(range(10, 18))], "knob_touch_buttons", is_feedback_enabled = False)
 
         # Another weird hack used for enabling Maschine display.
         # After some investigation, I found these facts:
@@ -228,6 +232,15 @@ class ControlElements(ElementsBase):
                 map_mode = MapMode.AccelTwoCompliment,
                 sensitivity_modifier = self.macro,
                 is_feedback_enabled = False)
+
+        knobs_iterator = iter(self.knobs_raw)
+
+        self.add_matrix(
+            [list(range(10, 18))],
+            "knob_touch_buttons",
+            channels = default_channel,
+            element_factory = lambda *a, **k: TouchElement(*a, encoder = next(knobs_iterator), **k),
+            is_feedback_enabled = False)
 
         self.add_matrix(
             create_matrix_identifiers(60, 76, 4, True),
