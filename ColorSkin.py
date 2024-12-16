@@ -376,6 +376,8 @@ class MaschineLEDColors:
     class NoteRepeat:
         On = BasicColors.ON
         Off = BasicColors.OFF
+        LockOn = BasicColors.ON
+        LockOff = BasicColors.OFF
         Rate = make_color(WHITE, LEVEL_2)
         RateSelected = make_color(WHITE, LEVEL_4)
 

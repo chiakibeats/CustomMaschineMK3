@@ -317,7 +317,7 @@ def create_mappings(surface):
 
     mappings["Note_Repeat"] = dict(
         repeat_button = "noterep",
-        shift_button = "shift",
+        lock_button = "lock_with_noterep",
         rate_select_mode_button = "notes",
         rate_select_buttons = "group_buttons_with_notes"
     )

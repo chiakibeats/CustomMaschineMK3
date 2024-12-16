@@ -140,7 +140,7 @@ class ControlElements(ElementsBase):
 
         add_button(44, "Volume")
         add_button(45, "Swing")
-        add_button(46, "NoteRep")
+        add_modifier_button(46, "NoteRep")
         add_button(47, "Tempo")
         add_button(48, "Lock")
 
@@ -313,6 +313,7 @@ class ControlElements(ElementsBase):
         self.add_modified_control(self.group_buttons, self.pattern)
         self.add_modified_control(self.mod, self.erase)
         self.add_modified_control(self.lock, self.plugin)
+        self.add_modified_control(self.lock, self.noterep)
         self.add_modified_control(self.duplicate, self.shift)
         self.add_modified_control(self.solo, self.erase)
         self.add_modified_control(self.mute, self.erase)

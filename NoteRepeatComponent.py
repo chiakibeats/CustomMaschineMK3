@@ -42,14 +42,14 @@ class CustomSendValueEncoderControl(SendValueEncoderControl):
 # repeat_rate: Interval of repetition, type is float, 1.0 means 1/4 synced length in ableton
 class NoteRepeatComponent(Component):
     repeat_button = ButtonControl(color = "NoteRepeat.Off", on_color = "NoteRepeat.On")
-    shift_button = ButtonControl()
+    lock_button = ButtonControl(color = "NoteRepeat.LockOff", on_color = "NoteRepeat.LockOn")
     rate_select_mode_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
     rate_select_buttons = control_matrix(ButtonControl, color = "NoteRepeat.Rate", on_color = "NoteRepeat.RateSelected")
 
     _note_repeat = None
     _enabled = False
     _selected_index = 0
-    _toggle_enabled = False
+    _lock_enabled = False
 
     @depends(note_repeat = None)
     def __init__(self, name = "Note_Repeat", note_repeat = None, *a, **k):
@@ -59,22 +59,25 @@ class NoteRepeatComponent(Component):
 
     @repeat_button.pressed
     def _on_repeat_button_pressed(self, button):
-        if self.shift_button.is_pressed and not self._enabled:
-            self._toggle_enabled = True
+        if not self._enabled:
             self._enabled = True
-        elif self._enabled:
-            self._toggle_enabled = False
-            self._enabled = False
         else:
-            self._enabled = True
+            self._lock_enabled = False
+            self._enabled = False
         self._update_note_repeat_state()
+        self._update_led_feedback()
 
     @repeat_button.released
     def _on_repeat_button_released(self, button):
-        if not self._toggle_enabled:
+        if not self._lock_enabled:
             self._enabled = False
             self._update_note_repeat_state()
+        self._update_led_feedback()
         
+    @lock_button.pressed
+    def _on_lock_button_pressed(self, button):
+        self._lock_enabled = True
+        self._update_led_feedback()
 
     @rate_select_mode_button.pressed
     def _on_rate_select_mode_button_pressed(self, button):
@@ -94,6 +97,9 @@ class NoteRepeatComponent(Component):
         self._update_led_feedback()
 
     def _update_led_feedback(self):
+        self.repeat_button.is_on = self._enabled
+        self.lock_button.is_on = self._lock_enabled
+
         for button in self.rate_select_buttons:
             row, column = button.coordinate
             index = row * self.rate_select_buttons.width + column
@@ -101,7 +107,6 @@ class NoteRepeatComponent(Component):
 
     def _update_note_repeat_state(self):
         self._note_repeat.enabled = self._enabled
-        self.repeat_button.is_on = self._enabled
 
     def update(self):
         super().update()
