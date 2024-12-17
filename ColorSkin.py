@@ -222,6 +222,12 @@ class MaschineLEDColors:
         NewPressed = BasicColors.ON
         New = BasicColors.OFF
 
+    class RecordLength:
+        FixedOn = BasicColors.ON
+        FixedOff = BasicColors.OFF
+        Length = make_color(WHITE, LEVEL_2)
+        LengthSelected = make_color(WHITE, LEVEL_4)
+
     class UndoRedo:
         UndoPressed = make_color(WHITE, LEVEL_2)
         Undo = make_color(WHITE, LEVEL_4)

@@ -159,6 +159,9 @@ def create_mappings(surface):
                 dict(component = "Mixer",
                     clear_all_solo_button = "solo_with_erase",
                     clear_all_mute_button = "mute_with_erase"),
+                dict(component = "View_Based_Recording",
+                    fixed_button = "pattern",
+                    length_select_buttons = "group_buttons_with_pattern"),
             ]),
         keyboard = dict(
             component = "Maschine_Playable",

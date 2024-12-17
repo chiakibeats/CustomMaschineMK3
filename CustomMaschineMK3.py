@@ -61,6 +61,7 @@ from .SelectedParameterControlComponent import SelectedParameterControlComponent
 from .CustomNoteEditorComponent import CustomNoteEditorComponent, CustomStepSequenceComponent
 from .ClipEditorComponent import ClipEditorComponent
 from .BrowserComponent import BrowserComponent
+from .RecordingMethod import FixedLengthRecordingMethod, CustomViewBasedRecordingComponent
 
 from .Logger import logger
 from . import Config
@@ -86,8 +87,10 @@ class Specification(ControlSurfaceSpecification):
     quantized_parameter_sensitivity = 0.2
     identity_response_id_bytes = [0x00, 0x00, 0x00]
     create_mappings_function = create_mappings
+    recording_method_type = FixedLengthRecordingMethod
     feedback_channels = [1]
     component_map = {
+        "View_Based_Recording": partial(CustomViewBasedRecordingComponent, recording_method_type = recording_method_type),
         "Browser": BrowserComponent,
         "Clip_Editor": ClipEditorComponent,
         "Selected_Parameter": SelectedParameterControlComponent,
