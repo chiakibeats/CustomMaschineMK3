@@ -45,7 +45,11 @@ from .MasterVolumeComponent import MasterVolumeComponent
 from .MaschinePlayableComponent import MaschinePlayableComponent
 from .CustomDrumGroupComponent import CustomDrumGroupComponent
 from .MiscControlComponent import MiscControlComponent
-from .CustomDeviceComponent import CustomDeviceComponent
+from .CustomDeviceComponent import (
+    CUSTOM_BANK_DEFINITIONS,
+    CustomDeviceDecoratorFactory,
+    CustomDeviceComponent
+)
 from .CustomDeviceNavigationComponent import CustomDeviceNavigationComponent
 from .CustomMixerComponent import CustomMixerComponent
 from .CustomClipActionsComponent import CustomClipActionsComponent
@@ -106,9 +110,11 @@ class Specification(ControlSurfaceSpecification):
             playhead_triplet_notes = tuple(triplet_playhead_notes),
             playhead_channels = [1])
     }
+    parameter_bank_definitions = CUSTOM_BANK_DEFINITIONS
 
 Specification.component_map["Device"] = partial(
     CustomDeviceComponent,
+    device_decorator_factory = CustomDeviceDecoratorFactory(),
     bank_definitions = Specification.parameter_bank_definitions,
     bank_size = Specification.parameter_bank_size,
     continuous_parameter_sensitivity = Specification.continuous_parameter_sensitivity,
