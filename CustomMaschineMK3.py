@@ -62,6 +62,7 @@ from .CustomNoteEditorComponent import CustomNoteEditorComponent, CustomStepSequ
 from .ClipEditorComponent import ClipEditorComponent
 from .BrowserComponent import BrowserComponent
 from .RecordingMethod import FixedLengthRecordingMethod, CustomViewBasedRecordingComponent
+from .EncoderModeControlComponent import EncoderModeControlComponent
 
 from .Logger import logger
 from . import Config
@@ -90,6 +91,7 @@ class Specification(ControlSurfaceSpecification):
     recording_method_type = FixedLengthRecordingMethod
     feedback_channels = [1]
     component_map = {
+        "Encoder_Mode_Control": EncoderModeControlComponent,
         "View_Based_Recording": partial(CustomViewBasedRecordingComponent, recording_method_type = recording_method_type),
         "Browser": BrowserComponent,
         "Clip_Editor": ClipEditorComponent,
@@ -233,6 +235,9 @@ class CustomMaschineMK3(ControlSurface):
             self.component_map["Maschine_Playable"].set_scale_system(self.component_map["Scale_System"])
             self.component_map["Step_Sequence"]._note_editor.set_velocity_levels(self.component_map["Velocity_Levels"])
             self.component_map["Clip_Editor"].set_step_sequence(self.component_map["Step_Sequence"])
+            encoder_mode_control = self.component_map["Encoder_Mode_Control"]
+            encoder_mode_control.set_encoder_modes(self.component_map["Encoder_Modes"])
+            encoder_mode_control.set_buttons_and_knobs_modes(self.component_map["Buttons_And_Knobs_Modes"])
 
     def disconnect(self):
         super().disconnect()

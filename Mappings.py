@@ -57,11 +57,6 @@ def create_mappings(surface):
 
     mappings["Encoder_Modes"] = dict(
         default_behaviour = ToggleBehaviour(return_to_default = True),
-        volume_button = "volume",
-        swing_button = "swing",
-        position_button = "swing_with_shift",
-        tempo_button = "tempo",
-        scale_button = "tempo_with_shift",
         default = dict(
             modes = [
                 dict(component = "Misc_Control",
@@ -109,6 +104,20 @@ def create_mappings(surface):
             indicator_button_2 = "encoderdown",
             indicator_button_3 = "encoderleft",
             indicator_button_4 = "encoderright"),
+        browser = dict(
+            component = "Browser",
+            select_encoder = "encoder",
+            load_button = "encoderpush",
+            enter_folder_button = "encoderright",
+            leave_folder_button = "encoderleft",
+        ),
+    )
+
+    mappings["Encoder_Mode_Control"] = dict(
+        volume_button = "volume",
+        swing_button = "swing",
+        tempo_button = "tempo",
+        shift_button = "shift",
     )
     
     mappings["TouchStrip_Modes"] = dict(
@@ -273,11 +282,8 @@ def create_mappings(surface):
             encoder_touch_buttons = "knob_touch_buttons"
         ),
         browser = dict(
+            behaviour = ToggleBehaviour(),
             component = "Browser",
-            select_encoder = "encoder",
-            load_button = "encoderpush",
-            enter_folder_button = "encoderright",
-            leave_folder_button = "encoderleft",
             preview_toggle_button = "track_buttons_raw[0]",
             preview_volume_encoder = "knobs_raw[0]",
             select_folder_buttons = "track_buttons_with_macro"
