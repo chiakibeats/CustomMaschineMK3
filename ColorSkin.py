@@ -250,6 +250,16 @@ class MaschineLEDColors:
         BrowserOn = BasicColors.ON
         BrowserOff = BasicColors.OFF
 
+    class Browser:
+        CanNavigateFolder = make_color(WHITE, LEVEL_2)
+        CannotNavigateFolder = BasicColors.OFF
+        NavigateFolderPressed = make_color(WHITE, LEVEL_4)
+        CanNavigateItem = make_color(WHITE, LEVEL_2)
+        CannotNavigateItem = BasicColors.OFF
+        NavigateItemPressed = make_color(WHITE, LEVEL_4)
+        PreviewOn = BasicColors.ON
+        PreviewOff = BasicColors.OFF
+
     class Mixer:
         ArmOn = BasicColors.ON
         ArmOff = BasicColors.OFF

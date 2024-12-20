@@ -10,6 +10,7 @@ from ableton.v3.base import clamp, depends, listens, listenable_property
 from Live.Browser import BrowserItem # type: ignore
 
 from .Logger import logger
+from . import Config
 
 COLLECTION_COLORS = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Gray"]
 
@@ -70,11 +71,13 @@ class BrowserRootItem:
 class BrowserComponent(Component, Renderable):
     select_encoder = StepEncoderControl(num_steps = 64)
     load_button = ButtonControl(color = None)
-    enter_folder_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
-    leave_folder_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
-    preview_toggle_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
+    enter_folder_button = ButtonControl(color = "Browser.CannotNavigateFolder", on_color = "Browser.CanNavigateFolder", pressed_color = "Browser.NavigateFolderPressed")
+    leave_folder_button = ButtonControl(color = "Browser.CannotNavigateFolder", on_color = "Browser.CanNavigateFolder", pressed_color = "Browser.NavigateFolderPressed")
+    jump_next_button = ButtonControl(color = "Browser.CannotNavigateItem", on_color = "Browser.CanNavigateItem", pressed_color = "Browser.NavigateItemPressed", repeat = True)
+    jump_prev_button = ButtonControl(color = "Browser.CannotNavigateItem", on_color = "Browser.CanNavigateItem", pressed_color = "Browser.NavigateItemPressed", repeat = True)
+    preview_toggle_button = ButtonControl(color = "Browser.PreviewOff", on_color = "Browser.PreviewOn")
     preview_volume_encoder = MappedSensitivitySettingControl()
-    select_folder_buttons = control_list(ButtonControl, color = "DefaultButton.Off", on_color = "DefaultButton.On")
+    select_folder_buttons = control_list(ButtonControl)
 
     _selected_item_index = 0
     _preview_enabled = True
@@ -109,17 +112,7 @@ class BrowserComponent(Component, Renderable):
         self.enter_folder(self._root_item)
         self.preview_volume_encoder.mapped_parameter = self.song.master_track.mixer_device.cue_volume
         self._update_preview_state(True)
-        
-        # for item in self.application.browser.max_for_live.children:
-        #     logger.info(f"name = {item.name}, children = {item.children}, is_device = {item.is_device}, is_folder = {item.is_folder}, is_loadable = {item.is_loadable}, uri = {item.uri}")
- 
-        # for item in self.application.browser.max_for_live.children.iter_children:
-        #     logger.info(f"name = {item.name}, children = {item.children}, is_device = {item.is_device}, is_folder = {item.is_folder}, is_loadable = {item.is_loadable}, uri = {item.uri}")
-
-        # for folder in browser.user_folders:
-        #     logger.info(f"user folder name = {folder.name}, uri = {folder.uri}")
-        #     for item in folder.children:
-        #         logger.info(f"item name = {item.name}, uri = {item.uri}")
+        self._update_led_feedback()
 
     def _update_folder_stack(self, new_root_item, current_stack):
         # Update stack items based on its URI
@@ -142,6 +135,7 @@ class BrowserComponent(Component, Renderable):
         return new_stack
 
     def _update_browser_items(self):
+        # We have to scan library folders periodcally because not all items listed at startup.
         current_selected_item = self.selected_item
         new_root_item = BrowserRootItem(self._browser, self._target_track.target_track.has_midi_input)
         new_folder_stack = self._update_folder_stack(new_root_item, self._folder_stack)
@@ -162,12 +156,16 @@ class BrowserComponent(Component, Renderable):
     def update(self):
         super().update()
         self._update_browser_items()
+        self._update_led_feedback()
 
     def _set_item_index(self, new_index, force_preview = False):
         old_index = self._selected_item_index
         self._selected_item_index = new_index
         logger.info(f"Select item {self.selected_item.name if self.selected_item else None}")
         self.notify_selected_item()
+
+        # Preview item function is blocking call (time depends on sample length and storage bandwidth)
+        # We need to finish other tasks before item preview
         if self._preview_enabled and (old_index != new_index or force_preview):
             self._browser.stop_preview()
             preview_item = self.selected_item
@@ -178,6 +176,7 @@ class BrowserComponent(Component, Renderable):
         self._folder_stack.append(folder)
         self.parent_folder = folder
         self._set_item_index(0, True)
+        self._update_led_feedback()
 
     def leave_folder(self):
         if len(self._folder_stack) > 1:
@@ -191,22 +190,34 @@ class BrowserComponent(Component, Renderable):
                     break
 
             self._set_item_index(item_index, True)
+        
+        self._update_led_feedback()
 
     def _update_preview_state(self, new_state):
         self._preview_enabled = new_state
-        self.preview_toggle_button.is_on = self._preview_enabled
         if self._preview_enabled:
             preview_item = self.selected_item 
             if isinstance(preview_item, BrowserItem):
                 self._browser.preview_item(preview_item)
         else:
             self._browser.stop_preview()
+        
+        self._update_led_feedback()
+
+    def _update_led_feedback(self):
+        item = self.selected_item
+        can_enter = False if item == None else item.is_folder or len(item.children) > 0
+        self.enter_folder_button.is_on = can_enter
+        self.leave_folder_button.is_on = len(self._folder_stack) > 1
+        self.jump_next_button.is_on = self._selected_item_index < len(self.parent_folder.children) - 1
+        self.jump_prev_button.is_on = self._selected_item_index > 0
+        self.preview_toggle_button.is_on = self._preview_enabled
 
     @select_encoder.value
     def _on_select_encoder_value(self, value, encoder):
-        new_index = self._selected_item_index + value
-        new_index = clamp(new_index, 0, len(self.parent_folder.children) - 1)
+        new_index = clamp(self._selected_item_index + value, 0, len(self.parent_folder.children) - 1)
         self._set_item_index(new_index)
+        self._update_led_feedback()
 
     @load_button.pressed
     def _on_load_button_pressed(self, button):
@@ -227,6 +238,18 @@ class BrowserComponent(Component, Renderable):
     @leave_folder_button.pressed
     def _on_leave_folder_button_pressed(self, button):
         self.leave_folder()
+
+    @jump_next_button.pressed
+    def _on_jump_next_button_pressed(self, button):
+        new_index = clamp(self._selected_item_index + Config.SKIP_ITEM_COUNT, 0, len(self.parent_folder.children) - 1)
+        self._set_item_index(new_index)
+        self._update_led_feedback()
+
+    @jump_prev_button.pressed
+    def _on_jump_prev_button_pressed(self, button):
+        new_index = clamp(self._selected_item_index - Config.SKIP_ITEM_COUNT, 0, len(self.parent_folder.children) - 1)
+        self._set_item_index(new_index)
+        self._update_led_feedback()
 
     @preview_toggle_button.pressed
     def _on_preview_toggle_button_pressed(self, button):

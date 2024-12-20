@@ -110,7 +110,8 @@ def create_mappings(surface):
             load_button = "encoderpush",
             enter_folder_button = "encoderright",
             leave_folder_button = "encoderleft",
-        ),
+            jump_next_button = "encoderdown",
+            jump_prev_button = "encoderup"),
     )
 
     mappings["Encoder_Mode_Control"] = dict(
