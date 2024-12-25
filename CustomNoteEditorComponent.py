@@ -14,6 +14,9 @@ class CustomStepSequenceComponent(StepSequenceComponent):
     def set_select_button(self, button):
         self._note_editor.select_button.set_control_element(button)
 
+    def set_copy_button(self, button):
+        self._loop_selector.set_copy_button(button)
+
 class CustomNoteEditorComponent(NoteEditorComponent):
     select_button = ButtonControl(color = None)
 

@@ -226,7 +226,8 @@ def create_mappings(surface):
             loop_delete_button = "erase",
             prev_page_button = "row0_pads_with_shift_raw[2]",
             next_page_button = "row0_pads_with_shift_raw[3]",
-            select_button = "select"
+            select_button = "select",
+            copy_button = "duplicate"
         ),
     )
 
