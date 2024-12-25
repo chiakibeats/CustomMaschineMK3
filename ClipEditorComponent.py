@@ -295,6 +295,7 @@ class ClipEditorComponent(Component):
 
     _nudge_offset_value_stepper = CustomValueStepper(32)
     _note_length_value_stepper = CustomValueStepper(32)
+    _note_step_length_value_stepper = CustomValueStepper(8)
     _note_pitch_value_stepper = CustomValueStepper(16)
     _note_velocity_value_stepper = CustomValueStepper(32)
 
@@ -365,8 +366,8 @@ class ClipEditorComponent(Component):
             EncoderCallbackSet(self._change_start_marker),
             EncoderCallbackSet(self._change_launch_quantization),
             EncoderCallbackSet(self._change_note_nudge_offset),
+            EncoderCallbackSet(self._change_note_step_length),
             EncoderCallbackSet(self._change_note_length),
-            EncoderCallbackSet(self._change_note_pitch),
             EncoderCallbackSet(self._change_note_velocity),
         ]
 
@@ -376,8 +377,8 @@ class ClipEditorComponent(Component):
             EncoderCallbackSet(),
             EncoderCallbackSet(self._change_launch_quantization),
             EncoderCallbackSet(self._change_note_nudge_offset),
+            EncoderCallbackSet(self._change_note_step_length),
             EncoderCallbackSet(self._change_note_length),
-            EncoderCallbackSet(self._change_note_pitch),
             EncoderCallbackSet(self._change_note_velocity),
         ]
 
@@ -558,23 +559,56 @@ class ClipEditorComponent(Component):
     def _change_note_nudge_offset(self, value, encoder):
         step = self._nudge_offset_value_stepper.update(value)
         if step != 0 and self._step_sequence != None:
-            self._step_sequence.note_editor.set_nudge_offset(step / 128.0)
+            self._modify_note_property(step / 128.0, 0.0, 0, 0)
+            #self._step_sequence.note_editor.set_nudge_offset(step / 128.0)
+
+    def _change_note_step_length(self, value, encoder):
+        step = self._note_step_length_value_stepper.update(value)
+        if step != 0 and self._step_sequence != None:
+            self._modify_note_property(0.0, step * self._step_sequence.note_editor.step_length, 0, 0)
+            #self._step_sequence.note_editor.set_duration_offset(step * self._step_sequence.note_editor.step_length)
 
     def _change_note_length(self, value, encoder):
         step = self._note_length_value_stepper.update(value)
         if step != 0 and self._step_sequence != None:
-            self._step_sequence.note_editor.set_duration_offset(step / 128.0)
+            self._modify_note_property(0.0, step / 128.0, 0, 0)
+            #self._step_sequence.note_editor.set_duration_offset(step / 128.0)
 
     def _change_note_pitch(self, value, encoder):
         step = self._note_pitch_value_stepper.update(value)
         if step != 0 and self._step_sequence != None:
-            self._step_sequence.note_editor.set_pitch_offset(step)
+            self._modify_note_property(0.0, 0.0, step, 0)
+            #self._step_sequence.note_editor.set_pitch_offset(step)
 
     def _change_note_velocity(self, value, encoder):
         step = self._note_velocity_value_stepper.update(value)
         if step != 0 and self._step_sequence != None:
-            self._step_sequence.note_editor.set_velocity_offset(step)
-    
+            self._modify_note_property(0.0, 0.0, 0, step)
+            #self._step_sequence.note_editor.set_velocity_offset(step)
+
+    def _modify_note_property(self, start_offset, duration_offset, pitch_offset, velocity_offset):
+        if len(self._step_sequence.note_editor.active_steps) > 0:
+            if start_offset != 0.0:
+                self._step_sequence.note_editor.set_nudge_offset(start_offset)
+            if duration_offset != 0.0:
+                self._step_sequence.note_editor.set_duration_offset(duration_offset)
+            if pitch_offset != 0:
+                self._step_sequence.note_editor.set_pitch_offset(pitch_offset)
+            if velocity_offset != 0:
+                self._step_sequence.note_editor.set_velocity_offset(velocity_offset)
+        else:
+            self._modify_selected_notes(start_offset, duration_offset, pitch_offset, velocity_offset)
+
+    def _modify_selected_notes(self, start_offset, duration_offset, pitch_offset, velocity_offset):
+        if liveobj_valid(self._clip):
+            selected_notes = self._clip.get_selected_notes_extended()
+            for note in selected_notes:
+                note.start_time += start_offset
+                note.duration = max(1 / 128.0, note.duration + duration_offset)
+                note.velocity = clamp(note.velocity + velocity_offset, 1, 127)
+                note.pitch = clamp(note.pitch + pitch_offset, 0, 127)
+            self._clip.apply_note_modifications(selected_notes)
+
     def _dump_clip(self, clip):
         for attr in dir(clip):
             if not attr.startswith("__"):

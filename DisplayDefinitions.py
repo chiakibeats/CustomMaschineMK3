@@ -33,6 +33,7 @@ class Content:
     groove_amount = 0.0
     selected_grid = None
     display_mode = None
+    target_track_locked = False
 
 class Notifications(DefaultNotifications):
 
@@ -51,9 +52,11 @@ def create_root_view():
     def main_view(state):
         content = Content()
 
-        content.selected_track = state.target_track.target_track.name
+        content.selected_track = state.target_track.target_track
         content.selected_clip = state.target_track.target_clip
-        content.selected_device = try_get_attr(state.device.device, "name", "---")
+        content.target_track_locked = state.target_track.is_locked_to_track
+        content.selected_device = state.device.device
+        content.selected_parameter_bank = state.device.bank_name
         content.selected_folder = try_get_attr(state.browser.parent_folder, "name", "---")
         content.selected_browser_item = state.browser.selected_item
         content.display_mode = state.buttons_and_knobs_modes.selected_mode
@@ -68,6 +71,22 @@ def create_root_view():
     return CompoundView(NotificationView(notification_content), main_view)
 
 def protocol(elements):
+
+    def display_mixer_info(content: Content):
+        elements.display_line_0.display_message(f"{'LOCKED' if content.target_track_locked else 'TARGET'}:{content.selected_track.name}")
+        # elements.display_line_2.display_message(f"{}|{}|{}|{}")
+        # elements.display_line_1.display_message(f"{}|{}|{}|{}")
+        # elements.display_line_3.display_message(f"{}|{}|{}|{}")
+
+    def display_device_info(content: Content):
+        device_name = ""
+        bank_name = ""
+        if liveobj_valid(content.selected_device):
+            device_name = content.selected_device.name
+            bank_name = content.selected_parameter_bank
+
+        elements.display_line_0.display_message(f"Device:{device_name}")
+        elements.display_line_2.display_message(f"Bank:{bank_name}")
 
     def display_clip_info(content: Content):
         clip =  content.selected_clip
@@ -112,7 +131,7 @@ def protocol(elements):
             # 9 + 6 + 9 = 24
             message = f"{warp:<8}|{pitch:>3}st|{gain:>8}"
         elif clip_type == 2:
-            message = "Nudge |Length|Pitch |Vel"
+            message = "Nudge |Steps |Fine  |Vel"
         else:
             message = ""
         
@@ -131,9 +150,9 @@ def protocol(elements):
             # elements.display_line_0.display_message("CustomMaschineMK3 by chiaki")
             # elements.display_line_2.display_message("Version 0.8")
             if content.display_mode == "default":
-                pass
+                display_mixer_info(content)
             elif content.display_mode == "device":
-                pass
+                display_device_info(content)
             elif content.display_mode == "clip":
                 display_clip_info(content)
             elif content.display_mode == "browser":
