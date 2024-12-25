@@ -51,8 +51,9 @@ class CustomNoteEditorComponent(NoteEditorComponent):
                 visible_steps = self._visible_steps()
                 step_notes = visible_steps[index].filter_notes(self._clip_notes)
                 self._clip.select_notes_by_id([note.note_id for note in step_notes])
-        else:
-            super()._on_pad_released(pad, **k)
+            k["can_add_or_remove"] = False
+        
+        super()._on_pad_released(pad, **k)
     
     @select_button.double_clicked
     def _on_select_button_double_clicked(self, button):
