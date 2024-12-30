@@ -1,4 +1,5 @@
 from functools import partial
+from math import modf
 from ableton.v3.base import clamp, depends, listens, nop, sign, listenable_property, EventObject
 from ableton.v2.control_surface import WrappingParameter, EnumWrappingParameter, IntegerParameter
 from ableton.v3.control_surface import ParameterInfo
@@ -401,6 +402,50 @@ class ClipEditorComponent(Component):
     def _get_one_beat_length(self):
         return 4.0 / self._clip.signature_denominator
     
+    def _to_time_string(self, float_seconds):
+        int_part, float_part = modf(float_seconds)
+        hours = 0
+        minutes = 0
+        seconds = 0
+        milliseconds = int(float_part * 1000)
+
+        if int_part >= 3600:
+            hours = int(int_part / 3600)
+            int_part = int_part % 3600
+        if int_part >= 60:
+            minutes = int(int_part / 60)
+            int_part = int_part % 60
+        seconds = int_part
+        return f"{hours:>2}:{minutes:>2}:{seconds:>2}.{milliseconds:>3}"
+    
+    def _to_bars_string(self, float_beats, numerator, denominator):
+        int_part, float_part = modf(float_beats)
+        bars = 0
+        beats = 0
+        sixteenth_notes = 0
+        
+        one_bar_length = numerator / (denominator / 4)
+
+        if int_part >= one_bar_length:
+            bars = int(int_part / one_bar_length)
+            int_part = int_part % one_bar_length
+        if int_part >= 4.0 / denominator:
+            beats = int(int_part / (4.0 / denominator))
+            int_part = int_part % (4.0 / denominator)
+
+    @listenable_property
+    def clip_length(self):
+        if liveobj_valid(self._clip):
+            if self._clip.is_audio_clip:
+                if self._clip.warping:
+                    return ""
+                else:
+                    return self._to_time_string(self._clip.loop_end - self._clip.loop_start)
+            else:
+                return ""
+        else:
+            return ""
+
     def set_step_sequence(self, step_sequence):
         self._step_sequence = step_sequence
 
