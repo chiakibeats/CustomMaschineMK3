@@ -1,6 +1,5 @@
-from itertools import product
-from re import L
 from ableton.v3.base import listens, listenable_property
+from ableton.v2.base.collection import IndexedDict
 from ableton.v3.live.util import find_parent_track, liveobj_valid
 from ableton.v3.control_surface import DEFAULT_BANK_SIZE, use
 from ableton.v3.control_surface.components import (
@@ -47,20 +46,21 @@ from .Logger import logger
 # Wavetable device decorator is removed from v3 decorator factory (reason is unknown), so I put all decorators into this class
 class CustomDeviceDecoratorFactory(DeviceDecoratorFactory):
     DECORATOR_CLASSES = {
-     'Delay': DelayDeviceDecorator, 
-     'Drift': DriftDeviceDecorator, 
-     'OriginalSimpler': SimplerDeviceDecorator, 
-     'Roar': RoarDeviceDecorator, 
-     'Transmute': TransmuteDeviceDecorator,
-     'InstrumentVector': WavetableDeviceDecorator}
+        'Delay': DelayDeviceDecorator, 
+        'Drift': DriftDeviceDecorator, 
+        'OriginalSimpler': SimplerDeviceDecorator, 
+        'Roar': RoarDeviceDecorator, 
+        'Transmute': TransmuteDeviceDecorator,
+        'InstrumentVector': WavetableDeviceDecorator
+    }
 
 CUSTOM_BANK_DEFINITIONS = BANK_DEFINITIONS.copy()
 CUSTOM_BANK_DEFINITIONS["InstrumentVector"]["Oscillator 1"] = {
     BANK_PARAMETERS_KEY: (
         'Osc 1 Category',
         'Osc 1 Table',
-        'Osc 1 Pitch',
         'Osc 1 Pos',
+        'Osc 1 Pitch',
         'Osc 1 Effect 1',
         'Osc 1 Effect 2',
         'Osc 1 Gain',
@@ -72,8 +72,8 @@ CUSTOM_BANK_DEFINITIONS["InstrumentVector"]["Oscillator 2"] = {
     BANK_PARAMETERS_KEY: (
         'Osc 2 Category',
         'Osc 2 Table',
-        'Osc 2 Pitch',
         'Osc 2 Pos',
+        'Osc 2 Pitch',
         'Osc 2 Effect 1',
         'Osc 2 Effect 2',
         'Osc 2 Gain',
@@ -83,28 +83,168 @@ CUSTOM_BANK_DEFINITIONS["InstrumentVector"]["Oscillator 2"] = {
 
 # You can switch bank parameter depends on certain condition by using mini language, also parameter name can be modified. 
 # Simpler custom bank definition is a long spaghetti...
-CUSTOM_BANK_DEFINITIONS["OriginalSimpler"][BANK_MAIN_KEY] = {
-    BANK_PARAMETERS_KEY: (
-        "Mode",
-        use("Start").if_parameter("Mode").has_value("Classic")
-            .else_use("Trigger Mode").with_name("Trigger").if_parameter("Mode").has_value_in(("One-Shot", "Slicing")),
-        use("End").if_parameter("Mode").has_value("Classic")
-            .else_use("Snap").if_parameter("Mode").has_value("One-Shot")
-            .else_use("Slice by").with_name("Slice Mode").if_parameter("Mode").has_value("Slicing"),
-        use("S Loop Length").with_name("Loop Length").if_parameter("Mode").has_value("Classic")
-            .else_use("").if_parameter("Mode").has_value("One-Shot")
-            .else_use("Sensitivity").if_parameter("Mode").has_value("Slicing").and_parameter("Slice by").has_value("Transient")
-            .else_use("Division").if_parameter("Mode").has_value("Slicing").and_parameter("Slice by").has_value("Beat")
-            .else_use("Regions").if_parameter("Mode").has_value("Slicing").and_parameter("Slice by").has_value("Region")
-            .else_use("").if_parameter("Mode").has_value("Slicing").and_parameter("Slice by").has_value("Manual"),
-        use("S Loop On").with_name("Loop").if_parameter("Mode").has_value("Classic")
-            .else_use("").if_parameter("Mode").has_value("One-Shot")
-            .else_use("Playback").if_parameter("Mode").has_value("Slicing"),
-        use("Voices").if_parameter("Mode").has_value_in(("Classic", "Slicing")),
-        "Warp",
-        "Warp Mode"
-    )
-}
+CUSTOM_BANK_DEFINITIONS["OriginalSimpler"] = IndexedDict((
+    (
+        BANK_MAIN_KEY,
+        {BANK_PARAMETERS_KEY: (
+            use("Ve Attack").if_parameter("Multi Sample").has_value("On")
+                .else_use("Mode"),
+            use("Ve Decay").if_parameter("Multi Sample").has_value("On")
+                .else_use("Start"),
+            use("Ve Sustain").if_parameter("Multi Sample").has_value("On")
+                .else_use("End"),
+            use("Ve Release").if_parameter("Multi Sample").has_value("On")
+                .else_use("Fade In").if_parameter("Mode").has_value("One-Shot")
+                .else_use("Nudge").if_parameter("Mode").has_value("Slicing")
+                .else_use("S Start").if_parameter("Mode").has_value("Classic"),
+            use("Pan").if_parameter("Multi Sample").has_value("On")
+                .else_use("Fade Out").if_parameter("Mode").has_value("One-Shot")
+                .else_use("Playback").if_parameter("Mode").has_value("Slicing")
+                .else_use("S Length").if_parameter("Mode").has_value("Classic"),
+            use("Transpose").if_parameter("Multi Sample").has_value("On")
+                .else_use("Transpose").if_parameter("Mode").has_value("One-Shot")
+                .else_use("Slice by").if_parameter("Mode").has_value("Slicing")
+                .else_use("S Loop Length").if_parameter("Mode").has_value("Classic"),
+            use("Detune").if_parameter("Multi Sample").has_value("On")
+                .else_use("Gain").if_parameter("Mode").has_value("One-Shot")
+                .else_use("Sensitivity").if_parameter("Slice by").has_value("Transient")
+                    .and_parameter("Mode").has_value("Slicing")
+                .else_use("Division").if_parameter("Slice by").has_value("Beat")
+                    .and_parameter("Mode").has_value("Slicing")
+                .else_use("Regions").if_parameter("Slice by").has_value("Region")
+                    .and_parameter("Mode").has_value("Slicing")
+                .else_use("Pad Slicing").if_parameter("Slice by").has_value("Manual")
+                    .and_parameter("Mode").has_value("Slicing")
+                .else_use("Sensitivity").if_parameter("Mode").has_value("Slicing")
+                .else_use("S Loop Fade").if_parameter("Mode").has_value("Classic")
+                    .and_parameter("Warp").has_value("Off")
+                .else_use("Detune"),
+            use("Volume"))}
+    ),
+    (
+        "Filter",
+        {BANK_PARAMETERS_KEY: (
+            "F On",
+            use("Filter Type").if_parameter("Filter Type").is_available(True)
+                .else_use("Filter Type (Legacy)"),
+            "Filter Freq",
+            use("Filter Res").if_parameter("Filter Res").is_available(True)
+                .else_use("Filter Res (Legacy)"),
+            use("Filter Circuit - LP/HP").if_parameter("Filter Type").has_value("Lowpass")
+                .else_use("Filter Circuit - LP/HP").if_parameter("Filter Type").has_value("Highpass")
+                .else_use("Filter Circuit - BP/NO/Morph"),
+            use("Filter Morph").if_parameter("Filter Type").has_value("Morph")
+                .else_use("").if_parameter("Filter Type").has_value("Lowpass")
+                    .and_parameter("Filter Circuit - LP/HP").has_value("Clean")
+                .else_use("").if_parameter("Filter Type").has_value("Highpass")
+                    .and_parameter("Filter Circuit - LP/HP").has_value("Clean")
+                .else_use("").if_parameter("Filter Type").has_value("Bandpass")
+                    .and_parameter("Filter Circuit - BP/NO/Morph").has_value("Clean")
+                .else_use("").if_parameter("Filter Type").has_value("Notch")
+                    .and_parameter("Filter Circuit - BP/NO/Morph").has_value("Clean")
+                .else_use("Filter Drive"),
+            "Filt < Vel",
+            "Filt < LFO")}
+    ),
+    (
+        "LFO",
+        {BANK_PARAMETERS_KEY: (
+            "L Wave",
+            "L Sync",
+            use("L Rate").if_parameter("L Sync").has_value("Free")
+                .else_use("L Sync Rate"),
+            "L Attack",
+            "L R < Key",
+            "Vol < LFO",
+            "L Retrig",
+            "L Offset")}
+    ),
+    (
+        "Global",
+        {BANK_PARAMETERS_KEY: (
+            "Glide Mode",
+            "Glide Time",
+            use("").if_parameter("Mode").has_value("One-Shot")
+                .else_use("Voices").if_parameter("Mode").has_value("Classic")
+                .else_use("Voices").if_parameter("Mode").has_value("Slicing")
+                    .and_parameter("Playback").has_value("Poly"),
+            "Transpose",
+            "Detune",
+            "Vol < Vel",
+            'Pan',
+            'Spread')}
+    ),
+    (
+        "Amplitude",
+        {BANK_PARAMETERS_KEY: (
+            use("Ve Attack").if_parameter("Mode").has_value("Classic")
+                .else_use("Fade In"),
+            use("Ve Decay").if_parameter("Mode").has_value("Classic")
+                .else_use("Fade Out"),
+            use("Ve Sustain").if_parameter("Mode").has_value("Classic")
+                .else_use("Volume"),
+            use("Ve Release").if_parameter("Mode").has_value("Classic"),
+            use("Ve Mode"),
+            use("Ve Retrig").if_parameter("Ve Mode").has_value("Beat")
+                    .or_parameter("Ve Mode").has_value("Sync")
+                .else_use("Ve Loop").if_parameter("Ve Mode").has_value("Loop"),
+            'Pan < Rnd',
+            'Pan < LFO')}
+    ),
+    (
+        "Filter Envelope",
+        {BANK_PARAMETERS_KEY: (
+            "Fe On",
+            "Fe Attack",
+            "Fe Decay",
+            "Fe Sustain",
+            "Fe Release",
+            "Fe < Env",
+            "",
+            "")}
+    ),
+    (
+        "Pitch Modifiers",
+        {BANK_PARAMETERS_KEY: (
+            use("Pe On"),
+            use("Pe Attack"),
+            use("Pe Decay"),
+            use("Pe Sustain"),
+            use("Pe Release"),
+            use("Pe < Env"),
+            "Pe < LFO",
+            'PB Range')}
+    ),
+    (
+        "Sample & Warp",
+        {BANK_PARAMETERS_KEY: (
+            use("").if_parameter("Multi Sample").has_value("On")
+                .else_use("Gain"),
+            use("").if_parameter("Multi Sample").has_value("On")
+                .else_use("Start"),
+            use("").if_parameter("Multi Sample").has_value("On")
+                .else_use("End"),
+            use("").if_parameter("Multi Sample").has_value("On")
+                .else_use("Warp"),
+            use("").if_parameter("Multi Sample").has_value("On")
+                .else_use("").if_parameter("Warp").has_value("Off")
+                .else_use("Warp Mode"),
+            use("").if_parameter("Multi Sample").has_value("On")
+                .else_use("").if_parameter("Warp").has_value("Off")
+                .else_use("Preserve").if_parameter("Warp Mode").has_value("Beats")
+                .else_use("Grain Size Tones").if_parameter("Warp Mode").has_value("Tones")
+                .else_use("Grain Size Texture").if_parameter("Warp Mode").has_value("Texture")
+                .else_use("Formants").if_parameter("Warp Mode").has_value("Pro"),
+            use("").if_parameter("Multi Sample").has_value("On")
+                .else_use("").if_parameter("Warp").has_value("Off")
+                .else_use("Loop Mode").if_parameter("Warp Mode").has_value("Beats")
+                .else_use("Flux").if_parameter("Warp Mode").has_value("Texture")
+                .else_use("Envelope Complex Pro").if_parameter("Warp Mode").has_value("Pro"),
+            use("").if_parameter("Multi Sample").has_value("On")
+                .else_use("").if_parameter("Warp").has_value("Off")
+                .else_use("Envelope").if_parameter("Warp Mode").has_value("Beats"))}
+    ),
+))
 
 class CustomDeviceComponent(DeviceComponent):
     _parameter_touch_controls = control_list(ButtonControl, DEFAULT_BANK_SIZE)
