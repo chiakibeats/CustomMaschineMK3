@@ -13,15 +13,16 @@ from Live import Song # type: ignore
 
 from .Logger import logger
 
-class ScaleSystemComponent(Component):
+SCALE_ROOT_NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
+class ScaleSystemComponent(Component, Renderable):
     select_encoder = StepEncoderControl(num_steps = 64)
-    root_note_encoder = StepEncoderControl(num_steps = 64)
-    toggle_button = ButtonControl()
-    # Just for LED feedback
-    indicator_button_1 = ButtonControl(color = "Scale.Off", on_color = "Scale.On")
-    indicator_button_2 = ButtonControl(color = "Scale.Off", on_color = "Scale.On")
-    indicator_button_3 = ButtonControl(color = "Scale.Off", on_color = "Scale.On")
-    indicator_button_4 = ButtonControl(color = "Scale.Off", on_color = "Scale.On")
+    toggle_button = ButtonControl(color = None)
+    # For LED feedback & root note control
+    up_button = ButtonControl(color = "Scale.Off", on_color = "Scale.On")
+    down_button = ButtonControl(color = "Scale.Off", on_color = "Scale.On")
+    left_button = ButtonControl(color = "Scale.Off", on_color = "Scale.On")
+    right_button = ButtonControl(color = "Scale.Off", on_color = "Scale.On")
 
     _all_scales_list = [name for name, intervals in Song.get_all_scales_ordered()]
     _selected_scale_index = 0
@@ -48,6 +49,14 @@ class ScaleSystemComponent(Component):
             return self._internal_scale_mode
         else:
             return self.song.scale_mode
+        
+    @listenable_property
+    def scale_name(self):
+        return self.song.scale_name
+    
+    @listenable_property
+    def root_note(self):
+        return SCALE_ROOT_NOTES[self.song.root_note]
 
     @scale_mode.setter
     def scale_mode(self, mode):
@@ -73,9 +82,16 @@ class ScaleSystemComponent(Component):
 
         self.song.scale_name = self._all_scales_list[new_scale_index]
 
-    @root_note_encoder.value
-    def _on_root_note_encoder_value_changed(self, value, encoder):
-        new_root_note = self.song.root_note + int(sign(value))
+    @up_button.pressed
+    def _on_up_button_pressed(self, button):
+        self._change_root_note(1)
+
+    @down_button.pressed
+    def _on_down_button_pressed(self, button):
+        self._change_root_note(-1)
+
+    def _change_root_note(self, offset):
+        new_root_note = self.song.root_note + offset
         if new_root_note < 0:
             new_root_note = 11
         elif new_root_note >= 12:
@@ -93,17 +109,17 @@ class ScaleSystemComponent(Component):
                 self._selected_scale_index = index
                 logger.info(f"Selected scale name = {scale}, index = {index}")
                 break
+        self.notify_scale_name()
 
     def _on_root_note_changed(self):
-        # Update renderable state
-        pass
+        self.notify_root_note()
 
     def _update_led_feedback(self):
         buttons = [
-            self.indicator_button_1,
-            self.indicator_button_2,
-            self.indicator_button_3,
-            self.indicator_button_4
+            self.up_button,
+            self.down_button,
+            self.left_button,
+            self.right_button
         ]
 
         for button in buttons:
