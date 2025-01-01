@@ -75,8 +75,7 @@ def create_mappings(surface):
                 )]),
         volume = dict(
             component = "Master_Volume",
-            coarse_volume = "encoder",
-            fine_volume = "encoder_with_shift",
+            master_volume = "encoder",
             reset_button = "encoderpush"),
         swing = dict(
             component = "Groove_Pool",
@@ -100,10 +99,10 @@ def create_mappings(surface):
             select_encoder = "encoder",
             root_note_encoder = "encoder_with_shift",
             toggle_button = "encoderpush",
-            indicator_button_1 = "encoderup",
-            indicator_button_2 = "encoderdown",
-            indicator_button_3 = "encoderleft",
-            indicator_button_4 = "encoderright"),
+            up_button = "encoderup",
+            down_button = "encoderdown",
+            left_button = "encoderleft",
+            right_button = "encoderright"),
         browser = dict(
             component = "Browser",
             select_encoder = "encoder",
