@@ -80,28 +80,39 @@ class BrowserComponent(Component, Renderable):
     select_folder_buttons = control_list(ButtonControl)
 
     _selected_item_index = 0
+    _selected_item_name = None
     _preview_enabled = True
     _parent_folder = None
+    _parent_folder_name = None
     _root_item = None
     _folder_stack = []
     _browser = None
     _target_track = None
 
-    @listenable_property
+    @property
     def selected_item(self):
         if len(self.parent_folder.children) > 0:
             return self.parent_folder.children[self._selected_item_index]
         else:
             return None
-    
+        
     @listenable_property
+    def selected_item_name(self):
+        return self._selected_item_name
+    
+    @property
     def parent_folder(self):
         return self._parent_folder
     
     @parent_folder.setter
     def parent_folder(self, folder):
         self._parent_folder = folder
-        self.notify_parent_folder()
+        self._parent_folder_name = folder.name
+        self.notify_parent_folder_name()
+
+    @listenable_property
+    def parent_folder_name(self):
+        return self._parent_folder_name
 
     @depends(target_track = None)
     def __init__(self, name = "Browser", target_track = None, *a, **k):
@@ -149,9 +160,8 @@ class BrowserComponent(Component, Renderable):
 
         self._root_item = new_root_item
         self._folder_stack = new_folder_stack
-        self._selected_item_index = new_selected_index
-        self.notify_parent_folder()
-        self.notify_selected_item()
+        self.parent_folder = self._folder_stack[-1]
+        self._set_item_index(new_selected_index)
 
     def update(self):
         super().update()
@@ -161,8 +171,9 @@ class BrowserComponent(Component, Renderable):
     def _set_item_index(self, new_index, force_preview = False):
         old_index = self._selected_item_index
         self._selected_item_index = new_index
-        logger.info(f"Select item {self.selected_item.name if self.selected_item else None}")
-        self.notify_selected_item()
+        self._selected_item_name = self.selected_item.name if self.selected_item else None
+        logger.info(f"Select item {self._selected_item_name}")
+        self.notify_selected_item_name()
 
         # Preview item function is blocking call (time depends on sample length and storage bandwidth)
         # We need to finish other tasks before item preview
