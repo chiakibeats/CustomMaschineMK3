@@ -76,7 +76,8 @@ class NoteRepeatComponent(Component):
         
     @lock_button.pressed
     def _on_lock_button_pressed(self, button):
-        self._lock_enabled = True
+        if self._enabled:
+            self._lock_enabled = True
         self._update_led_feedback()
 
     @rate_select_mode_button.pressed
