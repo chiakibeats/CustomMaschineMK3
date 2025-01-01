@@ -47,12 +47,13 @@ from .Logger import logger
 # Wavetable device decorator is removed from v3 decorator factory (reason is unknown), so I put all decorators into this class
 class CustomDeviceDecoratorFactory(DeviceDecoratorFactory):
     DECORATOR_CLASSES = {
-     'Delay': DelayDeviceDecorator, 
-     'Drift': DriftDeviceDecorator, 
-     'OriginalSimpler': SimplerDeviceDecorator, 
-     'Roar': RoarDeviceDecorator, 
-     'Transmute': TransmuteDeviceDecorator,
-     'InstrumentVector': WavetableDeviceDecorator}
+        'Delay': DelayDeviceDecorator, 
+        'Drift': DriftDeviceDecorator, 
+        'OriginalSimpler': SimplerDeviceDecorator, 
+        'Roar': RoarDeviceDecorator, 
+        'Transmute': TransmuteDeviceDecorator,
+        'InstrumentVector': WavetableDeviceDecorator
+    }
 
 CUSTOM_BANK_DEFINITIONS = BANK_DEFINITIONS.copy()
 CUSTOM_BANK_DEFINITIONS["InstrumentVector"]["Oscillator 1"] = {
