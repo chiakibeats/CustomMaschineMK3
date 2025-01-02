@@ -5,20 +5,20 @@ from ableton.v3.control_surface.display import Renderable
 
 # Record length in beats
 RECORD_LENGTH_LIST = [
-    1.0,
-    2.0,
-    4.0,
-    8.0,
-    16.0,
-    32.0,
-    64.0,
-    128.0
+    (1.0, "1 Beat"),
+    (2.0, "2 Beats"),
+    (4.0, "1 Bar"),
+    (8.0, "2 Bars"),
+    (16.0, "4 Bars"),
+    (32.0, "8 Bars"),
+    (64.0, "16 Bars"),
+    (128.0, "32 Bars"),
 ]
 
 DEFAULT_LENGTH_INDEX = 3
 
 class FixedLengthRecordingMethod(RecordingMethod):
-    _record_length = RECORD_LENGTH_LIST[DEFAULT_LENGTH_INDEX]
+    _record_length = RECORD_LENGTH_LIST[DEFAULT_LENGTH_INDEX][0]
     _fixed_length_enabled = False
 
     def trigger_recording(self):
@@ -49,16 +49,17 @@ class CustomViewBasedRecordingComponent(ViewBasedRecordingComponent):
         checked_color = "RecordLength.LengthSelected",
         control_count = len(RECORD_LENGTH_LIST))
 
-    _record_length = RECORD_LENGTH_LIST[DEFAULT_LENGTH_INDEX]
-
     def __init__(self, name = "View_Based_Recording", *a, **k):
         super().__init__(name, *a, **k)
         self.length_select_buttons.checked_index = DEFAULT_LENGTH_INDEX
 
     @length_select_buttons.checked
     def _on_length_select_buttons_checked(self, button):
-        self._record_length = RECORD_LENGTH_LIST[button.index]
-        self._recording_method.set_record_length(self._record_length)
+        self._recording_method.set_record_length(RECORD_LENGTH_LIST[button.index][0])
+
+    @length_select_buttons.pressed
+    def _on_length_select_buttons_pressed(self, button):
+        self.notify(self.notifications.Recording.fixed_length, RECORD_LENGTH_LIST[button.index][1])
 
     @fixed_button.value
     def _on_fixed_button_value_changed(self, value, button):
