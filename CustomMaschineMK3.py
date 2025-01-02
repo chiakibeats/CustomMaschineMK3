@@ -239,7 +239,9 @@ class CustomMaschineMK3(ControlSurface):
             self.component_map["Clip_Editor"].set_step_sequence(self.component_map["Step_Sequence"])
             encoder_mode_control = self.component_map["Encoder_Mode_Control"]
             encoder_mode_control.set_encoder_modes(self.component_map["Encoder_Modes"])
-            encoder_mode_control.set_buttons_and_knobs_modes(self.component_map["Buttons_And_Knobs_Modes"])
+            buttons_knobs = self.component_map["Buttons_And_Knobs_Modes"]
+            encoder_mode_control.set_buttons_and_knobs_modes(buttons_knobs)
+            self.component_map["Browser"].set_buttons_and_knobs_modes(buttons_knobs)
 
     def disconnect(self):
         super().disconnect()

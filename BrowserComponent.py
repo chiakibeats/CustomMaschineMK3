@@ -1,5 +1,6 @@
 from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.display import Renderable
+from ableton.v3.control_surface.mode import pop_last_mode
 from ableton.v3.control_surface.controls import (
     StepEncoderControl,
     ButtonControl,
@@ -129,6 +130,8 @@ class BrowserComponent(Component, Renderable):
     _folder_stack = []
     _browser = None
     _target_track = None
+    _close_browser = False
+    _buttons_and_knobs_modes = None
 
     @property
     def selected_item(self):
@@ -165,6 +168,9 @@ class BrowserComponent(Component, Renderable):
         self.preview_volume_encoder.mapped_parameter = self.song.master_track.mixer_device.cue_volume
         self._update_preview_state(True)
         self._update_led_feedback()
+
+    def set_buttons_and_knobs_modes(self, modes):
+        self._buttons_and_knobs_modes = modes
 
     def _update_folder_stack(self, new_root_item, current_stack):
         # Update stack items based on its URI
@@ -278,8 +284,16 @@ class BrowserComponent(Component, Renderable):
             if item.is_loadable:
                 logger.info(f"Load item {self.selected_item.name}")
                 self.application.browser.load_item(self.selected_item)
+                self._close_browser = True
             elif item.is_folder or len(item.children) > 0:
                 self.enter_folder(item)
+
+    @load_button.released
+    def _on_load_button_released(self, button):
+        if self._close_browser:
+            if self._buttons_and_knobs_modes != None:
+                pop_last_mode(self._buttons_and_knobs_modes, "browser")
+            self._close_browser = False
 
     @enter_folder_button.pressed
     def _on_enter_folder_button_pressed(self, button):
