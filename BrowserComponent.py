@@ -15,32 +15,72 @@ from . import Config
 COLLECTION_COLORS = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Gray"]
 
 class BrowserCollectionRootItem:
-    name = "Collections"
-    children = []
-    is_folder = True
-    is_device = False
-    is_loadable = False
-    uri = ""
 
     def __init__(self, browser):
-        self.uri = type(self).__name__
+        self.name = "Collections"
         self.children = []
+        self.is_folder = True
+        self.is_device = False
+        self.is_loadable = False
+        self.uri = type(self).__name__
+
         for item in browser.colors:
             self.children.append(item)
 
 class BrowserUserFoldersRootItem:
-    name = "User Files"
-    children = []
-    is_folder = True
-    is_device = False
-    is_loadable = False
-    uri = ""
 
     def __init__(self, browser):
-        self.uri = type(self).__name__
+        self.name = "User Files"
         self.children = []
+        self.is_folder = True
+        self.is_device = False
+        self.is_loadable = False
+        self.uri = type(self).__name__
+
         for item in browser.user_folders:
             self.children.append(item)
+
+class WrapBrowserItem:
+    
+    def __init__(self, item, name):
+        self._wrapped_item = item
+        self._name = name
+    
+    @property
+    def children(self):
+        return self._wrapped_item.children
+
+    @property
+    def is_device(self):
+        return self._wrapped_item.is_device
+
+    @property
+    def is_folder(self):
+        return self._wrapped_item.is_folder
+
+    @property
+    def is_loadable(self):
+        return self._wrapped_item.is_loadable
+
+    @property
+    def is_selected(self):
+        return self._wrapped_item.is_selected
+
+    @property
+    def iter_children(self):
+        return self._wrapped_item.iter_children
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def source(self):
+        return self._wrapped_item.source
+
+    @property
+    def uri(self):
+        return self._wrapped_item.uri
 
 class BrowserRootItem:
     name = "Browser Top"
@@ -53,19 +93,20 @@ class BrowserRootItem:
     def __init__(self, browser, target_is_midi_track = True):
         self.uri = type(self).__name__
         self.children = [BrowserCollectionRootItem(browser)]
+        audio_effects = WrapBrowserItem(browser.audio_effects, "Audio Effects")
         if target_is_midi_track:
-            self.children.append(browser.sounds)
-            self.children.append(browser.drums)
-            self.children.append(browser.instruments)
-            self.children.append(browser.audio_effects)
-            self.children.append(browser.midi_effects)
+            self.children.append(WrapBrowserItem(browser.sounds, "Sounds"))
+            self.children.append(WrapBrowserItem(browser.drums, "Drums"))
+            self.children.append(WrapBrowserItem(browser.instruments, "Instruments"))
+            self.children.append(audio_effects)
+            self.children.append(WrapBrowserItem(browser.midi_effects, "MIDI Effects"))
         else:
-            self.children.append(browser.audio_effects)
+            self.children.append(audio_effects)
 
         self.children += [browser.max_for_live,
-            browser.plugins,
+            WrapBrowserItem(browser.plugins, "Plug-Ins"),
             browser.packs,
-            browser.current_project,
+            WrapBrowserItem(browser.current_project, "Current Project"),
             BrowserUserFoldersRootItem(browser)]
 
 class BrowserComponent(Component, Renderable):
