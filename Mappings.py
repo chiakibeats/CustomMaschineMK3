@@ -314,7 +314,8 @@ def create_mappings(surface):
     )
 
     mappings["Selected_Parameter"] = dict(
-        reset_value_button = "mod_with_erase"
+        reset_value_button = "mod_with_erase",
+        select_modifier = "mod"
     )
 
     mappings["Target_Track"] = dict(

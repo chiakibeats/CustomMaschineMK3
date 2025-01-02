@@ -16,7 +16,8 @@ from ableton.v3.live import liveobj_valid
 from .Logger import logger
 
 class SelectedParameterControlComponent(Component):
-    select_buttons = control_list(ButtonControl, control_count = DEFAULT_BANK_SIZE)
+    select_buttons = control_list(ButtonControl, control_count = DEFAULT_BANK_SIZE, color = None)
+    select_modifier = ButtonControl(color = None)
     reset_value_button = ButtonControl(color = None)
     modulation_encoder = MappedControl()
 
@@ -42,6 +43,16 @@ class SelectedParameterControlComponent(Component):
             logger.info(f"Parameter name = {parameter.name}")
         self._show_selected_parameter_message(parameter)
         self.modulation_encoder.mapped_parameter = parameter
+
+    @select_modifier.pressed_delayed
+    def _on_select_modifier_pressed_delayed(self, _):
+        for button in self.select_buttons:
+            button.color = "DefaultButton.On"
+
+    @select_modifier.released
+    def _on_select_modifier_released(self, _):
+        for button in self.select_buttons:
+            button.color = None
 
     @reset_value_button.pressed
     def _on_value_reset_button_pressed(self, button):
