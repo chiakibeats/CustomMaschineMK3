@@ -164,7 +164,6 @@ def create_root_view():
 
     @View
     def main_view(state):
-        logger.info(f"state = {dir(state)}")
         content = Content()
         display_mode = state.buttons_and_knobs_modes.selected_mode
         if display_mode == TRACK_MIXER:
