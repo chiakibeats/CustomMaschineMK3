@@ -18,28 +18,6 @@ def make_mcu_display_header(line):
 def make_display_sysex_message(line, message):
     return make_mcu_display_header(line) + message + (0xF7,)
 
-class OldContent:
-    selected_mode = None
-    selected_track = None
-    selected_device = None
-    selected_parameter_bank = None
-    current_tracks_in_ring = []
-    selected_clip = None
-    clip_start_marker = ""
-    clip_loop_length = ""
-    clip_loop_offset = ""
-    selected_folder = None
-    selected_browser_item = None
-    selected_pitches = []
-    tempo = 0.0
-    is_scale_enabled = False
-    scale_name = "Chromatic"
-    scale_root_note = "C"
-    groove_amount = 0.0
-    selected_grid = None
-    display_mode = None
-    target_track_locked = False
-
 class Content:
     lines = [""] * 4
 
@@ -188,17 +166,17 @@ def create_root_view():
         if state.elements.encodercap.is_pressed:
             encoder_mode = state.encoder_modes.selected_mode
             if encoder_mode == MASTER_VOLUME:
-                content.lines[0] = "Master Volume:"
+                content.lines[0] = "Master Volume"
                 content.lines[2] = f"{state.master_volume.gain_string}"
             elif encoder_mode == GROOVE_AMOUNT:
-                content.lines[0] = "Groove Amount:"
+                content.lines[0] = "Groove Amount"
                 content.lines[2] = f"{state.groove_pool.amount_string}"
             elif encoder_mode == ARRANGE_POSITION:
-                content.lines[0] = "Playing Cursor:"
-                content.lines[2] = "{}"
+                content.lines[0] = "Song Time"
+                content.lines[2] = f"{state.transport.current_song_time_in_bars}({state.transport.current_song_time})"
             elif encoder_mode == SONG_TEMPO:
-                content.lines[0] = "Song Tempo:"
-                content.lines[2] = "{}BPM"
+                content.lines[0] = "Song Tempo"
+                content.lines[2] = f"{state.transport.song_tempo:.2f} BPM"
             elif encoder_mode == CLIP_SCALE:
                 content.lines[0] = f"Scale({'On' if state.scale_system.scale_mode else 'Off'}):{state.scale_system.scale_name}"
                 content.lines[2] = f"Root Note:{state.scale_system.root_note}"
@@ -235,24 +213,7 @@ def create_root_view():
 
 def protocol(elements):
 
-    def display_mixer_info(content: Content):
-        elements.display_line_0.display_message(f"{'LOCKED' if content.target_track_locked else 'TARGET'}:{content.selected_track.name}")
-        # elements.display_line_2.display_message(f"{}|{}|{}|{}")
-        # elements.display_line_1.display_message(f"{}|{}|{}|{}")
-        # elements.display_line_3.display_message(f"{}|{}|{}|{}")
-
-    def display_device_info(content: Content):
-        device_name = ""
-        bank_name = ""
-        if liveobj_valid(content.selected_device):
-            device_name = content.selected_device.name
-            bank_name = content.selected_parameter_bank
-
-        elements.display_line_0.display_message(f"Device:{device_name}")
-        elements.display_line_2.display_message(f"Bank:{bank_name}")
-
     def display(content: Content):
-        #logger.info("display()")
         if content:
             elements.display_line_0.display_message(content.lines[0])
             elements.display_line_1.display_message(content.lines[1])

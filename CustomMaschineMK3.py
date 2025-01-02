@@ -64,6 +64,7 @@ from .ClipEditorComponent import ClipEditorComponent
 from .BrowserComponent import BrowserComponent
 from .RecordingMethod import FixedLengthRecordingMethod, CustomViewBasedRecordingComponent
 from .EncoderModeControlComponent import EncoderModeControlComponent
+from .CustomTransportComponent import CustomTransportComponent
 
 from .Logger import logger
 from . import Config
@@ -92,6 +93,7 @@ class Specification(ControlSurfaceSpecification):
     recording_method_type = FixedLengthRecordingMethod
     feedback_channels = [1]
     component_map = {
+        "Transport": CustomTransportComponent,
         "Encoder_Mode_Control": EncoderModeControlComponent,
         "View_Based_Recording": partial(CustomViewBasedRecordingComponent, recording_method_type = recording_method_type),
         "Browser": BrowserComponent,
