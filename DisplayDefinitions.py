@@ -68,11 +68,15 @@ class Notifications(DefaultNotifications):
         lock = DefaultNotifications.DefaultText()
 
     class Recording(DefaultNotifications.Recording):
-        fixed_length = "Fixed Length Rec:{}".format
+        fixed_length = "Fixed Length Rec\n{}".format
         fixed_length: "Notification[Fn[str]]"
 
+    class SelectedParameterControl:
+        select = "Select {}\n{}".format
+        select: "Notification[Fn[str, str]]"
+
     class NoteRepeat:
-        repeat_rate = "Note Repeat Rate:{}".format
+        repeat_rate = "Note Repeat Rate\n{}".format
         repeat_rate: "Notification[Fn[str]]"
     
     class DrumGroup(DefaultNotifications.DrumGroup):
@@ -218,10 +222,17 @@ def create_root_view():
     def notification_content(state, event):
         logger.info(f"notification: {event}")
         content = main_view(state)
-        content.lines[0] = event
+        messages = str.splitlines(event)
+        content.lines[0] = messages[0]
+        if len(messages) > 1:
+            content.lines[2] = messages[1]
+ 
         return content
 
-    return CompoundView(NotificationView(notification_content, duration = 1.5), knob_control_view, main_view)
+    return CompoundView(
+        NotificationView(notification_content, duration = 1.5, supports_new_line = True),
+        knob_control_view,
+        main_view)
 
 def protocol(elements):
 

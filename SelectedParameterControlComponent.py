@@ -1,4 +1,5 @@
 from ableton.v3.control_surface.component import Component
+from ableton.v3.control_surface.display import Renderable
 from ableton.v3.control_surface.controls import (
     ButtonControl,
     MappedControl,
@@ -15,9 +16,9 @@ from ableton.v3.live import liveobj_valid
 
 from .Logger import logger
 
-class SelectedParameterControlComponent(Component):
+class SelectedParameterControlComponent(Component, Renderable):
     select_buttons = control_list(ButtonControl, control_count = DEFAULT_BANK_SIZE, color = None)
-    select_modifier = ButtonControl(color = None)
+    select_modifier = ButtonControl(color = None, delay_time = 0.6)
     reset_value_button = ButtonControl(color = None)
     modulation_encoder = MappedControl()
 
@@ -38,9 +39,7 @@ class SelectedParameterControlComponent(Component):
     @select_buttons.pressed
     def _on_select_buttons_pressed(self, button):
         parameter = self._get_knob_mapped_parameter(button.index)
-        logger.info(f"Parameter select {parameter}")
-        if liveobj_valid(parameter):
-            logger.info(f"Parameter name = {parameter.name}")
+        logger.info(f"Parameter select {parameter.name if liveobj_valid(parameter) else None}")
         self._show_selected_parameter_message(parameter)
         self.modulation_encoder.mapped_parameter = parameter
 
@@ -61,14 +60,14 @@ class SelectedParameterControlComponent(Component):
             parameter.value = parameter.default_value
 
     def _show_selected_parameter_message(self, parameter):
-        if parameter != None:
-            self._show_message(f"Touch Strip Parameter: {self._get_parameter_path(parameter)}")
+        if liveobj_valid(parameter):
+            self.notify(self.notifications.SelectedParameterControl.select, *self._get_parameter_path(parameter))
         else:
-            self._show_message(f"Touch Strip Parameter: None")
+            self.notify(self.notifications.SelectedParameterControl.select, "", "---")
 
     def _get_parameter_path(self, parameter):
         parent = parameter.canonical_parent
         if str.find(str(type(parent)), "MixerDevice") > 0:
-            return f"{parent.canonical_parent.name} > {parameter.name}"
+            return (parent.canonical_parent.name, parameter.name)
         else:
-            return f"{parent.name} > {parameter.name}"
+            return (parent.name, parameter.name)
