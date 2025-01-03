@@ -114,10 +114,15 @@ class CustomDeviceComponent(DeviceComponent):
     
     def __init__(self, name = "Device", *a, **k):
         super().__init__(name, *a, **k)
+        self.register_slot(self, self.notify_current_parameters, "parameters")
+
+    @listenable_property
+    def current_parameters(self):
+        return self._provided_parameters
 
     def set_parameter_touch_controls(self, controls):
         self._parameter_touch_controls.set_control_element(controls)
-        
+
     @_parameter_touch_controls.pressed
     def _on_parameter_touch_pressed(self, button):
         if self._current_touched_index == -1:

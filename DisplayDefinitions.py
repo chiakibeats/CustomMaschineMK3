@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from ableton.v2.control_surface import InternalParameterBase
 from ableton.v3.control_surface.components.sliced_simpler import BASE_SLICING_NOTE
 from ableton.v3.control_surface.display import DefaultNotifications, DisplaySpecification
 from ableton.v3.control_surface.display.view import View, CompoundView, NotificationView
@@ -6,6 +7,8 @@ from ableton.v3.control_surface.display.text import adjust_string
 from ableton.v3.control_surface.display.notifications.type_decl import Fn, Notification
 from ableton.v3.live import liveobj_name, liveobj_valid
 from ableton.v3.base import pitch_index_to_string
+
+from Live.DeviceParameter import DeviceParameter # type: ignore
 
 from .ClipEditorComponent import LaunchModeList, ClipLaunchQuantizationList, WarpModeList
 from .Logger import logger
@@ -49,6 +52,20 @@ def adjust_gain_string(gain_string):
             gain_string = gain_string[:6]
 
     return gain_string
+
+def get_display_value(parameter):
+    if isinstance(parameter, InternalParameterBase):
+        return parameter.display_value
+    elif isinstance(parameter, DeviceParameter):
+        return parameter.str_for_value(parameter.value)
+    else:
+        return ""
+
+def to_pan_or_send_value(knob):
+    if str.startswith(knob.parameter_name, "Pan"):
+        return knob.parameter_value
+    else:
+        return adjust_gain_string(knob.parameter_value)
 
 class Content:
     lines = [""] * 4
@@ -95,12 +112,6 @@ class Notifications(DefaultNotifications):
 def create_root_view():
     logger.info("Init display")
 
-    def to_pan_or_send_value(knob):
-        if str.startswith(knob.parameter_name, "Pan"):
-            return knob.parameter_value
-        else:
-            return adjust_gain_string(knob.parameter_value)
-
     def mixer_view(state, content):
         control_name = state.mixer.control_name
         content.lines[0] = f"Parameter:{control_name}"
@@ -110,8 +121,19 @@ def create_root_view():
         content.lines[3] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[adjust_gain_string(knob.parameter_value) for knob in state.elements.knobs[4:]])
 
     def device_view(state, content):
-        content.lines[0] = ""
-        content.lines[1] = ""
+        if liveobj_valid(state.device.device):
+            names = [info.parameter.name if info.parameter else "" for info in state.device.current_parameters]
+            values = [get_display_value(info.parameter) if info.parameter else "" for info in state.device.current_parameters]
+
+            content.lines[0] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[adjust_string(x, 6) for x in names[:4]])
+            content.lines[1] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[adjust_string(x, 6) for x in names[4:]])
+            content.lines[2] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[adjust_string(x, 6) for x in values[:4]])
+            content.lines[3] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[adjust_string(x, 6) for x in values[4:]])
+        else:
+            content.lines[0] = "No device selected"
+            content.lines[1] = ""
+            content.lines[2] = ""
+            content.lines[3] = ""
         
     def clip_view(state, content):
         clip = state.target_track.target_clip
@@ -139,7 +161,7 @@ def create_root_view():
                 content.lines[1] = f"{launch_mode:<6}|{quantize:>6}|Legato|"
                 content.lines[3] = "Nudge |Steps |Fine  |Vel"
         else:
-            content.lines[0] = "No Clip Selected"
+            content.lines[0] = "No clip selected"
             content.lines[1] = ""
             content.lines[2] = ""
             content.lines[3] = ""
