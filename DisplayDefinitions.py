@@ -74,6 +74,10 @@ class Notifications(DefaultNotifications):
     class NoteRepeat:
         repeat_rate = "Note Repeat Rate\n{}".format
         repeat_rate: "Notification[Fn[str]]"
+
+    class VelocityLevels:
+        select = "Sequencer velocity\n{}".format
+        select: "Notification[Fn[int]]"
     
     class DrumGroup(DefaultNotifications.DrumGroup):
         class Pad(DefaultNotifications.DrumGroup.Pad):

@@ -5,9 +5,7 @@ from ableton.v3.control_surface.components import (
     Scrollable,
     PitchProvider
 )
-
 from ableton.v3.control_surface.display import Renderable
-
 from ableton.v3.control_surface.controls import (
     ButtonControl,
     EncoderControl,
@@ -18,26 +16,23 @@ from ableton.v3.control_surface.controls import (
     PlayableControl,
     control_matrix
 )
-
 from ableton.v3.control_surface.skin import LiveObjSkinEntry
-
 from ableton.v3.base import depends, listens
 
 from .Logger import logger
 
 DEFAULT_NOTE = 60
+# Simulate Live's internal velocity calculation
+# Levels list in velocity level object is sometimes unavailable
+VELOCITY_LEVELS = list(range(127, 0, -8))[::-1]
+DEFAULT_LEVEL_INDEX = 12
 
-
-
-class VelocityLevelsComponent(PlayableComponent):
+class VelocityLevelsComponent(PlayableComponent, Renderable):
     _pitch_provider = None
     _target_track = None
     _velocity_levels = None
     _source_notes = list(range(60, 76))
-    # Simulate Live's internal velocity calculation
-    _levels = list(range(127, 0, -8))[::-1]
     _selected_level = 0
-    _selected_coordinate = (-1, -1)
 
     @property
     def selected_velocity(self):
@@ -48,8 +43,9 @@ class VelocityLevelsComponent(PlayableComponent):
         super().__init__(name, matrix_always_listenable, *a, **k)
         self._velocity_levels = velocity_levels
         self._on_played_level_changed.subject = self._velocity_levels
-        self._selected_level = self._levels[12]
-        self._selected_coordinate = (0, 0)
+        self._select_velocity_level(DEFAULT_LEVEL_INDEX)
+        self._selected_level = VELOCITY_LEVELS[DEFAULT_LEVEL_INDEX]
+        self._selected_index = DEFAULT_LEVEL_INDEX
         self._target_track = target_track
         self._on_target_track_changed.subject = self._target_track
         self._on_target_track_changed()
@@ -58,6 +54,13 @@ class VelocityLevelsComponent(PlayableComponent):
     def set_pitch_provider(self, provider):
         self._pitch_provider = provider
         self._on_pitches_changed.subject = self._pitch_provider
+
+    def _select_velocity_level(self, index):
+        if len(self._velocity_levels.levels) > 0:
+            self._selected_level = int(self._velocity_levels.levels[index])
+        else:
+            self._selected_level = VELOCITY_LEVELS[index]
+        self._selected_index = index
 
     def _note_translation_for_button(self, button):
         return super()._note_translation_for_button(button)
@@ -72,13 +75,12 @@ class VelocityLevelsComponent(PlayableComponent):
             self._velocity_levels.enabled = False
 
     def _on_matrix_pressed(self, button):
-        self._selected_coordinate = button.coordinate
         row, column = button.coordinate
         index = (self.height - row - 1) * self.matrix.width + column
-        if len(self._velocity_levels.levels) > 0:
-            self._selected_level = self._velocity_levels.levels[index]
-        else:
-            self._selected_level = self._levels[index]
+        self._select_velocity_level(index)
+
+        if self.select_button.is_pressed:
+            self.notify(self.notifications.VelocityLevels.select, self._selected_level)
 
     def _on_select_button_pressed(self):
         self._update_led_feedback()
@@ -96,9 +98,10 @@ class VelocityLevelsComponent(PlayableComponent):
 
     def _update_button_color(self, button):
         row, column = button.coordinate
-        level = self.height - row
+        level = self.matrix.height - row
+        index = (level - 1) * self.matrix.width + column
 
-        if self.select_button.is_pressed and button.coordinate == self._selected_coordinate:
+        if self.select_button.is_pressed and index == self._selected_index:
             color_name = "VelocityLevels.Selected"
         else:
             color_name = f"VelocityLevels.Level{level}"
@@ -108,7 +111,10 @@ class VelocityLevelsComponent(PlayableComponent):
 
     @listens("pitches")
     def _on_pitches_changed(self, pitches):
-        pitches = self._pitch_provider.pitches
+        pitch = self._pitch_provider.pitches[0] if len(self._pitch_provider.pitches) > 0 else DEFAULT_NOTE
+        if self._velocity_levels.target_note != pitch:
+            # Reset velocity level if target note is changed
+            self._select_velocity_level(DEFAULT_LEVEL_INDEX)
         self._velocity_levels.target_note = pitches[0] if len(pitches) > 0 else DEFAULT_NOTE
 
     @listens("target_track")
