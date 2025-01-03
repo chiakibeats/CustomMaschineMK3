@@ -111,7 +111,6 @@ def create_mappings(surface):
         scale = dict(
             component = "Scale_System",
             select_encoder = "encoder",
-            root_note_encoder = "encoder_with_shift",
             toggle_button = "encoderpush",
             up_button = "encoderup",
             down_button = "encoderdown",
