@@ -2,8 +2,8 @@ from functools import partial
 from itertools import product
 from time import sleep
 
-from ableton.v3.base import lazy_attribute, const
-from ableton.v3.live.util import liveobj_valid
+from ableton.v3.base import lazy_attribute, const, listens
+from ableton.v3.live import liveobj_valid, scene_index
 from ableton.v3.control_surface import (
     ControlSurface,
     ControlSurfaceSpecification,
@@ -24,7 +24,8 @@ from ableton.v3.control_surface.components import (
     StepSequenceComponent,
     SequencerClip,
     GridResolutionComponent,
-    SessionComponent
+    SessionComponent,
+    TargetTrackComponent
 )
 
 from ableton.v3.control_surface.components.grid_resolution import GridResolution
@@ -75,6 +76,25 @@ if Config.REVERSE_STEP_PADS:
 playhead_notes = [base_note + offset for base_note, offset in product(pad_row_notes, range(4))]
 triplet_playhead_notes = [base_note + offset for base_note, offset in product(pad_row_notes, range(3))]
 
+class CustomTargetTrackComponent(TargetTrackComponent):
+        
+    def _target_clip_from_session(self):
+        slot_index = scene_index()
+        if slot_index < len(self._target_track.clip_slots):
+            clip_slot = self._target_track.clip_slots[slot_index]
+        else:
+            clip_slot = None
+
+        self._on_clip_slot_state_changed.subject = clip_slot
+        if clip_slot:
+            if clip_slot.has_clip:
+                return clip_slot.clip
+    
+    @listens("has_clip")
+    def _on_clip_slot_state_changed(self):
+        self._update_target_clip()
+
+
 class Specification(ControlSurfaceSpecification):
     elements_type = ControlElements
     control_surface_skin = MaschineSkin
@@ -86,6 +106,7 @@ class Specification(ControlSurfaceSpecification):
     include_auto_arming = True
     link_session_ring_to_track_selection = True
     link_session_ring_to_scene_selection = True
+    target_track_component_type = CustomTargetTrackComponent
     continuous_parameter_sensitivity = 2.0
     quantized_parameter_sensitivity = 0.2
     identity_response_id_bytes = [0x00, 0x00, 0x00]
