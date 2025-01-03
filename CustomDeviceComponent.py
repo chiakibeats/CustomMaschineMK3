@@ -1,6 +1,5 @@
 from itertools import product
-from re import L
-from ableton.v3.base import listens, listenable_property
+from ableton.v3.base import listens, listenable_property, task
 from ableton.v3.live.util import find_parent_track, liveobj_valid
 from ableton.v3.control_surface import DEFAULT_BANK_SIZE, use
 from ableton.v3.control_surface.components import (
@@ -110,33 +109,50 @@ CUSTOM_BANK_DEFINITIONS["OriginalSimpler"][BANK_MAIN_KEY] = {
 class CustomDeviceComponent(DeviceComponent):
     _parameter_touch_controls = control_list(ButtonControl, DEFAULT_BANK_SIZE)
     erase_button = ButtonControl(color = None)
-    _current_touched_index = -1
     
     def __init__(self, name = "Device", *a, **k):
         super().__init__(name, *a, **k)
+        self._active_index = -1
+        self._inactive_task = self._tasks.add(task.sequence(task.wait(0.3), task.run(self._inactive_parameter_index)))
+        self._inactive_task.kill()
         self.register_slot(self, self.notify_current_parameters, "parameters")
 
     @listenable_property
     def current_parameters(self):
         return self._provided_parameters
+    
+    @listenable_property
+    def active_parameter_index(self):
+        return self._active_index
+    
+    @active_parameter_index.setter
+    def active_parameter_index(self, index):
+        self._active_index = index
+        self.notify_active_parameter_index()
 
     def set_parameter_touch_controls(self, controls):
         self._parameter_touch_controls.set_control_element(controls)
 
+    def _inactive_parameter_index(self):
+        self.active_parameter_index = -1
+
     @_parameter_touch_controls.pressed
     def _on_parameter_touch_pressed(self, button):
-        if self._current_touched_index == -1:
-            self._current_touched_index = button.index
-            touched_parameter = self.parameters[button.index]
-
-            if touched_parameter is not None:
-                name = touched_parameter.name
-                self._show_message(f"Knob {button.index + 1} Parameter Name: {name}")
+        if self.active_parameter_index == -1 or self._inactive_task.is_running:
+            self._inactive_task.kill()
+            self.active_parameter_index = button.index
     
     @_parameter_touch_controls.released
-    def _on_parameter_touch_released(self, button):
-        if button == self._parameter_touch_controls[self._current_touched_index]:
-            self._current_touched_index = -1
+    def _on_parameter_touch_released(self, target_button):
+        touched_index = -1
+        for button in self._parameter_touch_controls:
+            if button.is_pressed:
+                touched_index = button.index
+        
+        if touched_index != -1:
+            self.active_parameter_index = touched_index
+        else:
+            self._inactive_task.restart()
 
     @_parameter_touch_controls.double_clicked
     def _on_parameter_touch_double_clicked(self, button):

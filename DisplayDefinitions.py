@@ -81,7 +81,7 @@ class Notifications(DefaultNotifications):
         lock = DefaultNotifications.DefaultText()
 
     class Recording(DefaultNotifications.Recording):
-        fixed_length = "Fixed Length Rec\n{}".format
+        fixed_length = "Fixed length rec\n{}".format
         fixed_length: "Notification[Fn[str]]"
 
     class SelectedParameterControl:
@@ -89,7 +89,7 @@ class Notifications(DefaultNotifications):
         select: "Notification[Fn[str, str]]"
 
     class NoteRepeat:
-        repeat_rate = "Note Repeat Rate\n{}".format
+        repeat_rate = "Note repeat rate\n{}".format
         repeat_rate: "Notification[Fn[str]]"
 
     class VelocityLevels:
@@ -122,8 +122,8 @@ def create_root_view():
 
     def device_view(state, content):
         if liveobj_valid(state.device.device):
-            names = [info.parameter.name if info.parameter else "" for info in state.device.current_parameters]
-            values = [get_display_value(info.parameter) if info.parameter else "" for info in state.device.current_parameters]
+            names = [info.parameter.name if liveobj_valid(info.parameter) else "" for info in state.device.current_parameters]
+            values = [get_display_value(info.parameter) if liveobj_valid(info.parameter) else "" for info in state.device.current_parameters]
 
             content.lines[0] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[adjust_string(x, 6) for x in names[:4]])
             content.lines[1] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[adjust_string(x, 6) for x in names[4:]])
@@ -176,29 +176,17 @@ def create_root_view():
         content.lines[2] = f">{item_name[:LCD_LINE_LENGTH - 1]}"
         content.lines[3] = f"{item_name[LCD_LINE_LENGTH - 1:]}"
 
-    @View
-    def main_view(state):
-        content = Content()
-        display_mode = state.buttons_and_knobs_modes.selected_mode
-        if display_mode == TRACK_MIXER:
-            mixer_view(state, content)
-        elif display_mode == DEVICE_CONTROL:
-            device_view(state, content)
-        elif display_mode == CLIP_CONTROL:
-            clip_view(state, content)
-        elif display_mode == BROWSER:
-            browser_view(state, content)
+    def knob_control_view(state, content):
+        if state.buttons_and_knobs_modes.selected_mode == DEVICE_CONTROL and liveobj_valid(state.device.device):
+            active_index = state.device.active_parameter_index
+            if active_index != -1:
+                info = state.device.current_parameters[active_index]
+                if liveobj_valid(info.parameter):
+                    name = info.parameter.name
+                    value = get_display_value(info.parameter)
+                    content.lines[0 if active_index < 4 else 1] = name
+                    content.lines[2 if active_index < 4 else 3] = value
 
-        if state.elements.setting.is_pressed:
-            content.lines[0] = "CustomMaschineMK3 by chiaki"
-            content.lines[2] = "Version 0.99"
-        
-        return content
-    
-    def render_knob_control_view(state):
-        #content = Content()
-        content = main_view(state)
-    
         if state.elements.encodercap.is_pressed:
             encoder_mode = state.encoder_modes.selected_mode
             if encoder_mode == MASTER_VOLUME:
@@ -216,24 +204,30 @@ def create_root_view():
             elif encoder_mode == CLIP_SCALE:
                 content.lines[0] = f"Scale({'On' if state.scale_system.scale_mode else 'Off'}):{state.scale_system.scale_name}"
                 content.lines[2] = f"Root Note:{NOTES[state.scale_system.root_note]}"
-        return content
 
-    def should_render_knob_control_view(state):
-        do_render = False
-        #logger.info(f"{state.elements.knob_touch_buttons}")
-        for button in state.elements.knob_touch_buttons:
-            if button.is_pressed:
-                do_render = True
+    @View
+    def main_view(state):
+        content = Content()
+        display_mode = state.buttons_and_knobs_modes.selected_mode
+        if display_mode == TRACK_MIXER:
+            mixer_view(state, content)
+        elif display_mode == DEVICE_CONTROL:
+            device_view(state, content)
+        elif display_mode == CLIP_CONTROL:
+            clip_view(state, content)
+        elif display_mode == BROWSER:
+            browser_view(state, content)
+
+        knob_control_view(state, content)
+
+        if state.elements.setting.is_pressed:
+            content.lines[0] = "CustomMaschineMK3 by chiaki"
+            content.lines[2] = "Version 1.00"
         
-        if state.elements.encodercap.is_pressed:
-            do_render = True
-
-        return do_render
-
-    knob_control_view = View(render_knob_control_view, should_render_knob_control_view)
+        return content    
 
     def notification_content(state, event):
-        logger.info(f"notification: {event}")
+        logger.debug(f"notification: {event}")
         content = main_view(state)
         messages = str.splitlines(event)
         content.lines[0] = messages[0]
@@ -244,7 +238,6 @@ def create_root_view():
 
     return CompoundView(
         NotificationView(notification_content, duration = 1.5, supports_new_line = True),
-        knob_control_view,
         main_view)
 
 def protocol(elements):
