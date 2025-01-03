@@ -187,6 +187,7 @@ class MaschinePlayableComponent(ClipNotesSelectMixin, PlayableComponent, PageCom
             pitch, _ = self._note_translation_for_button(target_button)
             self.pitches = [pitch]
             self._update_led_feedback()
+            self.notify(self.notifications.Keyboard.select, pitch)
         else:
             self._last_played_note = self._note_translation_for_button(target_button)[0]
             self._select_pitch_task.restart()

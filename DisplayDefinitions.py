@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from ableton.v3.control_surface.components.sliced_simpler import BASE_SLICING_NOTE
 from ableton.v3.control_surface.display import DefaultNotifications, DisplaySpecification
 from ableton.v3.control_surface.display.view import View, CompoundView, NotificationView
 from ableton.v3.control_surface.display.text import adjust_string
 from ableton.v3.control_surface.display.notifications.type_decl import Fn, Notification
 from ableton.v3.live import liveobj_name, liveobj_valid
+from ableton.v3.base import pitch_index_to_string
 
 from .ClipEditorComponent import LaunchModeList, ClipLaunchQuantizationList, WarpModeList
 from .Logger import logger
@@ -11,15 +13,7 @@ from .Logger import logger
 LCD_LINES = 4
 LCD_LINE_LENGTH = 28
 NO_ITEM = "---"
-
-def make_mcu_display_header(line):
-    return (0xF0, 0x00, 0x00, 0x66, 0x17, 0x12, 28 * min(line, LCD_LINES - 1))
-
-def make_display_sysex_message(line, message):
-    return make_mcu_display_header(line) + message + (0xF7,)
-
-class Content:
-    lines = [""] * 4
+NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 SESSION_RING = "default"
 MASTER_VOLUME = "volume"
@@ -34,6 +28,30 @@ DEVICE_CONTROL = "device"
 CLIP_CONTROL = "clip"
 BROWSER = "browser"
 
+def make_mcu_display_header(line):
+    return (0xF0, 0x00, 0x00, 0x66, 0x17, 0x12, 28 * min(line, LCD_LINES - 1))
+
+def make_display_sysex_message(line, message):
+    return make_mcu_display_header(line) + message + (0xF7,)
+
+def try_get_attr(obj, attr, default = None):
+    if obj != None:
+        return getattr(obj, attr)
+    else:
+        return default
+    
+def adjust_gain_string(gain_string):
+    if len(gain_string) > 0:
+        gain_string = gain_string[:-3]
+        if gain_string[0] != "-":
+            gain_string = " " + gain_string
+        if len(gain_string) > 6:
+            gain_string = gain_string[:6]
+
+    return gain_string
+
+class Content:
+    lines = [""] * 4
 
 class Notifications(DefaultNotifications):
 
@@ -61,22 +79,14 @@ class Notifications(DefaultNotifications):
         class Pad(DefaultNotifications.DrumGroup.Pad):
             select = DefaultNotifications.DefaultText()
 
-
-def try_get_attr(obj, attr, default = None):
-    if obj != None:
-        return getattr(obj, attr)
-    else:
-        return default
-    
-def adjust_gain_string(gain_string):
-    if len(gain_string) > 0:
-        gain_string = gain_string[:-3]
-        if gain_string[0] != "-":
-            gain_string = " " + gain_string
-        if len(gain_string) > 6:
-            gain_string = gain_string[:6]
-
-    return gain_string
+    class Simpler(DefaultNotifications.Simpler):
+        class Slice(DefaultNotifications.Simpler.Slice):
+            select = lambda index: f"Slice {index}({pitch_index_to_string(int(index) - 1 + BASE_SLICING_NOTE, NOTES)})\n selected"
+            select: "Notification[Fn[str]]"
+            
+    class Keyboard:
+        select = lambda note: f"Note {pitch_index_to_string(note, NOTES)}\nselected"
+        select: "Notification[Fn[int]]"
 
 def create_root_view():
     logger.info("Init display")
@@ -179,7 +189,7 @@ def create_root_view():
                 content.lines[2] = f"{state.transport.song_tempo:.2f} BPM"
             elif encoder_mode == CLIP_SCALE:
                 content.lines[0] = f"Scale({'On' if state.scale_system.scale_mode else 'Off'}):{state.scale_system.scale_name}"
-                content.lines[2] = f"Root Note:{state.scale_system.root_note}"
+                content.lines[2] = f"Root Note:{NOTES[state.scale_system.root_note]}"
         return content
 
     def should_render_knob_control_view(state):

@@ -13,8 +13,6 @@ from Live import Song # type: ignore
 
 from .Logger import logger
 
-SCALE_ROOT_NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-
 class ScaleSystemComponent(Component, Renderable):
     select_encoder = StepEncoderControl(num_steps = 64)
     toggle_button = ButtonControl(color = None)
@@ -56,7 +54,7 @@ class ScaleSystemComponent(Component, Renderable):
     
     @listenable_property
     def root_note(self):
-        return SCALE_ROOT_NOTES[self.song.root_note]
+        return self.song.root_note
 
     @scale_mode.setter
     def scale_mode(self, mode):
