@@ -25,7 +25,9 @@ from ableton.v3.control_surface.default_bank_definitions import (
 )
 from ableton.v3.control_surface.parameter_mapping_sensitivities import (
     DEFAULT_CONTINUOUS_PARAMETER_SENSITIVITY,
-    DEFAULT_QUANTIZED_PARAMETER_SENSITIVITY
+    DEFAULT_QUANTIZED_PARAMETER_SENSITIVITY,
+    create_sensitivities,
+    parameter_mapping_sensitivities,
 )
 from ableton.v3.control_surface.device_decorators import (
     DeviceDecoratorFactory,
@@ -107,11 +109,23 @@ CUSTOM_BANK_DEFINITIONS["OriginalSimpler"][BANK_MAIN_KEY] = {
     )
 }
 
+def custom_mapping_sensitivities(original):
+    def inner(parameter, device):
+        default = original(parameter, device)
+        if liveobj_valid(parameter):
+            if device.class_name == "OriginalSimpler" and parameter.name == "Mode":
+                default = tuple(x * 6 for x in default)
+        
+        return default
+    
+    return inner
+
 class CustomDeviceComponent(KnobTouchStateMixin, DeviceComponent):
     erase_button = ButtonControl(color = None)
     
     def __init__(self, name = "Device", *a, **k):
         super().__init__(name, *a, **k)
+        self._parameter_mapping_sensitivities = custom_mapping_sensitivities(self._parameter_mapping_sensitivities)
         self.register_slot(self, self.notify_current_parameters, "parameters")
 
     @listenable_property
