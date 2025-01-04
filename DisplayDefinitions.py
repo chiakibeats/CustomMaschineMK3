@@ -195,10 +195,10 @@ def create_root_view():
             index = state.mixer.active_index
             if index != -1:
                 parameter = state.elements.knob_touch_buttons[index].controlled_parameter
-                track_name = liveobj_name(parameter_owner(parameter))
-                param_name = liveobj_name(parameter)
-                value = get_display_value(parameter)
                 if liveobj_valid(parameter):
+                    track_name = liveobj_name(parameter_owner(parameter))
+                    param_name = liveobj_name(parameter)
+                    value = get_display_value(parameter)
                     content.lines[0 if index < 4 else 1] = f"{track_name}"
                     content.lines[2 if index < 4 else 3] = f"{param_name}:{value}"
 
