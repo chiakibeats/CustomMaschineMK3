@@ -5,7 +5,7 @@ from ableton.v3.control_surface.display import DefaultNotifications, DisplaySpec
 from ableton.v3.control_surface.display.view import View, CompoundView, NotificationView
 from ableton.v3.control_surface.display.text import adjust_string
 from ableton.v3.control_surface.display.notifications.type_decl import Fn, Notification
-from ableton.v3.live import liveobj_name, liveobj_valid
+from ableton.v3.live import liveobj_name, liveobj_valid, parameter_owner
 from ableton.v3.base import pitch_index_to_string
 
 from Live.DeviceParameter import DeviceParameter # type: ignore
@@ -44,7 +44,7 @@ def try_get_attr(obj, attr, default = None):
         return default
     
 def adjust_gain_string(gain_string):
-    if len(gain_string) > 0:
+    if str.find(gain_string, "dB") != -1:
         gain_string = gain_string[:-3]
         if gain_string[0] != "-":
             gain_string = " " + gain_string
@@ -79,6 +79,9 @@ class Notifications(DefaultNotifications):
 
     class Track(DefaultNotifications.Track):
         lock = DefaultNotifications.DefaultText()
+
+    class Clip(DefaultNotifications.Clip):
+        select = DefaultNotifications.DefaultText()
 
     class Recording(DefaultNotifications.Recording):
         fixed_length = "Fixed length rec\n{}".format
@@ -177,15 +180,27 @@ def create_root_view():
         content.lines[3] = f"{item_name[LCD_LINE_LENGTH - 1:]}"
 
     def knob_control_view(state, content):
-        if state.buttons_and_knobs_modes.selected_mode == DEVICE_CONTROL and liveobj_valid(state.device.device):
-            active_index = state.device.active_parameter_index
-            if active_index != -1:
-                info = state.device.current_parameters[active_index]
+        #logger.info(f"index = {state.knob_touch_state.active_index}")
+        display_mode = state.buttons_and_knobs_modes.selected_mode
+        if display_mode == DEVICE_CONTROL and liveobj_valid(state.device.device):
+            index = state.device.active_index
+            if index != -1:
+                info = state.device.current_parameters[index]
                 if liveobj_valid(info.parameter):
                     name = info.parameter.name
                     value = get_display_value(info.parameter)
-                    content.lines[0 if active_index < 4 else 1] = name
-                    content.lines[2 if active_index < 4 else 3] = value
+                    content.lines[0 if index < 4 else 1] = name
+                    content.lines[2 if index < 4 else 3] = value
+        elif display_mode == TRACK_MIXER:
+            index = state.mixer.active_index
+            if index != -1:
+                parameter = state.elements.knob_touch_buttons[index].controlled_parameter
+                track_name = liveobj_name(parameter_owner(parameter))
+                param_name = liveobj_name(parameter)
+                value = get_display_value(parameter)
+                if liveobj_valid(parameter):
+                    content.lines[0 if index < 4 else 1] = f"{track_name}"
+                    content.lines[2 if index < 4 else 3] = f"{param_name}:{value}"
 
         if state.elements.encodercap.is_pressed:
             encoder_mode = state.encoder_modes.selected_mode

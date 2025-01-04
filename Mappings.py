@@ -260,14 +260,13 @@ def create_mappings(surface):
             mute_buttons = "left_half_track_buttons_with_mute",
             solo_buttons = "left_half_track_buttons_with_solo",
             track_select_buttons = "right_half_track_buttons",
-            volume_touch_controls = "right_half_knob_touch_buttons",
-            pan_or_send_touch_controls = "left_half_knob_touch_buttons",
+            knob_touch_buttons = "knob_touch_buttons",
             erase_button = "erase"),
         device = dict(
             modes = [
                 dict(component = "Device",
                     parameter_controls = "knobs",
-                    parameter_touch_controls = "knob_touch_buttons",
+                    knob_touch_buttons = "knob_touch_buttons",
                     prev_bank_button = "left",
                     next_bank_button = "right",
                     bank_select_buttons = "track_buttons_with_macro",
