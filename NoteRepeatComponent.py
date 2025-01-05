@@ -4,6 +4,7 @@ from ableton.v3.control_surface.controls import (
     SendValueEncoderControl,
     control_matrix
 )
+from ableton.v3.control_surface.display import Renderable
 from ableton.v3.base import depends
 
 from .Logger import logger
@@ -14,14 +15,14 @@ def beat_ratio(denominator):
 # Upper group buttons mapped to normal repeat rates
 # Lower group buttons mapped to triplet repeat rates 
 REPEAT_RATES = [
-    beat_ratio(4),
-    beat_ratio(8),
-    beat_ratio(16),
-    beat_ratio(32),
-    beat_ratio(6),
-    beat_ratio(12),
-    beat_ratio(24),
-    beat_ratio(48),
+    (beat_ratio(4), "1/4"),
+    (beat_ratio(8), "1/8"),
+    (beat_ratio(16), "1/16"),
+    (beat_ratio(32), "1/32"),
+    (beat_ratio(6), "1/4T"),
+    (beat_ratio(12), "1/8T"),
+    (beat_ratio(24), "1/16T"),
+    (beat_ratio(48), "1/32T"),
 ]
 
 class CustomSendValueEncoderControl(SendValueEncoderControl):
@@ -40,7 +41,7 @@ class CustomSendValueEncoderControl(SendValueEncoderControl):
 # This object has 2 property, "enabled" and "repeat_rate"
 # enabled: Enable or disable note repeat function, type is boolean
 # repeat_rate: Interval of repetition, type is float, 1.0 means 1/4 synced length in ableton
-class NoteRepeatComponent(Component):
+class NoteRepeatComponent(Component, Renderable):
     repeat_button = ButtonControl(color = "NoteRepeat.Off", on_color = "NoteRepeat.On")
     lock_button = ButtonControl(color = "NoteRepeat.LockOff", on_color = "NoteRepeat.LockOn")
     rate_select_mode_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
@@ -76,7 +77,8 @@ class NoteRepeatComponent(Component):
         
     @lock_button.pressed
     def _on_lock_button_pressed(self, button):
-        self._lock_enabled = True
+        if self._enabled:
+            self._lock_enabled = True
         self._update_led_feedback()
 
     @rate_select_mode_button.pressed
@@ -91,10 +93,11 @@ class NoteRepeatComponent(Component):
     def _on_rate_selector_changed(self, button):
         row, column = button.coordinate
         index = min(row * self.rate_select_buttons.width + column, len(REPEAT_RATES) - 1)
-        logger.info(f"Repeat rate select = {index}")
-        self._note_repeat.repeat_rate = REPEAT_RATES[index]
+        rate = REPEAT_RATES[index]
+        self._note_repeat.repeat_rate = rate[0]
         self._selected_index = index
         self._update_led_feedback()
+        self.notify(self.notifications.NoteRepeat.repeat_rate, rate[1])
 
     def _update_led_feedback(self):
         self.repeat_button.is_on = self._enabled
@@ -111,5 +114,5 @@ class NoteRepeatComponent(Component):
     def update(self):
         super().update()
         self._note_repeat.enabled = self._enabled
-        self._note_repeat.repeat_rate = REPEAT_RATES[self._selected_index]
+        self._note_repeat.repeat_rate = REPEAT_RATES[self._selected_index][0]
         self._update_led_feedback()

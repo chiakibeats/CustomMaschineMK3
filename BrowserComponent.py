@@ -1,5 +1,6 @@
 from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.display import Renderable
+from ableton.v3.control_surface.mode import pop_last_mode
 from ableton.v3.control_surface.controls import (
     StepEncoderControl,
     ButtonControl,
@@ -15,32 +16,72 @@ from . import Config
 COLLECTION_COLORS = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Gray"]
 
 class BrowserCollectionRootItem:
-    name = "Collections"
-    children = []
-    is_folder = True
-    is_device = False
-    is_loadable = False
-    uri = ""
 
     def __init__(self, browser):
-        self.uri = type(self).__name__
+        self.name = "Collections"
         self.children = []
+        self.is_folder = True
+        self.is_device = False
+        self.is_loadable = False
+        self.uri = type(self).__name__
+
         for item in browser.colors:
             self.children.append(item)
 
 class BrowserUserFoldersRootItem:
-    name = "User Files"
-    children = []
-    is_folder = True
-    is_device = False
-    is_loadable = False
-    uri = ""
 
     def __init__(self, browser):
-        self.uri = type(self).__name__
+        self.name = "User Files"
         self.children = []
+        self.is_folder = True
+        self.is_device = False
+        self.is_loadable = False
+        self.uri = type(self).__name__
+
         for item in browser.user_folders:
             self.children.append(item)
+
+class WrapBrowserItem:
+    
+    def __init__(self, item, name):
+        self._wrapped_item = item
+        self._name = name
+    
+    @property
+    def children(self):
+        return self._wrapped_item.children
+
+    @property
+    def is_device(self):
+        return self._wrapped_item.is_device
+
+    @property
+    def is_folder(self):
+        return self._wrapped_item.is_folder
+
+    @property
+    def is_loadable(self):
+        return self._wrapped_item.is_loadable
+
+    @property
+    def is_selected(self):
+        return self._wrapped_item.is_selected
+
+    @property
+    def iter_children(self):
+        return self._wrapped_item.iter_children
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def source(self):
+        return self._wrapped_item.source
+
+    @property
+    def uri(self):
+        return self._wrapped_item.uri
 
 class BrowserRootItem:
     name = "Browser Top"
@@ -53,19 +94,20 @@ class BrowserRootItem:
     def __init__(self, browser, target_is_midi_track = True):
         self.uri = type(self).__name__
         self.children = [BrowserCollectionRootItem(browser)]
+        audio_effects = WrapBrowserItem(browser.audio_effects, "Audio Effects")
         if target_is_midi_track:
-            self.children.append(browser.sounds)
-            self.children.append(browser.drums)
-            self.children.append(browser.instruments)
-            self.children.append(browser.audio_effects)
-            self.children.append(browser.midi_effects)
+            self.children.append(WrapBrowserItem(browser.sounds, "Sounds"))
+            self.children.append(WrapBrowserItem(browser.drums, "Drums"))
+            self.children.append(WrapBrowserItem(browser.instruments, "Instruments"))
+            self.children.append(audio_effects)
+            self.children.append(WrapBrowserItem(browser.midi_effects, "MIDI Effects"))
         else:
-            self.children.append(browser.audio_effects)
+            self.children.append(audio_effects)
 
         self.children += [browser.max_for_live,
-            browser.plugins,
+            WrapBrowserItem(browser.plugins, "Plug-Ins"),
             browser.packs,
-            browser.current_project,
+            WrapBrowserItem(browser.current_project, "Current Project"),
             BrowserUserFoldersRootItem(browser)]
 
 class BrowserComponent(Component, Renderable):
@@ -80,28 +122,41 @@ class BrowserComponent(Component, Renderable):
     select_folder_buttons = control_list(ButtonControl)
 
     _selected_item_index = 0
+    _selected_item_name = None
     _preview_enabled = True
     _parent_folder = None
+    _parent_folder_name = None
     _root_item = None
     _folder_stack = []
     _browser = None
     _target_track = None
+    _close_browser = False
+    _buttons_and_knobs_modes = None
 
-    @listenable_property
+    @property
     def selected_item(self):
         if len(self.parent_folder.children) > 0:
             return self.parent_folder.children[self._selected_item_index]
         else:
             return None
-    
+        
     @listenable_property
+    def selected_item_name(self):
+        return self._selected_item_name
+    
+    @property
     def parent_folder(self):
         return self._parent_folder
     
     @parent_folder.setter
     def parent_folder(self, folder):
         self._parent_folder = folder
-        self.notify_parent_folder()
+        self._parent_folder_name = folder.name
+        self.notify_parent_folder_name()
+
+    @listenable_property
+    def parent_folder_name(self):
+        return self._parent_folder_name
 
     @depends(target_track = None)
     def __init__(self, name = "Browser", target_track = None, *a, **k):
@@ -113,6 +168,9 @@ class BrowserComponent(Component, Renderable):
         self.preview_volume_encoder.mapped_parameter = self.song.master_track.mixer_device.cue_volume
         self._update_preview_state(True)
         self._update_led_feedback()
+
+    def set_buttons_and_knobs_modes(self, modes):
+        self._buttons_and_knobs_modes = modes
 
     def _update_folder_stack(self, new_root_item, current_stack):
         # Update stack items based on its URI
@@ -149,9 +207,8 @@ class BrowserComponent(Component, Renderable):
 
         self._root_item = new_root_item
         self._folder_stack = new_folder_stack
-        self._selected_item_index = new_selected_index
-        self.notify_parent_folder()
-        self.notify_selected_item()
+        self.parent_folder = self._folder_stack[-1]
+        self._set_item_index(new_selected_index)
 
     def update(self):
         super().update()
@@ -161,8 +218,9 @@ class BrowserComponent(Component, Renderable):
     def _set_item_index(self, new_index, force_preview = False):
         old_index = self._selected_item_index
         self._selected_item_index = new_index
-        logger.info(f"Select item {self.selected_item.name if self.selected_item else None}")
-        self.notify_selected_item()
+        self._selected_item_name = self.selected_item.name if self.selected_item else None
+        logger.info(f"Select item {self._selected_item_name}")
+        self.notify_selected_item_name()
 
         # Preview item function is blocking call (time depends on sample length and storage bandwidth)
         # We need to finish other tasks before item preview
@@ -226,8 +284,16 @@ class BrowserComponent(Component, Renderable):
             if item.is_loadable:
                 logger.info(f"Load item {self.selected_item.name}")
                 self.application.browser.load_item(self.selected_item)
+                self._close_browser = True
             elif item.is_folder or len(item.children) > 0:
                 self.enter_folder(item)
+
+    @load_button.released
+    def _on_load_button_released(self, button):
+        if self._close_browser:
+            if self._buttons_and_knobs_modes != None:
+                pop_last_mode(self._buttons_and_knobs_modes, "browser")
+            self._close_browser = False
 
     @enter_folder_button.pressed
     def _on_enter_folder_button_pressed(self, button):

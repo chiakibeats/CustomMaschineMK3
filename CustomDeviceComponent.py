@@ -25,7 +25,9 @@ from ableton.v3.control_surface.default_bank_definitions import (
 )
 from ableton.v3.control_surface.parameter_mapping_sensitivities import (
     DEFAULT_CONTINUOUS_PARAMETER_SENSITIVITY,
-    DEFAULT_QUANTIZED_PARAMETER_SENSITIVITY
+    DEFAULT_QUANTIZED_PARAMETER_SENSITIVITY,
+    create_sensitivities,
+    parameter_mapping_sensitivities,
 )
 from ableton.v3.control_surface.device_decorators import (
     DeviceDecoratorFactory,
@@ -39,6 +41,7 @@ from ableton.v2.control_surface import (
     WavetableDeviceDecorator
 )
 
+from .KnobTouchStateMixin import KnobTouchStateMixin
 from .Logger import logger
 
 # Device decorator is extender for device object
@@ -246,34 +249,30 @@ CUSTOM_BANK_DEFINITIONS["OriginalSimpler"] = IndexedDict((
     ),
 ))
 
-class CustomDeviceComponent(DeviceComponent):
-    _parameter_touch_controls = control_list(ButtonControl, DEFAULT_BANK_SIZE)
+def custom_mapping_sensitivities(original):
+    def inner(parameter, device):
+        default = original(parameter, device)
+        if liveobj_valid(parameter):
+            if device.class_name == "OriginalSimpler" and parameter.name == "Mode":
+                default = tuple(x * 6 for x in default)
+        
+        return default
+    
+    return inner
+
+class CustomDeviceComponent(KnobTouchStateMixin, DeviceComponent):
     erase_button = ButtonControl(color = None)
-    _current_touched_index = -1
     
     def __init__(self, name = "Device", *a, **k):
         super().__init__(name, *a, **k)
+        self._parameter_mapping_sensitivities = custom_mapping_sensitivities(self._parameter_mapping_sensitivities)
+        self.register_slot(self, self.notify_current_parameters, "parameters")
 
-    def set_parameter_touch_controls(self, controls):
-        self._parameter_touch_controls.set_control_element(controls)
-        
-    @_parameter_touch_controls.pressed
-    def _on_parameter_touch_pressed(self, button):
-        if self._current_touched_index == -1:
-            self._current_touched_index = button.index
-            touched_parameter = self.parameters[button.index]
+    @listenable_property
+    def current_parameters(self):
+        return self._provided_parameters
 
-            if touched_parameter is not None:
-                name = touched_parameter.name
-                self._show_message(f"Knob {button.index + 1} Parameter Name: {name}")
-    
-    @_parameter_touch_controls.released
-    def _on_parameter_touch_released(self, button):
-        if button == self._parameter_touch_controls[self._current_touched_index]:
-            self._current_touched_index = -1
-
-    @_parameter_touch_controls.double_clicked
-    def _on_parameter_touch_double_clicked(self, button):
+    def on_knob_touch_double_clicked(self, button):
         if self.erase_button.is_pressed:
             if button.index < len(self.parameters):
                 parameter = self.parameters[button.index].parameter

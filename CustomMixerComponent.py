@@ -20,6 +20,8 @@ from ableton.v2.control_surface.control import (
     MatrixControl
 )
 
+from ableton.v3.control_surface.display import Renderable
+
 from ableton.v2.control_surface import (
     WrappingParameter
 )
@@ -34,14 +36,13 @@ from ableton.v3.base import (
 
 from ableton.v3.live import liveobj_valid
 
+from .KnobTouchStateMixin import KnobTouchStateMixin
 from .Logger import logger
 
-class CustomMixerComponent(MixerComponent):
+class CustomMixerComponent(KnobTouchStateMixin, MixerComponent, Renderable):
     pan_or_send_controls = control_list(MappedControl)
     prev_control_button = ButtonControl()
     next_control_button = ButtonControl()
-    volume_touch_controls = control_list(ButtonControl)
-    pan_or_send_touch_controls = control_list(ButtonControl)
     erase_button = ButtonControl(color = None)
     clear_all_solo_button = ButtonControl(color = None)
     clear_all_mute_button = ButtonControl(color = None)
@@ -62,8 +63,8 @@ class CustomMixerComponent(MixerComponent):
     def set_pan_or_send_controls(self, controls):
         self.pan_or_send_controls.set_control_element(controls)
         self._update_control_mapped_parameter(self.control_index)
-        if controls != None:
-            self._show_current_control_name()
+        # if controls != None:
+        #     self._show_current_control_name()
     
     def set_prev_control_button(self, button):
         self.prev_control_button.set_control_element(button)
@@ -71,11 +72,8 @@ class CustomMixerComponent(MixerComponent):
     def set_next_control_button(self, button):
         self.next_control_button.set_control_element(button)
 
-    def set_volume_touch_controls(self, buttons):
-        self.volume_touch_controls.set_control_element(buttons)
-
-    def set_pan_or_send_touch_controls(self, buttons):
-        self.pan_or_send_touch_controls.set_control_element(buttons)
+    def set_knob_touch_buttons(self, buttons):
+        self.knob_touch_buttons.set_control_element(buttons)
 
     def set_erase_button(self, button):
         self.erase_button.set_control_element(button)
@@ -96,6 +94,11 @@ class CustomMixerComponent(MixerComponent):
         self._control_index = clamp(index, 0, self._control_count - 1)
         if changed:
             self._update_control_mapped_parameter(self._control_index)
+        self.notify_control_name()
+    
+    @listenable_property
+    def control_name(self):
+        return self._display_names[self._control_index]
     
     @prev_control_button.pressed
     def _on_prev_button_pressed(self, button):
@@ -104,7 +107,7 @@ class CustomMixerComponent(MixerComponent):
         else:
             self.control_index -= 1
 
-        self._show_current_control_name()
+        # self._show_current_control_name()
 
     @next_control_button.pressed
     def _on_next_button_pressed(self, button):
@@ -113,21 +116,18 @@ class CustomMixerComponent(MixerComponent):
         else:
             self.control_index += 1
 
-        self._show_current_control_name()
+        # self._show_current_control_name()
 
-    @volume_touch_controls.double_clicked
-    def _on_volume_touch_double_clicked(self, button):
+    def on_knob_touch_double_clicked(self, button):
         if self.erase_button.is_pressed:
-            parameter = self.channel_strip(button.index).volume_control.mapped_parameter
-            if liveobj_valid(parameter) and not parameter.is_quantized:
-                parameter.value = parameter.default_value
-
-    @pan_or_send_touch_controls.double_clicked
-    def _on_pan_or_send_touch_double_clicked(self, button):
-        if self.erase_button.is_pressed:
-            parameter = self.pan_or_send_controls[button.index].mapped_parameter
-            if liveobj_valid(parameter) and not parameter.is_quantized:
-                parameter.value = parameter.default_value
+            if button.index < self._track_count:
+                parameter = self.pan_or_send_controls[button.index].mapped_parameter
+                if liveobj_valid(parameter) and not parameter.is_quantized:
+                    parameter.value = parameter.default_value
+            else:
+                parameter = self.channel_strip(button.index - self._track_count).volume_control.mapped_parameter
+                if liveobj_valid(parameter) and not parameter.is_quantized:
+                    parameter.value = parameter.default_value
 
     @clear_all_solo_button.pressed
     def _on_clear_all_solo_pressed(self, button):
@@ -171,4 +171,4 @@ class CustomMixerComponent(MixerComponent):
         self._control_count = 1 + len(self.song.return_tracks)
         if self.control_index >= self._control_count:
             self.control_index = self._control_count - 1
-            self._show_current_control_name()
+            # self._show_current_control_name()

@@ -36,9 +36,8 @@ from ableton.v3.base import (
 )
 
 from ableton.v3.live.util import find_parent_track, liveobj_valid, clamp
-
+from ableton.v3.control_surface.display import Renderable
 from ableton.v3.control_surface.parameter_mapping_sensitivities import DEFAULT_CONTINUOUS_PARAMETER_SENSITIVITY, DEFAULT_QUANTIZED_PARAMETER_SENSITIVITY
-
 from ableton.v3.control_surface.components.device import get_on_off_parameter
 
 from .Logger import logger
@@ -46,7 +45,7 @@ from .Logger import logger
 class DeviceSelectControl(ScrollComponent):
     pass
 
-class CustomDeviceNavigationComponent(ScrollComponent):
+class CustomDeviceNavigationComponent(ScrollComponent, Renderable):
     bank_size = DEFAULT_BANK_SIZE
     select_buttons = control_list(ButtonControl, control_count = bank_size, color = "DefaultButton.Off", on_color = "DefaultButton.On")
     on_off_buttons = control_list(MappedButtonControl, control_count = bank_size, color = "DefaultButton.Off", on_color = "DefaultButton.On")
@@ -119,7 +118,9 @@ class CustomDeviceNavigationComponent(ScrollComponent):
             if self.delete_button.is_pressed:
                 self._target_track.target_track.delete_device(device_index)
             else:
-                self.song.view.select_device(self.devices[device_index])
+                device = self.devices[device_index]
+                self.song.view.select_device(device)
+                self.notify(self.notifications.Device.select, device.name)
 
     @listens("target_track")
     def _on_target_track_changed(self):

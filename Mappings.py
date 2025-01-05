@@ -1,7 +1,21 @@
 from ableton.v3.control_surface.component_map import ComponentMap
-from ableton.v3.control_surface.mode import ToggleBehaviour, MomentaryBehaviour, LatchingBehaviour, ImmediateBehaviour
+from ableton.v3.control_surface.mode import (
+    ToggleBehaviour,
+    MomentaryBehaviour,
+    LatchingBehaviour as LatchingBehaviourBase,
+    ImmediateBehaviour
+)
 
 from . import Config
+
+class LatchingBehaviour(LatchingBehaviourBase):
+    def __init__(self, return_on_hold = False):
+        super().__init__()
+        self._return_on_hold = return_on_hold
+
+    def release_delayed(self, component, mode):
+        if self._return_on_hold:
+            super().release_delayed(component, mode)
 
 def create_mappings(surface):
     mappings = {}
@@ -75,8 +89,7 @@ def create_mappings(surface):
                 )]),
         volume = dict(
             component = "Master_Volume",
-            coarse_volume = "encoder",
-            fine_volume = "encoder_with_shift",
+            master_volume = "encoder",
             reset_button = "encoderpush"),
         swing = dict(
             component = "Groove_Pool",
@@ -98,12 +111,11 @@ def create_mappings(surface):
         scale = dict(
             component = "Scale_System",
             select_encoder = "encoder",
-            root_note_encoder = "encoder_with_shift",
             toggle_button = "encoderpush",
-            indicator_button_1 = "encoderup",
-            indicator_button_2 = "encoderdown",
-            indicator_button_3 = "encoderleft",
-            indicator_button_4 = "encoderright"),
+            up_button = "encoderup",
+            down_button = "encoderdown",
+            left_button = "encoderleft",
+            right_button = "encoderright"),
         browser = dict(
             component = "Browser",
             select_encoder = "encoder",
@@ -248,14 +260,13 @@ def create_mappings(surface):
             mute_buttons = "left_half_track_buttons_with_mute",
             solo_buttons = "left_half_track_buttons_with_solo",
             track_select_buttons = "right_half_track_buttons",
-            volume_touch_controls = "right_half_knob_touch_buttons",
-            pan_or_send_touch_controls = "left_half_knob_touch_buttons",
+            knob_touch_buttons = "knob_touch_buttons",
             erase_button = "erase"),
         device = dict(
             modes = [
                 dict(component = "Device",
                     parameter_controls = "knobs",
-                    parameter_touch_controls = "knob_touch_buttons",
+                    knob_touch_buttons = "knob_touch_buttons",
                     prev_bank_button = "left",
                     next_bank_button = "right",
                     bank_select_buttons = "track_buttons_with_macro",
@@ -275,10 +286,10 @@ def create_mappings(surface):
             mute_button = "track_buttons_raw[0]",
             loop_button = "track_buttons_raw[1]",
             crop_button = "track_buttons_raw[2]",
-            launch_mode_button = "track_buttons_raw[3]",
-            legato_button = "track_buttons_raw[4]",
-            warp_button = "track_buttons_raw[5]",
-            ram_mode_button = "track_buttons_raw[6]",
+            launch_mode_button = "track_buttons_raw[4]",
+            launch_quantize_button = "track_buttons_raw[5]",
+            legato_button = "track_buttons_raw[6]",
+            warp_button = "track_buttons_raw[7]",
             fine_grain_button = "macro",
             control_encoders = "knobs",
             encoder_touch_buttons = "knob_touch_buttons"
@@ -315,7 +326,8 @@ def create_mappings(surface):
     )
 
     mappings["Selected_Parameter"] = dict(
-        reset_value_button = "mod_with_erase"
+        reset_value_button = "mod_with_erase",
+        select_modifier = "mod"
     )
 
     mappings["Target_Track"] = dict(

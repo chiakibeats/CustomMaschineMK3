@@ -1,5 +1,6 @@
 from itertools import zip_longest
 from ableton.v3.base import listens, listens_group
+from ableton.v3.control_surface.skin import LiveObjSkinEntry
 from ableton.v3.control_surface.components import DrumGroupComponent
 from ableton.v3.control_surface.controls import (
     control_matrix,
@@ -33,6 +34,7 @@ class CustomDrumGroupComponent(ClipNotesSelectMixin, DrumGroupComponent):
     def set_drum_group_device(self, drum_group_device):
         super().set_drum_group_device(drum_group_device)
         self._on_chains_changed.replace_subjects(self._all_drum_pads)
+        self._on_chains_changed(None)
 
     def set_matrix(self, matrix):
         super().set_matrix(matrix)
@@ -62,7 +64,7 @@ class CustomDrumGroupComponent(ClipNotesSelectMixin, DrumGroupComponent):
             if intersects:
                 new_color += "Selected"
 
-            button.color = new_color
+            button.color = LiveObjSkinEntry(new_color, self._target_track.target_track)
 
     def _update_button_color(self, button):
         super()._update_button_color(button)

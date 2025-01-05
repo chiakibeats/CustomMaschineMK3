@@ -346,7 +346,7 @@ class MaschineLEDColors:
         # Used in custom component
         Group = BasicColors.OFF
         GroupSelected = make_color(WHITE, LEVEL_4)
-        GroupHasFilledPad = make_color(WHITE, LEVEL_2)
+        GroupHasFilledPad = make_keyboard_color
         GroupHasFilledPadSelected = make_color(WHITE, LEVEL_4)
         PadPressed = make_color(WHITE, LEVEL_4)
 

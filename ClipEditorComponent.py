@@ -1,8 +1,10 @@
 from functools import partial
-from math import modf
+from math import modf, ceil
 from ableton.v3.base import clamp, depends, listens, nop, sign, listenable_property, EventObject
+from ableton.v2.base import EventError
 from ableton.v2.control_surface import WrappingParameter, EnumWrappingParameter, IntegerParameter
 from ableton.v3.control_surface import ParameterInfo
+from ableton.v3.control_surface.display import Renderable
 from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.components.device import DEFAULT_BANK_SIZE
 from ableton.v3.control_surface.controls import (
@@ -194,6 +196,14 @@ class CustomEnumWrappingParameter(EnumWrappingParameter):
         super().set_property_host(new_host)
         self._parent = new_host
         self.notify_value()
+
+    def set_values_host(self, new_host):
+        self._values_host = new_host
+        try:
+            self.register_slot(self._values_host, self.notify_value_items, self._values_property)
+        except EventError:
+            pass
+
     
 # Max clip length is 1 year in 120BPM (taken from Push 2)
 MAX_CLIP_LENGTH = 365 * 24 * 3600 * 2.0
@@ -235,6 +245,7 @@ class CustomValueStepper():
     @step_count.setter
     def step_count(self, value):
         self._step_count = value
+        self.reset()
 
     def update(self, value):
         if sign(value) != sign(self._step_value):
@@ -252,6 +263,13 @@ class CustomValueStepper():
     def reset(self):
         self._step_value = 0.0
 
+BAR_LENGTH_VALUE_STEPS = 16
+TIME_LENGTH_FINE_STEPS = 32
+COARSE_TIME_RESOLUTION = 0.1
+FINE_TIME_RESOLUTION = 0.001
+COARSE_GAIN_RESOLUTION = 0.005
+FINE_GAIN_RESOLUTION = 0.001
+
 class EncoderCallbackSet:
     value_changed = None
     touched = None
@@ -262,41 +280,32 @@ class EncoderCallbackSet:
         self.touched = touched
         self.released = released
 
-class ClipEditorComponent(Component):
+class ClipEditorComponent(Component, Renderable):
     bank_size = DEFAULT_BANK_SIZE
 
     mute_button = MappedButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
     loop_button = MappedButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
     crop_button = ButtonControl(color = "DefaultButton.Off", pressed_color = "DefaultButton.On")
-    launch_mode_button = MappedButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
+    launch_mode_button = MappedButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.Off", pressed_color = "DefaultButton.On")
+    launch_quantize_button = MappedButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.Off", pressed_color = "DefaultButton.On")
     legato_button = MappedButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
     warp_button = MappedButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
-    ram_mode_button = MappedButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
 
     fine_grain_button = ButtonControl(color = None)
     control_encoders = control_list(EncoderControl, control_count = bank_size)
     encoder_touch_buttons = control_list(ButtonControl, control_count = bank_size, color = None)
 
-    _mute_parameter = None
-    _loop_parameter = None
-    _launch_mode_parameter = None
-    _legato_parameter = None
-    _warp_parameter = None
-    _warp_mode_parameter = None
-    _ram_mode_parameter = None
-
-    _position_value_stepper = CustomValueStepper(8)
-    _loop_start_value_stepper = CustomValueStepper(8)
-    _loop_end_value_stepper = CustomValueStepper(8)
-    _start_marker_value_stepper = CustomValueStepper(8)
-    _launch_quantization_value_stepper = CustomValueStepper(4)
-    _pitch_value_stepper = CustomValueStepper(8)
+    _position_value_stepper = CustomValueStepper(16)
+    _loop_start_value_stepper = CustomValueStepper(BAR_LENGTH_VALUE_STEPS)
+    _loop_end_value_stepper = CustomValueStepper(BAR_LENGTH_VALUE_STEPS)
+    _start_marker_value_stepper = CustomValueStepper(BAR_LENGTH_VALUE_STEPS)
+    _pitch_value_stepper = CustomValueStepper(16)
     _warp_mode_value_stepper = CustomValueStepper(4)
     _gain_value_stepper = CustomValueStepper(64)
 
     _nudge_offset_value_stepper = CustomValueStepper(32)
     _note_length_value_stepper = CustomValueStepper(32)
-    _note_step_length_value_stepper = CustomValueStepper(8)
+    _note_step_length_value_stepper = CustomValueStepper(16)
     _note_pitch_value_stepper = CustomValueStepper(16)
     _note_velocity_value_stepper = CustomValueStepper(32)
 
@@ -305,48 +314,20 @@ class ClipEditorComponent(Component):
     _step_sequence = None
 
     _empty_encoder_callbacks = [EncoderCallbackSet()] * bank_size
-
-    _looped_audio_clip_encoder_callbacks = None
-    _nonlooped_audio_clip_encoder_callbacks = None
-
-    _looped_midi_clip_encoder_callbacks = None
-    _nonlooped_midi_clip_encoder_callbacks = None
-
     _encoder_callbacks = _empty_encoder_callbacks
 
     @depends(target_track = None)
     def __init__(self, name = "Clip_Editor", target_track = None, *a, **k):
         super().__init__(name, *a, **k)
         self._target_track = target_track
-
-        self._mute_parameter = BoolWrappingParameter(None, "muted", bool_on_off, True)
-        self._loop_parameter = BoolWrappingParameter(None, "looping", bool_on_off)
-        self._launch_mode_parameter = CustomEnumWrappingParameter(None, LaunchModeList, "values", "launch_mode")
-        self._legato_parameter = BoolWrappingParameter(None, "legato", bool_on_off)
-        self._warp_parameter = BoolWrappingParameter(None, "warping", bool_on_off)
-        self._warp_mode_parameter = CustomEnumWrappingParameter(None, self, "available_warp_modes", "warp_mode", int, self._to_warp_mode, self._from_warp_mode)
-        self._ram_mode_parameter = BoolWrappingParameter(None, "ram_mode", bool_on_off)
-
-        self.mute_button.mapped_parameter = self._mute_parameter
-        self.loop_button.mapped_parameter = self._loop_parameter
-        self.launch_mode_button.mapped_parameter = self._launch_mode_parameter
-        self.legato_button.mapped_parameter = self._legato_parameter
-        self.warp_button.mapped_parameter = self._warp_parameter
-        self.ram_mode_button.mapped_parameter = self._ram_mode_parameter
-
-        self._on_target_track_changed.subject = self._target_track
-        self._on_target_clip_changed.subject = self._target_track
-        self._on_target_track_changed()
-        self._on_target_clip_changed()
-
         self._looped_audio_clip_encoder_callbacks = [
             EncoderCallbackSet(self._change_position),
             EncoderCallbackSet(self._change_loop_end),
             EncoderCallbackSet(self._change_start_marker),
-            EncoderCallbackSet(self._change_launch_quantization),
-            EncoderCallbackSet(self._change_warp_mode),
-            EncoderCallbackSet(self._change_pitch),
+            EncoderCallbackSet(),
             EncoderCallbackSet(self._change_gain),
+            EncoderCallbackSet(self._change_pitch),
+            EncoderCallbackSet(self._change_warp_mode),
             EncoderCallbackSet(),
         ]
 
@@ -354,10 +335,10 @@ class ClipEditorComponent(Component):
             EncoderCallbackSet(self._change_loop_start),
             EncoderCallbackSet(self._change_loop_end),
             EncoderCallbackSet(),
-            EncoderCallbackSet(self._change_launch_quantization),
-            EncoderCallbackSet(self._change_warp_mode),
-            EncoderCallbackSet(self._change_pitch),
+            EncoderCallbackSet(),
             EncoderCallbackSet(self._change_gain),
+            EncoderCallbackSet(self._change_pitch),
+            EncoderCallbackSet(self._change_warp_mode),
             EncoderCallbackSet(),
         ]
 
@@ -365,7 +346,7 @@ class ClipEditorComponent(Component):
             EncoderCallbackSet(self._change_position),
             EncoderCallbackSet(self._change_loop_end),
             EncoderCallbackSet(self._change_start_marker),
-            EncoderCallbackSet(self._change_launch_quantization),
+            EncoderCallbackSet(),
             EncoderCallbackSet(self._change_note_nudge_offset),
             EncoderCallbackSet(self._change_note_step_length),
             EncoderCallbackSet(self._change_note_length),
@@ -376,16 +357,83 @@ class ClipEditorComponent(Component):
             EncoderCallbackSet(self._change_loop_start),
             EncoderCallbackSet(self._change_loop_end),
             EncoderCallbackSet(),
-            EncoderCallbackSet(self._change_launch_quantization),
+            EncoderCallbackSet(),
             EncoderCallbackSet(self._change_note_nudge_offset),
             EncoderCallbackSet(self._change_note_step_length),
             EncoderCallbackSet(self._change_note_length),
             EncoderCallbackSet(self._change_note_velocity),
         ]
 
+        self._mute_parameter = BoolWrappingParameter(None, "muted", bool_on_off, True)
+        self._loop_parameter = BoolWrappingParameter(None, "looping", bool_on_off)
+        self._launch_mode_parameter = CustomEnumWrappingParameter(None, LaunchModeList, "values", "launch_mode")
+        self._launch_quantize_parameter = CustomEnumWrappingParameter(None, ClipLaunchQuantizationList, "values", "launch_quantization")
+        self._legato_parameter = BoolWrappingParameter(None, "legato", bool_on_off)
+        self._warp_parameter = BoolWrappingParameter(None, "warping", bool_on_off)
+        self._warp_mode_parameter = CustomEnumWrappingParameter(None, None, "available_warp_modes", "warp_mode", int, self._to_warp_mode, self._from_warp_mode)
+
+        self.mute_button.mapped_parameter = self._mute_parameter
+        self.loop_button.mapped_parameter = self._loop_parameter
+        self.launch_mode_button.mapped_parameter = self._launch_mode_parameter
+        self.launch_quantize_button.mapped_parameter = self._launch_quantize_parameter
+        self.legato_button.mapped_parameter = self._legato_parameter
+        self.warp_button.mapped_parameter = self._warp_parameter
+
+        self._on_target_track_changed.subject = self._target_track
+        self._on_target_clip_changed.subject = self._target_track
+        self._on_target_track_changed()
+        self._on_target_clip_changed()
+
     @listenable_property
-    def available_warp_modes(self):
-        return self._clip.available_warp_modes if liveobj_valid(self._clip) else []
+    def start_marker(self):
+        if liveobj_valid(self._clip):
+            if self._clip.is_midi_clip or self._clip.warping:
+                return self._to_bars_string(self._clip.start_marker, self._clip.signature_numerator, self._clip.signature_denominator, True)
+            else:
+                return self._to_time_string(self._clip.start_marker)
+        else:
+            return ""
+
+    @listenable_property
+    def loop_length(self):
+        if liveobj_valid(self._clip):
+            length = self._clip.loop_end - self._clip.loop_start
+            if self._clip.is_midi_clip or self._clip.warping:
+                return self._to_bars_string(length, self._clip.signature_numerator, self._clip.signature_denominator)
+            else:
+                return self._to_time_string(length)
+        else:
+            return ""
+    
+    @listenable_property
+    def loop_offset(self):
+        if liveobj_valid(self._clip):
+            if self._clip.looping:
+                return self._to_bars_string(self._clip.position, self._clip.signature_numerator, self._clip.signature_denominator, True)
+            else:
+                return ""
+        else:
+            return ""
+
+    @listenable_property
+    def loop_start(self):
+        if liveobj_valid(self._clip):
+            if self._clip.is_midi_clip or self._clip.warping:
+                return self._to_bars_string(self._clip.loop_start, self._clip.signature_numerator, self._clip.signature_denominator, True)
+            else:
+                return self._to_time_string(self._clip.loop_start)
+        else:
+            return ""
+
+    @listenable_property
+    def loop_end(self):
+        if liveobj_valid(self._clip):
+            if self._clip.is_midi_clip or self._clip.warping:
+                return self._to_bars_string(self._clip.loop_end, self._clip.signature_numerator, self._clip.signature_denominator, True)
+            else:
+                return self._to_time_string(self._clip.loop_end)
+        else:
+            return ""
     
     def _to_warp_mode(self, value):
         return self._clip.available_warp_modes[value]
@@ -403,49 +451,34 @@ class ClipEditorComponent(Component):
         return 4.0 / self._clip.signature_denominator
     
     def _to_time_string(self, float_seconds):
-        int_part, float_part = modf(float_seconds)
-        hours = 0
-        minutes = 0
-        seconds = 0
-        milliseconds = int(float_part * 1000)
+        float_part, int_part = modf(float_seconds)
 
-        if int_part >= 3600:
-            hours = int(int_part / 3600)
-            int_part = int_part % 3600
-        if int_part >= 60:
-            minutes = int(int_part / 60)
-            int_part = int_part % 60
-        seconds = int_part
-        return f"{hours:>2}:{minutes:>2}:{seconds:>2}.{milliseconds:>3}"
-    
-    def _to_bars_string(self, float_beats, numerator, denominator):
-        int_part, float_part = modf(float_beats)
-        bars = 0
-        beats = 0
-        sixteenth_notes = 0
-        
-        one_bar_length = numerator / (denominator / 4)
+        minutes = int(int_part / 60)
+        seconds = int(int_part % 60)
 
-        if int_part >= one_bar_length:
-            bars = int(int_part / one_bar_length)
-            int_part = int_part % one_bar_length
-        if int_part >= 4.0 / denominator:
-            beats = int(int_part / (4.0 / denominator))
-            int_part = int_part % (4.0 / denominator)
+        return f"{minutes:>3}:{seconds:>2}.{round(float_part * 1000):>3}"
 
-    @listenable_property
-    def clip_length(self):
-        if liveobj_valid(self._clip):
-            if self._clip.is_audio_clip:
-                if self._clip.warping:
-                    return ""
-                else:
-                    return self._to_time_string(self._clip.loop_end - self._clip.loop_start)
-            else:
-                return ""
+    def _to_bars_string(self, float_beats, numerator, denominator, is_position = False):
+        multiplier = denominator / 4.0
+        float_beats *= multiplier
+        if float_beats >= 0.0:
+            float_part, int_part = modf(float_beats)
+            offset = 1 if is_position else 0
+            bars = int(int_part / numerator) + offset
+            beats = int(int_part % numerator) + offset
+            sixteenth = int(float_part / (0.25 * multiplier)) + offset
         else:
-            return ""
+            float_beats = abs(float_beats)
+            bars = ceil(float_beats / numerator)
 
+            # Calculate beats and sixteenth notes count by using relative position from start of a bar
+            sub_bar_length = bars * numerator - float_beats
+            beats = int(sub_bar_length) + 1
+            sixteenth = int(modf(sub_bar_length)[0] / (0.25 * multiplier)) + 1
+            bars = -bars
+
+        return f"{bars:>3}.{beats:>2}.{sixteenth:>2}"
+    
     def set_step_sequence(self, step_sequence):
         self._step_sequence = step_sequence
 
@@ -469,6 +502,17 @@ class ClipEditorComponent(Component):
         callback_set = self._encoder_callbacks[button.index]
         callback_set.released(button)
 
+    @fine_grain_button.value
+    def _on_fine_grain_state_changed(self, value, button):
+        if liveobj_valid(self._clip) and self._clip.is_audio_clip and not self._clip.warping and value:
+            self._start_marker_value_stepper.step_count = TIME_LENGTH_FINE_STEPS
+            self._loop_start_value_stepper.step_count = TIME_LENGTH_FINE_STEPS
+            self._loop_end_value_stepper.step_count = TIME_LENGTH_FINE_STEPS
+        else:
+            self._start_marker_value_stepper.step_count = BAR_LENGTH_VALUE_STEPS
+            self._loop_start_value_stepper.step_count = BAR_LENGTH_VALUE_STEPS
+            self._loop_end_value_stepper.step_count = BAR_LENGTH_VALUE_STEPS
+
     @listens("target_track")
     def _on_target_track_changed(self):
         pass
@@ -477,13 +521,66 @@ class ClipEditorComponent(Component):
     def _on_target_clip_changed(self):
         self._clip = self._target_track.target_clip
         self._map_clip_button_parameters()
+        self._map_clip_encoder_parameters()
         self._on_clip_looping_changed.subject = self._clip
-        self._on_clip_looping_changed()
-        self.notify_available_warp_modes()
+        self._on_clip_loop_start_changed.subject = self._clip
+        self._on_clip_loop_end_changed.subject = self._clip
+        self._on_clip_position_changed.subject = self._clip
+        self._on_clip_start_marker_changed.subject = self._clip
+        self._on_clip_numerator_changed.subject = self._clip
+        self._on_clip_denominator_changed.subject = self._clip
+        if liveobj_valid(self._clip) and self._clip.is_audio_clip:
+            self._on_clip_warping_changed.subject = self._clip
+        else:
+            self._on_clip_warping_changed.subject = None
+        self.notify_loop_length()
+        self.notify_loop_offset()
+        self.notify_start_marker()
+        self.notify_loop_start()
+        self.notify_loop_end()
 
     @listens("looping")
     def _on_clip_looping_changed(self):
         self._map_clip_encoder_parameters()
+    
+    @listens("loop_start")
+    def _on_clip_loop_start_changed(self):
+        self.notify_loop_start()
+        self.notify_loop_length()
+        self.notify_loop_offset()
+        self.notify_start_marker()
+
+    @listens("loop_end")
+    def _on_clip_loop_end_changed(self):
+        self.notify_loop_end()
+        self.notify_loop_length()
+
+    @listens("position")
+    def _on_clip_position_changed(self):
+        self.notify_loop_offset()
+        self.notify_loop_end()
+    
+    @listens("start_marker")
+    def _on_clip_start_marker_changed(self):
+        self.notify_start_marker()
+
+    @listens("signature_numerator")
+    def _on_clip_numerator_changed(self):
+        self.notify_loop_length()
+        self.notify_loop_offset()
+
+    @listens("signature_denominator")
+    def _on_clip_denominator_changed(self):
+        self.notify_loop_length()
+        self.notify_loop_offset()
+
+    @listens("warping")
+    def _on_clip_warping_changed(self):
+        self.notify_loop_start()
+        self.notify_loop_end()
+        self.notify_loop_length()
+        self.notify_loop_offset()
+        self.notify_start_marker()
 
     def _map_clip_button_parameters(self):
         if liveobj_valid(self._clip):
@@ -493,18 +590,20 @@ class ClipEditorComponent(Component):
             self._mute_parameter.set_property_host(self._clip)
             self._loop_parameter.set_property_host(self._clip)
             self._launch_mode_parameter.set_property_host(self._clip)
+            self._launch_quantize_parameter.set_property_host(self._clip)
             self._legato_parameter.set_property_host(self._clip)
             self._warp_parameter.set_property_host(self._clip if is_audio else None)
             self._warp_mode_parameter.set_property_host(self._clip if is_audio else None)
-            self._ram_mode_parameter.set_property_host(self._clip if is_audio else None)
+            self._warp_mode_parameter.set_values_host(self._clip if is_audio else None)
         else:
             self._mute_parameter.set_property_host(None)
             self._loop_parameter.set_property_host(None)
             self._launch_mode_parameter.set_property_host(None)
+            self._launch_quantize_parameter.set_property_host(None)
             self._legato_parameter.set_property_host(None)
             self._warp_parameter.set_property_host(None)
             self._warp_mode_parameter.set_property_host(None)
-            self._ram_mode_parameter.set_property_host(None)
+            self._warp_mode_parameter.set_values_host(None)
     
     def _map_clip_encoder_parameters(self):
         if liveobj_valid(self._clip):
@@ -528,7 +627,7 @@ class ClipEditorComponent(Component):
             if self._clip.is_midi_clip or self._clip.warping:
                 self._clip.position += step * (self._get_one_beat_length() if use_fine_grain else self._get_one_bar_length())
             else:
-                self._clip.position += step * (0.01 if use_fine_grain else 0.1)
+                self._clip.position += step * (FINE_TIME_RESOLUTION if use_fine_grain else COARSE_TIME_RESOLUTION)
             
             self._clip.view.show_loop()
 
@@ -539,7 +638,7 @@ class ClipEditorComponent(Component):
             if self._clip.is_midi_clip or self._clip.warping:
                 self._clip.loop_start += step * (self._get_one_beat_length() if use_fine_grain else self._get_one_bar_length())
             else:
-                self._clip.loop_start += step * (0.01 if use_fine_grain else 0.1)
+                self._clip.loop_start += step * (FINE_TIME_RESOLUTION if use_fine_grain else COARSE_TIME_RESOLUTION)
             
             self._clip.view.show_loop()
 
@@ -548,11 +647,14 @@ class ClipEditorComponent(Component):
         if step != 0:
             use_fine_grain = self.fine_grain_button.is_pressed
             if self._clip.is_midi_clip or self._clip.warping:
-                self._clip.loop_end += step * (self._get_one_beat_length() if use_fine_grain else self._get_one_bar_length())
+                new_loop_end = self._clip.loop_end + step * (self._get_one_beat_length() if use_fine_grain else self._get_one_bar_length())
             else:
-                self._clip.loop_end += step * (0.01 if use_fine_grain else 0.1)
-            
-            self._clip.view.show_loop()
+                new_loop_end = self._clip.loop_end + step * (FINE_TIME_RESOLUTION if use_fine_grain else COARSE_TIME_RESOLUTION)
+
+            if new_loop_end > self._clip.loop_start:
+                self._clip.loop_end = new_loop_end
+                self._clip.view.show_loop()
+
 
     def _change_loop_length(self, value, encoder):
         length = self._clip.loop_end - self._clip.loop_start
@@ -568,7 +670,7 @@ class ClipEditorComponent(Component):
             if self._clip.is_midi_clip or self._clip.warping:
                 self._clip.start_marker += step * (self._get_one_beat_length() if use_fine_grain else self._get_one_bar_length())
             else:
-                self._clip.start_marker += step * (0.01 if use_fine_grain else 0.1)
+                self._clip.start_marker += step * (FINE_TIME_RESOLUTION if use_fine_grain else COARSE_TIME_RESOLUTION)
 
     def _change_launch_quantization(self, value, encoder):
         step = self._launch_quantization_value_stepper.update(value)
@@ -598,7 +700,7 @@ class ClipEditorComponent(Component):
         step = self._gain_value_stepper.update(value)
         if step != 0:
             use_fine_grain = self.fine_grain_button.is_pressed
-            new_value = self._clip.gain + step * (0.001 if use_fine_grain else 0.005)
+            new_value = self._clip.gain + step * (FINE_GAIN_RESOLUTION if use_fine_grain else COARSE_GAIN_RESOLUTION)
             self._clip.gain = clamp(new_value, 0.0, 1.0)
 
     def _change_note_nudge_offset(self, value, encoder):
