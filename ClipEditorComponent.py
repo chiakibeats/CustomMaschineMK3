@@ -320,27 +320,6 @@ class ClipEditorComponent(Component, Renderable):
     def __init__(self, name = "Clip_Editor", target_track = None, *a, **k):
         super().__init__(name, *a, **k)
         self._target_track = target_track
-
-        self._mute_parameter = BoolWrappingParameter(None, "muted", bool_on_off, True)
-        self._loop_parameter = BoolWrappingParameter(None, "looping", bool_on_off)
-        self._launch_mode_parameter = CustomEnumWrappingParameter(None, LaunchModeList, "values", "launch_mode")
-        self._launch_quantize_parameter = CustomEnumWrappingParameter(None, ClipLaunchQuantizationList, "values", "launch_quantization")
-        self._legato_parameter = BoolWrappingParameter(None, "legato", bool_on_off)
-        self._warp_parameter = BoolWrappingParameter(None, "warping", bool_on_off)
-        self._warp_mode_parameter = CustomEnumWrappingParameter(None, None, "available_warp_modes", "warp_mode", int, self._to_warp_mode, self._from_warp_mode)
-
-        self.mute_button.mapped_parameter = self._mute_parameter
-        self.loop_button.mapped_parameter = self._loop_parameter
-        self.launch_mode_button.mapped_parameter = self._launch_mode_parameter
-        self.launch_quantize_button.mapped_parameter = self._launch_quantize_parameter
-        self.legato_button.mapped_parameter = self._legato_parameter
-        self.warp_button.mapped_parameter = self._warp_parameter
-
-        self._on_target_track_changed.subject = self._target_track
-        self._on_target_clip_changed.subject = self._target_track
-        self._on_target_track_changed()
-        self._on_target_clip_changed()
-
         self._looped_audio_clip_encoder_callbacks = [
             EncoderCallbackSet(self._change_position),
             EncoderCallbackSet(self._change_loop_end),
@@ -384,6 +363,26 @@ class ClipEditorComponent(Component, Renderable):
             EncoderCallbackSet(self._change_note_length),
             EncoderCallbackSet(self._change_note_velocity),
         ]
+
+        self._mute_parameter = BoolWrappingParameter(None, "muted", bool_on_off, True)
+        self._loop_parameter = BoolWrappingParameter(None, "looping", bool_on_off)
+        self._launch_mode_parameter = CustomEnumWrappingParameter(None, LaunchModeList, "values", "launch_mode")
+        self._launch_quantize_parameter = CustomEnumWrappingParameter(None, ClipLaunchQuantizationList, "values", "launch_quantization")
+        self._legato_parameter = BoolWrappingParameter(None, "legato", bool_on_off)
+        self._warp_parameter = BoolWrappingParameter(None, "warping", bool_on_off)
+        self._warp_mode_parameter = CustomEnumWrappingParameter(None, None, "available_warp_modes", "warp_mode", int, self._to_warp_mode, self._from_warp_mode)
+
+        self.mute_button.mapped_parameter = self._mute_parameter
+        self.loop_button.mapped_parameter = self._loop_parameter
+        self.launch_mode_button.mapped_parameter = self._launch_mode_parameter
+        self.launch_quantize_button.mapped_parameter = self._launch_quantize_parameter
+        self.legato_button.mapped_parameter = self._legato_parameter
+        self.warp_button.mapped_parameter = self._warp_parameter
+
+        self._on_target_track_changed.subject = self._target_track
+        self._on_target_clip_changed.subject = self._target_track
+        self._on_target_track_changed()
+        self._on_target_clip_changed()
 
     @listenable_property
     def start_marker(self):
