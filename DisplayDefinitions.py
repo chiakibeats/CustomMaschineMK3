@@ -112,6 +112,10 @@ class Notifications(DefaultNotifications):
         select = lambda note: f"Note {pitch_index_to_string(note, NOTES)}\nselected"
         select: "Notification[Fn[int]]"
 
+    class StepSequence:
+        grid_resolution = "Step sequence grid\n{}".format
+        grid_resolution: "Notification[Fn[str]]"
+
 def create_root_view():
     logger.info("Init display")
 

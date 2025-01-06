@@ -1,21 +1,54 @@
 from faulthandler import is_enabled
 from math import inf
-from Live.Clip import MidiNoteSpecification # type: ignore
+from Live.Clip import MidiNoteSpecification, GridQuantization # type: ignore
 from ableton.v3.base import EventObject, clamp, depends, in_range, listenable_property, listens
 from ableton.v3.control_surface.components.note_editor import DEFAULT_STEP_TRANSLATION_CHANNEL
 from ableton.v3.live import liveobj_changed, liveobj_valid
 from ableton.v3.control_surface import Component
 from ableton.v3.control_surface.controls import ButtonControl, control_matrix
+from ableton.v3.control_surface.display import Renderable
 from ableton.v3.control_surface.skin import LiveObjSkinEntry
-
 from ableton.v3.control_surface.components import NoteEditorComponent, StepSequenceComponent
 
-class CustomStepSequenceComponent(StepSequenceComponent):
+GRID_RESOLUTION_NAMES = {
+    GridQuantization.g_thirtysecond: "1/32",
+    GridQuantization.g_sixteenth: "1/16",
+    GridQuantization.g_eighth: "1/8",
+    GridQuantization.g_quarter: "1/4",
+}
+
+class CustomStepSequenceComponent(StepSequenceComponent, Renderable):
+    def __init__(
+            self,
+            name = "Step_Sequence",
+            note_editor_component_type = None,
+            note_editor_paginator_type = None,
+            loop_selector_component_type = None,
+            playhead_component_type = None,
+            playhead_notes = None,
+            playhead_triplet_notes = None,
+            playhead_channels = None, *a, **k):
+        super().__init__(
+            name = name,
+            note_editor_component_type = note_editor_component_type,
+            note_editor_paginator_type = note_editor_paginator_type,
+            loop_selector_component_type = loop_selector_component_type,
+            playhead_component_type = playhead_component_type,
+            playhead_notes = playhead_notes,
+            playhead_triplet_notes = playhead_triplet_notes,
+            playhead_channels = playhead_channels, *a, **k)
+        
+        self.register_slot(self._grid_resolution, self._on_grid_resolution_changed, "index")
+
     def set_select_button(self, button):
         self._note_editor.select_button.set_control_element(button)
 
     def set_copy_button(self, button):
         self._loop_selector.set_copy_button(button)
+
+    def _on_grid_resolution_changed(self):
+        grid, triplet = self._grid_resolution.clip_grid
+        self.notify(self.notifications.StepSequence.grid_resolution, GRID_RESOLUTION_NAMES[grid] + ("T" if triplet else ""))
 
 class CustomNoteEditorComponent(NoteEditorComponent):
     select_button = ButtonControl(color = None)
