@@ -1,6 +1,6 @@
 from ableton.v3.base import listens, listenable_property
 from ableton.v2.base.collection import IndexedDict
-from ableton.v3.live.util import find_parent_track, liveobj_valid
+from ableton.v3.live import find_parent_track, liveobj_valid
 from ableton.v3.control_surface import DEFAULT_BANK_SIZE, use
 from ableton.v3.control_surface.components import (
     DeviceComponent,
@@ -29,11 +29,11 @@ from ableton.v3.control_surface.parameter_mapping_sensitivities import (
     create_sensitivities,
     parameter_mapping_sensitivities,
 )
+import ableton.v3.control_surface.device_decorators as decorators
 from ableton.v3.control_surface.device_decorators import (
     DeviceDecoratorFactory,
     TransmuteDeviceDecorator,
-    DriftDeviceDecorator,
-    RoarDeviceDecorator
+    DriftDeviceDecorator
 )
 from ableton.v2.control_surface import (
     DelayDeviceDecorator,
@@ -52,7 +52,6 @@ class CustomDeviceDecoratorFactory(DeviceDecoratorFactory):
         'Delay': DelayDeviceDecorator, 
         'Drift': DriftDeviceDecorator, 
         'OriginalSimpler': SimplerDeviceDecorator, 
-        'Roar': RoarDeviceDecorator, 
         'Transmute': TransmuteDeviceDecorator,
         'InstrumentVector': WavetableDeviceDecorator
     }
@@ -264,6 +263,9 @@ class CustomDeviceComponent(KnobTouchStateMixin, DeviceComponent):
     erase_button = ButtonControl(color = None)
     
     def __init__(self, name = "Device", *a, **k):
+        if self.application.get_major_version() == 12:
+            CustomDeviceDecoratorFactory.DECORATOR_CLASSES['Roar'] = decorators.RoarDeviceDecorator
+
         super().__init__(name, *a, **k)
         self._parameter_mapping_sensitivities = custom_mapping_sensitivities(self._parameter_mapping_sensitivities)
         self.register_slot(self, self.notify_current_parameters, "parameters")
