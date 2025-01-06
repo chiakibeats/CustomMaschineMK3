@@ -214,6 +214,8 @@ class BrowserComponent(Component, Renderable):
         super().update()
         self._update_browser_items()
         self._update_led_feedback()
+        if not self.is_enabled():
+            self._browser.stop_preview()
 
     def _set_item_index(self, new_index, force_preview = False):
         old_index = self._selected_item_index
@@ -259,8 +261,6 @@ class BrowserComponent(Component, Renderable):
                 self._browser.preview_item(preview_item)
         else:
             self._browser.stop_preview()
-        
-        self._update_led_feedback()
 
     def _update_led_feedback(self):
         item = self.selected_item
@@ -320,6 +320,7 @@ class BrowserComponent(Component, Renderable):
     @preview_toggle_button.pressed
     def _on_preview_toggle_button_pressed(self, button):
         self._update_preview_state(not self._preview_enabled)
+        self._update_led_feedback()
                 
     @select_folder_buttons.pressed
     def _on_folder_buttons_pressed(self, button):
