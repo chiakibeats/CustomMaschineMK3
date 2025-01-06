@@ -356,7 +356,7 @@ class MaschineLEDColors:
         SliceSelected = make_color(WHITE, LEVEL_3)
         NextSlice = make_color(WHITE, LEVEL_1)
         PadAction = make_color(GREEN, LEVEL_3)
-        ScrollPressed = (WHITE, LEVEL_2)
+        ScrollPressed = make_color(WHITE, LEVEL_2)
         Scroll = make_color(WHITE, LEVEL_4)
         # Used in custom component
         SlicePressed = make_color(WHITE, LEVEL_4)
