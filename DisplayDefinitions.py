@@ -121,10 +121,11 @@ def create_root_view():
 
     def mixer_view(state, content):
         control_name = state.mixer.control_name
-        content.lines[0] = f"Parameter:{control_name}"
+        content.lines[0] = f"Param:{control_name}"
         content.lines[2] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[to_pan_or_send_value(knob) for knob in state.elements.knobs[:4]])
 
-        content.lines[1] = f"{'Locked' if state.target_track.is_locked_to_track else 'Target'}:{state.target_track.target_track.name}"
+        content.lines[1] = f"{'Lock' if state.target_track.is_locked_to_track else 'Track'}:"
+        content.lines[1] += state.target_track.target_track.name[:LCD_LINE_LENGTH - len(content.lines[1])]
         content.lines[3] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[adjust_gain_string(knob.parameter_value) for knob in state.elements.knobs[4:]])
 
     def device_view(state, content):
@@ -191,7 +192,7 @@ def create_root_view():
             if index != -1:
                 info = state.device.current_parameters[index]
                 if liveobj_valid(info.parameter):
-                    name = info.parameter.name
+                    name = info.parameter.name[:LCD_LINE_LENGTH]
                     value = get_display_value(info.parameter)
                     content.lines[0 if index < 4 else 1] = name
                     content.lines[2 if index < 4 else 3] = value
@@ -200,7 +201,7 @@ def create_root_view():
             if index != -1:
                 parameter = state.elements.knob_touch_buttons[index].controlled_parameter
                 if liveobj_valid(parameter):
-                    track_name = liveobj_name(parameter_owner(parameter))
+                    track_name = liveobj_name(parameter_owner(parameter))[:LCD_LINE_LENGTH]
                     param_name = liveobj_name(parameter)
                     value = get_display_value(parameter)
                     content.lines[0 if index < 4 else 1] = f"{track_name}"
