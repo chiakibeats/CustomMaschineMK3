@@ -81,14 +81,15 @@ class Notifications(DefaultNotifications):
         lock = DefaultNotifications.DefaultText()
 
     class Clip(DefaultNotifications.Clip):
-        select = DefaultNotifications.DefaultText()
+        select = lambda clip: f"{clip[:LCD_LINE_LENGTH]}\nselected"
+        select: "Notification[Fn[str]]"
 
     class Recording(DefaultNotifications.Recording):
         fixed_length = "Fixed length rec\n{}".format
         fixed_length: "Notification[Fn[str]]"
 
     class SelectedParameterControl:
-        select = "Select {}\n{}".format
+        select = lambda device, param: f"Select {device[:LCD_LINE_LENGTH - 7]}\n{param}"
         select: "Notification[Fn[str, str]]"
 
     class NoteRepeat:
@@ -147,7 +148,7 @@ def create_root_view():
         clip = state.target_track.target_clip
 
         if liveobj_valid(clip):
-            name = adjust_string(clip.name, 13)
+            name = clip.name[:13]
             if clip.looping:
                 content.lines[0] = f"{name:<13}|Off:{state.clip_editor.start_marker:<10}"
                 content.lines[2] = f"S:{state.clip_editor.loop_offset:<11}|Len:{state.clip_editor.loop_length}"
@@ -159,14 +160,14 @@ def create_root_view():
             quantize = ClipLaunchQuantizationList.to_string(clip.launch_quantization)
             #quantization = ClipLaunchQuantizationList.to_string(clip.launch_quantization)
             if clip.is_audio_clip:
-                content.lines[1] = f"{launch_mode:<6}|{quantize:>6}|Legato|Warp"
+                content.lines[1] = f"{launch_mode:<6}|{quantize:<6}|Legato|Warp"
                 warp = WarpModeList.to_string(clip.warp_mode) if clip.warping else "No Warp"
                 pitch = f"{clip.pitch_coarse + clip.pitch_fine * 0.01:+.2f}st"
                 gain = adjust_gain_string(clip.gain_display_string)
                 # 7 + 9 + 9 = 25
                 content.lines[3] = f"{gain:<6}|{pitch:>8}|{warp:<8}"
             else:
-                content.lines[1] = f"{launch_mode:<6}|{quantize:>6}|Legato|"
+                content.lines[1] = f"{launch_mode:<6}|{quantize:<6}|Legato|"
                 content.lines[3] = "Nudge |Steps |Fine  |Vel"
         else:
             content.lines[0] = "No clip selected"
