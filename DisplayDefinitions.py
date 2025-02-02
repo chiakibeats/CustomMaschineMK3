@@ -1,3 +1,13 @@
+# ==================================================
+#
+# This file is part of CustomMaschineMK3.
+# CustomMaschineMK3 is free software licensed under GPL-3.0.
+# For more details, see "LICENSE" file.
+# 
+# Copyright (C) 2024-2025 chiaki
+#
+# ==================================================
+
 from dataclasses import dataclass
 from ableton.v2.control_surface import InternalParameterBase
 from ableton.v3.control_surface.components.sliced_simpler import BASE_SLICING_NOTE

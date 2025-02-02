@@ -1,3 +1,13 @@
+# ==================================================
+#
+# This file is part of CustomMaschineMK3.
+# CustomMaschineMK3 is free software licensed under GPL-3.0.
+# For more details, see "LICENSE" file.
+# 
+# Copyright (C) 2024-2025 chiaki
+#
+# ==================================================
+
 from ableton.v3.base import listens
 from ableton.v3.live.util import liveobj_valid
 from ableton.v3.control_surface.components import SlicedSimplerComponent
