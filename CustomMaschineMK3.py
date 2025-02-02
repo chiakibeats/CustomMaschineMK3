@@ -162,15 +162,15 @@ SIMPLER_MODE = "simpler"
 
 CUSTOM_GRID_RESOLUTIONS = (
     GridResolution("1/4", 1.0, GridQuantization.g_quarter, False),
-    GridResolution("1/8", 0.5, GridQuantization.g_eighth, False),
-    GridResolution("1/16", 0.25, GridQuantization.g_sixteenth, False),
-#    GridResolution("1/32", 0.125, GridQuantization.g_thirtysecond, False),
     GridResolution("1/4t", 0.6666666666666666, GridQuantization.g_quarter, True),
+    GridResolution("1/8", 0.5, GridQuantization.g_eighth, False),
     GridResolution("1/8t", 0.3333333333333333, GridQuantization.g_eighth, True),
+    GridResolution("1/16", 0.25, GridQuantization.g_sixteenth, False),
 #    GridResolution("1/16t", 0.16666666666666666, GridQuantization.g_sixteenth, True),
+#    GridResolution("1/32", 0.125, GridQuantization.g_thirtysecond, False),
 #    GridResolution("1/32t", 0.08333333333333333, GridQuantization.g_thirtysecond, True),
 )
-GRID_DEFAULT_INDEX = 2
+GRID_DEFAULT_INDEX = 4
 
 class CustomMaschineMK3(ControlSurface):
     _grid_resolution = None
