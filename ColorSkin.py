@@ -4,15 +4,36 @@ from ableton.v3.control_surface.elements import SimpleColor, RgbColor, create_rg
 from ableton.v3.live.util import liveobj_valid
 
 
-# Color space use strategy
-# Maschine's indexed colors have 68 (17 x 4) color variations.
+# Rules of color space use
+#
+# Maschine's indexed colors:
+# These have 68 (17 x 4) color variation.
 # These colors classified as 17 base colors and 4 brightness levels.
-# For balancing visibility and color matching, We use these rules.
-# Track colors:
-# Live's track colors have 70 variations.
-# We map these colors by using level 2-4 brightness colors except brightest white.
-# Total variation is 17 * 3 - 1 = 50, so some Live's track colors map to same color.
-
+#
+# Live's indexed colors:
+# Live has 70 color variations, actual color of these are affected by theme settings.
+#  
+# For balancing visibility and color matching, I set up these rules.
+# 1. Colors for objects (track, clip, scene, drum pad)
+# Object colors are mapped to level 2 to 4 brightness colors with few exceptions.
+# We don't use brightest white as object color, it's used for accent of pressed or selected states.
+# And we use level 1 brightness white for displaying dark gray instead.
+# Total variation is 17 * 3 = 51, thus some colors map to same indexed color.
+# 
+# 2. Colors for keyboard & group buttons
+# Colors of each pads based on its track color.
+# In normal keyboard mode, root and other notes color are determined by following conditions.
+# Root note:
+# If brightness is under 4, use level 3 brightness color with same base color.
+# Otherwise use color same as  track.
+# 
+# Other note:
+# If brightness is under 4, use level 1 brightness color with same base color.
+# Otherwise use level 2 brightness color with same base color.
+# 
+# 3. Colors for drum rack and simpler
+# Simpler slice colors are same to track.
+# Drum pad colors in drum rack are same to track if auto-coloring is enabled, otherwise follow chain color.
 
 # Constants for making color index
 BLACK = 0
@@ -153,12 +174,14 @@ def make_color_from_element(element):
     else:
         return BasicColors.OFF
 
-def make_keyboard_color(element, accent = False):
+def make_keyboard_color(element, accent = False, group = False):
     if liveobj_valid(element):
         if element.color_index != None:
             base_color, brightness = LIVE_COLOR_MAP.get(element.color_index, (0, 0))
             if accent:
                 return make_color(base_color, LEVEL_3 if brightness < LEVEL_4 else LEVEL_2)
+            elif group:
+                return make_color(base_color, LEVEL_2 if brightness < LEVEL_4 else LEVEL_4)
             else:
                 return make_color(base_color, LEVEL_1 if brightness < LEVEL_4 else LEVEL_4)
     return BasicColors.OFF
@@ -300,7 +323,7 @@ class MaschineLEDColors:
 
     class Zooming:
         Selected = make_color(WHITE, LEVEL_4)
-        Stopped = make_color(WHITE, LEVEL_1)
+        Stopped = make_color(WHITE, LEVEL_2)
         Playing = make_color(GREEN, LEVEL_3)
         Empty = BasicColors.OFF
 
@@ -346,7 +369,7 @@ class MaschineLEDColors:
         # Used in custom component
         Group = BasicColors.OFF
         GroupSelected = make_color(WHITE, LEVEL_4)
-        GroupHasFilledPad = make_keyboard_color
+        GroupHasFilledPad = partial(make_keyboard_color, group = True)
         GroupHasFilledPadSelected = make_color(WHITE, LEVEL_4)
         PadPressed = make_color(WHITE, LEVEL_4)
 
@@ -362,17 +385,17 @@ class MaschineLEDColors:
         SlicePressed = make_color(WHITE, LEVEL_4)
         Group = BasicColors.OFF
         GroupSelected = make_color(WHITE, LEVEL_4)
-        GroupHasSlice = make_keyboard_color
+        GroupHasSlice = partial(make_keyboard_color, group = True)
         GroupHasSliceSelected = make_color(WHITE, LEVEL_4)
 
     class Keyboard:
         Note = BasicColors.OFF
         NoNote = BasicColors.OFF
-        ScaleNote = make_keyboard_color#make_color(WHITE, LEVEL_1)
-        RootNote = partial(make_keyboard_color, accent = True)#make_color(WHITE, LEVEL_3)
+        ScaleNote = make_keyboard_color
+        RootNote = partial(make_keyboard_color, accent = True)
         NotePressed = make_color(WHITE, LEVEL_4)
         NoteSelected = make_color(WHITE, LEVEL_4)
-        Octave = make_keyboard_color
+        Octave = partial(make_keyboard_color, group = True)
         OctaveSelected = make_color(WHITE, LEVEL_4)
         Scroll = make_color(WHITE, LEVEL_4)
         ScrollPressed = make_color(WHITE, LEVEL_2)
@@ -410,7 +433,7 @@ class MaschineLEDColors:
 
     class LoopSelector:
         InsideLoopSelected = make_color(WHITE, LEVEL_4)
-        InsideLoop = make_keyboard_color
+        InsideLoop = partial(make_keyboard_color, group = True)
         OutsideLoopSelected = make_color(WHITE, LEVEL_4)
         OutsideLoop = BasicColors.OFF
         Playhead = make_color(GREEN, LEVEL_3)
