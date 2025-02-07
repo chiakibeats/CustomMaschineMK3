@@ -69,7 +69,7 @@ Ableton MIDI Remote Script for Maschine MK3
 # Requirements
 * Ableton Live 11: 11.3 or later
 * Ableton Live 12: 12.1 or later
-* Hardware: Maschine MK3
+* Hardware: Maschine MK3, Maschine+(beta, not fully tested)
 
 # Install
 1. Import controller editor template
