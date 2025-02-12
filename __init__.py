@@ -26,7 +26,8 @@ from ableton.v3.control_surface.capabilities import (
     REMOTE,
     controller_id,
     inport,
-    outport)
+    outport
+)
 
 from .Logger import logger
 from .CustomMaschineMK3 import CustomMaschineMK3
@@ -36,13 +37,13 @@ def get_capabilities():
         CONTROLLER_ID_KEY: (
             controller_id(
                 vendor_id = 0x17CC,
-                product_ids = [0x1600],
-                model_name = ["Maschine MK3"])),
+                product_ids = [0x1600, 0x1820],
+                model_name = ["Maschine MK3", "Maschine Plus"])),
         PORTS_KEY: [
-            inport(port_name = "Maschine MK3 EXT In", props = [NOTES_CC, SYNC]),
-            inport(port_name = "Maschine MK3 Ctrl In", props = [NOTES_CC, SCRIPT, HIDDEN]),
-            outport(port_name = "Maschine MK3 EXT Out", props = [NOTES_CC, SYNC]),
-            outport(port_name = "Maschine MK3 Ctrl Out", props = [NOTES_CC, SCRIPT, HIDDEN])]}
+            inport(props = [NOTES_CC, SYNC]),
+            inport(props = [NOTES_CC, SCRIPT, HIDDEN]),
+            outport(props = [NOTES_CC, SYNC]),
+            outport(props = [NOTES_CC, SCRIPT, HIDDEN])]}
 
 def create_instance(c_instance):
     logger.info("Create instance")

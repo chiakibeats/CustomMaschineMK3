@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <ni-controller-midi-map version="1">
-  <midi-map type="MaschinePlus" name="CustomMaschineM+" port="internal">
+  <midi-map type="MaschinePlus" name="CustomMaschinePlus" port="internal">
     <handleGroupControls />
     <handleKnobControls />
     <velocitycurve>3</velocitycurve>

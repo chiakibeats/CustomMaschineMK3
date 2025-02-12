@@ -164,7 +164,7 @@ class ControlElements(ElementsBase):
             channel = default_channel,
             resource_type = PrioritizedResource)
 
-        # For simulating pitch bend behaviour, touch strip controls use some trick
+        # For simulating pitch bend behaviour, touch strip controls use some trick.
         # Touch strip movement("Touchstrip") is mapped to channel 1 pitch bend.
         # It works as sending pitch bend value normally.
         # Touch strip proximity("TouchstripCap") is mapped to channel 2 pitch bend, It sends fixed value(8191) when finger released
@@ -259,14 +259,25 @@ class ControlElements(ElementsBase):
             msg_type = MIDI_NOTE_TYPE,
             is_rgb = True)
         
-        # Maschine MK3 Shift button send sysex message like this
-        # Button pushed: 0xF0, 0x00, 0x21, 0x09, 0x16, 0x00, 0x4D, 0x50, 0x00, 0x01, 0x4D, 0x01, 0xF7
-        # Button released: 0xF0, 0x00, 0x21, 0x09, 0x16, 0x00, 0x4D, 0x50, 0x00, 0x01, 0x4D, 0x00, 0xF7
+        # Maschine MK3 and Plus "SHIFT" button send sysex message when button is pushed or released.
+        # Base format: 0xF0, 0x00, 0x21, 0x09, {2 bytes device ID}, 0x4D, 0x50, 0x00, 0x01, 0x4D, {button state}, 0xF7
+        # Maschine MK3 device ID: 0x16, 0x00
+        # Maschine Plus device ID: 0x18, 0x20
+        # Button states: 0x01 is button pushed and 0x00 is released
 
         self.add_element(
             "shift_sysex",
             element_factory = SysexShiftButton,
             sysex_identifier = (0xF0, 0x00, 0x21, 0x09, 0x16, 0x00, 0x4D, 0x50, 0x00, 0x01, 0x4D),
+            use_first_byte_as_value = True,
+            target_button = self.shift)
+
+        # I just copy-paste definition to minimize structure changes...
+        # These constants will be consolidated into one file.
+        self.add_element(
+            "shift_sysex_plus",
+            element_factory = SysexShiftButton,
+            sysex_identifier = (0xF0, 0x00, 0x21, 0x09, 0x18, 0x20, 0x4D, 0x50, 0x00, 0x01, 0x4D),
             use_first_byte_as_value = True,
             target_button = self.shift)
         
