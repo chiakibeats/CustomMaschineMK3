@@ -77,8 +77,8 @@ Ableton MIDI Remote Script for Maschine MK3
 3. Configure control surface on Ableton Live
 4. Enjoy!
 
-# How to use
-Coming soon
+# Documents
+See [https://chiakibeats.github.io/CustomMaschineDocs/](https://chiakibeats.github.io/CustomMaschineDocs/)
 
 # Known Issue
 * In Live 12 browser mode, Dig into "Instruments" in "Max for Live" folder causes Live app crash
