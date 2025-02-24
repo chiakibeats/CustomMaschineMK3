@@ -329,7 +329,7 @@ class MaschinePlayableComponent(ClipNotesSelectMixin, PlayableComponent, PageCom
         if not scale_changed:
             logger.info("Scale unchanged")
 
-        logger.info(f"Scale Enabled = {scale_mode}, Root = {self.song.root_note}, Name = {self.song.scale_name}, Intervals = {self.song.scale_intervals}")
+        logger.info(f"Scale Enabled = {scale_mode}, Root = {self.song.root_note}, Name = {self.song.scale_name}, Intervals = {[i for i in self.song.scale_intervals]}")
         logger.debug(f"All scale notes = {self._all_scale_notes}")
         logger.debug(f"Octave root notes = {self._octave_root_notes}")
 

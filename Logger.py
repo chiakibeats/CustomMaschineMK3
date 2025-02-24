@@ -42,3 +42,7 @@ if Config.LOGGING == True and len(logger.handlers) == 0:
 
     logger.setLevel(level_table.get(Config.LOG_LEVEL, logging.INFO))
     logger.addHandler(handler)
+
+else:
+    # Set to max level for eliminating log output
+    logger.setLevel(logging.CRITICAL)

@@ -8,7 +8,7 @@
 #
 # ==================================================
 
-LOGGING = True
+LOGGING = False
 LOG_LEVEL = "INFO"
 LCD_ENABLED = True
 REVERSE_STEP_PADS = False
