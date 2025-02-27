@@ -7,10 +7,10 @@ Ableton MIDI Remote Script for Maschine MK3 / Plus
 * Hardware: Maschine MK3, Maschine Plus
 
 # Install
-See ["How to Install"](https://chiakibeats.github.io/CustomMaschineDocs/docs/how-to-install/) on GitHub Pages.
+See [How to Install](https://chiakibeats.github.io/CustomMaschineDocs/docs/how-to-install/) on GitHub Pages.
 
 # Feature Summary
-See ["All Operations"](https://chiakibeats.github.io/CustomMaschineDocs/docs/all-operations) for exhaustive list.
+See [All Operations](https://chiakibeats.github.io/CustomMaschineDocs/docs/all-operations) for exhaustive list.
 * Transport Control
     * Play, stop and pause song
     * Loop and metronome on / off
@@ -79,6 +79,6 @@ See ["All Operations"](https://chiakibeats.github.io/CustomMaschineDocs/docs/all
 https://chiakibeats.github.io/CustomMaschineDocs/
 
 # Known Issue
-* ~~In Live 12 browser mode, digging into "Instruments" in "Max for Live" folder causes Live app crash~~
+* ~~In Live 12 browser mode, digging into Instruments in Max for Live folder causes Live app crash~~
   * This issue fixed on 12.1.10
-* Scrolling items in "Collections" and "Max for Live" folders is laggy (depends on size of library? need to check more details)
+* Scrolling items in Collections and Max for Live folders is laggy (depends on size of library? need to check more details)
