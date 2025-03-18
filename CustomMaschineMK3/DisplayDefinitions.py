@@ -56,8 +56,6 @@ def try_get_attr(obj, attr, default = None):
 def adjust_gain_string(gain_string):
     if str.find(gain_string, "dB") != -1:
         gain_string = gain_string[:-3]
-        if gain_string[0] != "-":
-            gain_string = " " + gain_string
         if len(gain_string) > 6:
             gain_string = gain_string[:6]
 
