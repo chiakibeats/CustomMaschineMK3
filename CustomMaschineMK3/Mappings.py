@@ -286,8 +286,10 @@ def create_mappings(surface):
                     select_buttons = "track_buttons",
                     on_off_buttons = "track_buttons_with_mute",
                     delete_button = "erase",
-                    prev_group_button = "left_with_plugin",
-                    next_group_button = "right_with_plugin"
+                    prev_page_button = "left_with_plugin",
+                    next_page_button = "right_with_plugin",
+                    select_encoder = "encoder_with_plugin",
+                    view_button = "plugin",
                 )
             ]),
         clip = dict(

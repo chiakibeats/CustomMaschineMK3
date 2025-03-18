@@ -315,6 +315,7 @@ class ControlElements(ElementsBase):
         self.add_modified_control(self.browser, self.shift)
         self.add_modified_control(self.left, self.plugin)
         self.add_modified_control(self.right, self.plugin)
+        self.add_modified_control(self.encoder, self.plugin)
         self.add_modified_control(self.file, self.shift)
         self.add_modified_control(self.file, self.duplicate)
         self.add_modified_control(self.file, self.erase)
