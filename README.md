@@ -82,3 +82,6 @@ https://chiakibeats.github.io/CustomMaschineDocs/
 * ~~In Live 12 browser mode, digging into Instruments in Max for Live folder causes Live app crash~~
   * This issue fixed on 12.1.10
 * Scrolling items in Collections and Max for Live folders is laggy (depends on size of library? need to check more details)
+
+# Support / Donation
+You can support the development via [Buy Me a Coffee](https://buymeacoffee.com/chiaki_).
