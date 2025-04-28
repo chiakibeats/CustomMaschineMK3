@@ -27,7 +27,7 @@ class MasterVolumeComponent(Component, Renderable):
     @listenable_property
     def gain_string(self):
         display_value = self._master_volume.str_for_value(self._master_volume.value)
-        return " " + display_value if display_value[0] != "-" else display_value
+        return display_value
 
     # Roughly 0.1dB step gain control
     # +6 to -18dB range has perfect linearity, lower range has different (exponential) scale.
