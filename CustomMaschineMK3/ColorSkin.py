@@ -411,7 +411,7 @@ class MaschineLEDColors:
         ScrollPressed = make_color(WHITE, LEVEL_2)
 
     class VelocityLevels:
-        Level1 = BasicColors.OFF
+        Level1 = partial(make_velocity_color, level = LEVEL_1)
         Level2 = partial(make_velocity_color, level = LEVEL_1)
         Level3 = partial(make_velocity_color, level = LEVEL_2)
         Level4 = partial(make_velocity_color, level = LEVEL_3)
