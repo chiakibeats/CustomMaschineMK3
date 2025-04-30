@@ -18,7 +18,8 @@ from ableton.v3.base import depends
 from .Logger import logger
 
 class ClipNotesSelectMixin():
-    note_select_button = ButtonControl(color = None)
+    select_note_button = ButtonControl(color = None)
+    erase_note_button = ButtonControl(color = None)
 
     _sequencer_clip = None
     _trigger_deselect = True
@@ -43,23 +44,30 @@ class ClipNotesSelectMixin():
                 self._trigger_deselect = False
             clip.select_notes_by_id(note_ids)
 
-    @note_select_button.value
+    @select_note_button.value
     def _on_note_select_button_changed(self, value, button):
         self._set_control_pads_from_script(button.is_pressed)
         if not button.is_pressed:
             self._trigger_deselect = True
 
-    @note_select_button.double_clicked
+    @select_note_button.double_clicked
     def _on_note_select_double_clicked(self, button):
         clip = self._sequencer_clip.clip
         if clip != None:
             clip.deselect_all_notes()
 
+    @erase_note_button.pressed
+    def _on_note_erase_button_pressed(self, button):
+        clip = self._sequencer_clip.clip
+        if clip != None:
+            selected_notes = clip.get_selected_notes_extended()
+            clip.remove_notes_by_id([note.note_id for note in selected_notes])
+
     def _set_control_pads_from_script(self, takeover_pads):
-        super()._set_control_pads_from_script(takeover_pads or self.note_select_button.is_pressed)
+        super()._set_control_pads_from_script(takeover_pads or self.select_note_button.is_pressed)
 
     def process_pad_pressed(self, button):
-        if self.note_select_button.is_pressed:
+        if self.select_note_button.is_pressed:
             pitch, _ = self._note_translation_for_button(button)
             self.select_notes(pitch)
     
