@@ -35,8 +35,8 @@ class MasterVolumeComponent(Component, Renderable):
     def _on_coarse_volume_changed(self, value, encoder):
         self._master_volume.value = clamp(self._master_volume.value + sign(value) / 400, 0.0, 1.0)
             
-    @reset_button.pressed
-    def _on_reset_button_pressed(self, button):
+    @reset_button.double_clicked
+    def _on_reset_button_double_clicked(self, button):
         self._master_volume.value = self._master_volume.default_value
 
     @listens("value")
