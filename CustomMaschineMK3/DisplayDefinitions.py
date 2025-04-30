@@ -288,6 +288,38 @@ def create_root_view():
                     value = get_display_value(parameter)
                     content.lines[0 if index < 4 else 1] = f"{track_name}"
                     content.lines[2 if index < 4 else 3] = f"{param_name}:{value}"
+        elif display_mode == CLIP_CONTROL:
+            clip = state.target_track.target_clip
+            index = TOUCH_STATES.active_index
+            if liveobj_valid(clip):
+                if clip.looping:
+                    if index == 0:
+                        content.lines[0] = "Loop start"
+                        content.lines[2] = f"{state.clip_editor.loop_offset}"
+                    elif index == 1:
+                        content.lines[0] = "Loop length"
+                        content.lines[2] = f"{state.clip_editor.loop_length}"
+                    elif index == 2:
+                        content.lines[0] = "Play start"
+                        content.lines[2] = f"{state.clip_editor.start_marker}"
+                else:
+                    if index == 0:
+                        content.lines[0] = "Clip start"
+                        content.lines[2] = f"{state.clip_editor.loop_start}"
+                    elif index == 1:
+                        content.lines[0] = "Clip end"
+                        content.lines[2] = f"{state.clip_editor.loop_end}"
+                
+                if clip.is_audio_clip:
+                    if index == 4:
+                        content.lines[1] = "Gain"
+                        content.lines[3] = f"{clip.gain_display_string}"
+                    elif index == 5:
+                        content.lines[1] = "Pitch"
+                        content.lines[3] = f"{clip.pitch_coarse + clip.pitch_fine * 0.01:+.2f}st"
+                    elif index == 6:
+                        content.lines[1] = "Warp mode"
+                        content.lines[3] = WarpModeList.to_string(clip.warp_mode) if clip.warping else "No Warp"
 
         if TOUCH_STATES.encoder_active:
             encoder_mode = state.encoder_modes.selected_mode
