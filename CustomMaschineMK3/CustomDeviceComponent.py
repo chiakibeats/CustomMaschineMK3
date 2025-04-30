@@ -269,7 +269,8 @@ def custom_mapping_sensitivities(original):
     
     return inner
 
-class CustomDeviceComponent(KnobTouchStateMixin, DeviceComponent):
+class CustomDeviceComponent(DeviceComponent):
+    knob_touch_buttons = control_list(ButtonControl, color = None)
     erase_button = ButtonControl(color = None)
     
     def __init__(self, name = "Device", *a, **k):
@@ -284,7 +285,8 @@ class CustomDeviceComponent(KnobTouchStateMixin, DeviceComponent):
     def current_parameters(self):
         return self._provided_parameters
 
-    def on_knob_touch_double_clicked(self, button):
+    @knob_touch_buttons.double_clicked
+    def _on_knob_touch_double_clicked(self, button):
         if self.erase_button.is_pressed:
             if button.index < len(self.parameters):
                 parameter = self.parameters[button.index].parameter

@@ -49,8 +49,9 @@ from ableton.v3.live import liveobj_valid
 from .KnobTouchStateMixin import KnobTouchStateMixin
 from .Logger import logger
 
-class CustomMixerComponent(KnobTouchStateMixin, MixerComponent, Renderable):
+class CustomMixerComponent(MixerComponent, Renderable):
     pan_or_send_controls = control_list(MappedControl)
+    knob_touch_buttons = control_list(ButtonControl, color = None)
     prev_control_button = ButtonControl()
     next_control_button = ButtonControl()
     erase_button = ButtonControl(color = None)
@@ -127,8 +128,9 @@ class CustomMixerComponent(KnobTouchStateMixin, MixerComponent, Renderable):
             self.control_index += 1
 
         # self._show_current_control_name()
-
-    def on_knob_touch_double_clicked(self, button):
+    
+    @knob_touch_buttons.double_clicked
+    def _on_knob_touch_double_clicked(self, button):
         if self.erase_button.is_pressed:
             if button.index < self._track_count:
                 parameter = self.pan_or_send_controls[button.index].mapped_parameter
