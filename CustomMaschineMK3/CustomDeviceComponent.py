@@ -42,26 +42,46 @@ from ableton.v3.control_surface.parameter_mapping_sensitivities import (
 import ableton.v3.control_surface.device_decorators as decorators
 from ableton.v3.control_surface.device_decorators import (
     DeviceDecoratorFactory,
+    DeviceDecorator,
     TransmuteDeviceDecorator,
     DriftDeviceDecorator
 )
 from ableton.v2.control_surface import (
     DelayDeviceDecorator,
     SimplerDeviceDecorator,
-    WavetableDeviceDecorator
+    WavetableDeviceDecorator,
+    IntegerParameter
 )
 
 from .KnobTouchStateMixin import KnobTouchStateMixin
 from .Logger import logger
+
+class Eq8DeviceDecorator(DeviceDecorator):
+    def create_additional_parameters(self):
+        self._additional_parameters = []
+        self._additional_parameters.append(IntegerParameter(
+            name = "Band",
+            parent = self,
+            integer_value_host = self._live_object.view,
+            integer_value_property_name = "selected_band",
+            min_value = 0,
+            max_value = 7,
+            show_as_quantized = False,
+            display_value_conversion = (lambda x: str(x + 1))))
+    
+    @property
+    def parameters(self):
+        return tuple(self._live_object.parameters) + tuple(self._additional_parameters)
 
 # Device decorator is extender for device object
 # Usually wrap special parameters (wavetable index, simpler playback mode, etc.) for using them like normal device parameters
 # Wavetable device decorator is removed from v3 decorator factory (reason is unknown), so I put all decorators into this class
 class CustomDeviceDecoratorFactory(DeviceDecoratorFactory):
     DECORATOR_CLASSES = {
-        'Delay': DelayDeviceDecorator, 
-        'Drift': DriftDeviceDecorator, 
-        'OriginalSimpler': SimplerDeviceDecorator, 
+        'Delay': DelayDeviceDecorator,
+        'Drift': DriftDeviceDecorator,
+        'Eq8': Eq8DeviceDecorator,
+        'OriginalSimpler': SimplerDeviceDecorator,
         'Transmute': TransmuteDeviceDecorator,
         'InstrumentVector': WavetableDeviceDecorator
     }
@@ -257,6 +277,54 @@ CUSTOM_BANK_DEFINITIONS["OriginalSimpler"] = IndexedDict((
                 .else_use("Envelope").if_parameter("Warp Mode").has_value("Beats"))}
     ),
 ))
+
+CUSTOM_BANK_DEFINITIONS["Eq8"][BANK_MAIN_KEY] = {
+    BANK_PARAMETERS_KEY: (
+        'Band',
+        use("1 Filter On A").if_parameter("Band").has_value("1")
+            .else_use("2 Filter On A").if_parameter("Band").has_value("2")
+            .else_use("3 Filter On A").if_parameter("Band").has_value("3")
+            .else_use("4 Filter On A").if_parameter("Band").has_value("4")
+            .else_use("5 Filter On A").if_parameter("Band").has_value("5")
+            .else_use("6 Filter On A").if_parameter("Band").has_value("6")
+            .else_use("7 Filter On A").if_parameter("Band").has_value("7")
+            .else_use("8 Filter On A").if_parameter("Band").has_value("8"),
+        use("1 Filter Type A").if_parameter("Band").has_value("1")
+            .else_use("2 Filter Type A").if_parameter("Band").has_value("2")
+            .else_use("3 Filter Type A").if_parameter("Band").has_value("3")
+            .else_use("4 Filter Type A").if_parameter("Band").has_value("4")
+            .else_use("5 Filter Type A").if_parameter("Band").has_value("5")
+            .else_use("6 Filter Type A").if_parameter("Band").has_value("6")
+            .else_use("7 Filter Type A").if_parameter("Band").has_value("7")
+            .else_use("8 Filter Type A").if_parameter("Band").has_value("8"),
+        use("1 Frequency A").if_parameter("Band").has_value("1")
+            .else_use("2 Frequency A").if_parameter("Band").has_value("2")
+            .else_use("3 Frequency A").if_parameter("Band").has_value("3")
+            .else_use("4 Frequency A").if_parameter("Band").has_value("4")
+            .else_use("5 Frequency A").if_parameter("Band").has_value("5")
+            .else_use("6 Frequency A").if_parameter("Band").has_value("6")
+            .else_use("7 Frequency A").if_parameter("Band").has_value("7")
+            .else_use("8 Frequency A").if_parameter("Band").has_value("8"),
+        use("1 Resonance A").if_parameter("Band").has_value("1")
+            .else_use("2 Resonance A").if_parameter("Band").has_value("2")
+            .else_use("3 Resonance A").if_parameter("Band").has_value("3")
+            .else_use("4 Resonance A").if_parameter("Band").has_value("4")
+            .else_use("5 Resonance A").if_parameter("Band").has_value("5")
+            .else_use("6 Resonance A").if_parameter("Band").has_value("6")
+            .else_use("7 Resonance A").if_parameter("Band").has_value("7")
+            .else_use("8 Resonance A").if_parameter("Band").has_value("8"),
+        use("1 Gain A").if_parameter("Band").has_value("1")
+            .else_use("2 Gain A").if_parameter("Band").has_value("2")
+            .else_use("3 Gain A").if_parameter("Band").has_value("3")
+            .else_use("4 Gain A").if_parameter("Band").has_value("4")
+            .else_use("5 Gain A").if_parameter("Band").has_value("5")
+            .else_use("6 Gain A").if_parameter("Band").has_value("6")
+            .else_use("7 Gain A").if_parameter("Band").has_value("7")
+            .else_use("8 Gain A").if_parameter("Band").has_value("8"),
+        "Scale",
+        "Output Gain"
+    )
+}
 
 def custom_mapping_sensitivities(original):
     def inner(parameter, device):
