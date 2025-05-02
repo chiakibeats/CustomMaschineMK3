@@ -27,7 +27,7 @@ from .Logger import logger
 LCD_LINES = 4
 LCD_LINE_LENGTH = 28
 NO_ITEM = "---"
-NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+PITCH_NAMES = ["C", "C#/Db", "D", "D#/Db", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"]
 
 SESSION_RING = "default"
 MASTER_VOLUME = "volume"
@@ -187,11 +187,11 @@ class Notifications(DefaultNotifications):
 
     class Simpler(DefaultNotifications.Simpler):
         class Slice(DefaultNotifications.Simpler.Slice):
-            select = lambda index: f"Slice {index}({pitch_index_to_string(int(index) - 1 + BASE_SLICING_NOTE, NOTES)})\n selected"
+            select = lambda index: f"Slice {index}({pitch_index_to_string(int(index) - 1 + BASE_SLICING_NOTE, PITCH_NAMES)})\n selected"
             select: "Notification[Fn[str]]"
             
     class Keyboard:
-        select = lambda note: f"Note {pitch_index_to_string(note, NOTES)}\nselected"
+        select = lambda note: f"Note {pitch_index_to_string(note, PITCH_NAMES)}\nselected"
         select: "Notification[Fn[int]]"
 
     class StepSequence:
@@ -337,7 +337,7 @@ def create_root_view():
                 content.lines[2] = f"{state.transport.song_tempo:.2f} BPM"
             elif encoder_mode == CLIP_SCALE:
                 content.lines[0] = f"Scale({'On' if state.scale_system.scale_mode else 'Off'}):{state.scale_system.scale_name}"
-                content.lines[2] = f"Root Note:{NOTES[state.scale_system.root_note]}"
+                content.lines[2] = f"Root Note:{PITCH_NAMES[state.scale_system.root_note]}"
 
     @View
     def main_view(state):
