@@ -145,7 +145,6 @@ class Specification(ControlSurfaceSpecification):
         "Step_Sequence": partial(
             CustomStepSequenceComponent,
             note_editor_component_type = CustomNoteEditorComponent,
-            loop_selector_component_type = CustomLoopSelectorComponent,
             playhead_notes = tuple(playhead_notes),
             playhead_triplet_notes = tuple(triplet_playhead_notes),
             playhead_channels = [1])
