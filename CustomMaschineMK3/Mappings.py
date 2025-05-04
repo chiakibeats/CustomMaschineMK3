@@ -196,8 +196,6 @@ def create_mappings(surface):
                     select_button = "select",
                     delete_button = "erase",
                     copy_button = "duplicate"),
-                dict(component = "Session_Overview",
-                    matrix = "group_buttons"),
                 dict(component = "Mixer",
                     clear_all_solo_button = "solo_with_erase",
                     clear_all_mute_button = "mute_with_erase"),
@@ -209,7 +207,6 @@ def create_mappings(surface):
             modes = [
                 dict(component = "Maschine_Playable",
                     matrix = "pads",
-                    octave_select_buttons = "group_buttons",
                     scroll_down_button = "row0_pads_with_shift_raw[0]",
                     scroll_up_button = "row0_pads_with_shift_raw[1]",
                     scroll_page_down_button = "row0_pads_with_shift_raw[2]",
@@ -232,7 +229,6 @@ def create_mappings(surface):
                     scroll_up_button = "row0_pads_with_shift_raw[1]",
                     scroll_page_down_button = "row0_pads_with_shift_raw[2]",
                     scroll_page_up_button = "row0_pads_with_shift_raw[3]",
-                    select_buttons = "group_buttons",
                     select_button = "select",
                     delete_button = "erase",
                     copy_button = "duplicate",
@@ -253,7 +249,6 @@ def create_mappings(surface):
                     scroll_up_button = "row0_pads_with_shift_raw[1]",
                     scroll_page_down_button = "row0_pads_with_shift_raw[2]",
                     scroll_page_up_button = "row0_pads_with_shift_raw[3]",
-                    select_buttons = "upper_group_buttons",
                     select_button = "select",
                     delete_button = "erase",
                     select_note_button = "events",
@@ -277,12 +272,42 @@ def create_mappings(surface):
             component = "Step_Sequence",
             step_buttons = "pads" if Config.REVERSE_STEP_PADS else "original_order_pads",
             resolution_buttons = "group_buttons_with_pattern",
-            loop_buttons = "group_buttons",
             loop_copy_button = "duplicate",
             loop_delete_button = "erase",
             prev_page_button = "row0_pads_with_shift_raw[2]",
             next_page_button = "row0_pads_with_shift_raw[3]",
             select_button = "select",
+        ),
+    )
+
+    mappings["Group_Button_Modes"] = dict(
+        default = dict(
+            component = "Session_Overview",
+            matrix = "group_buttons",
+        ),
+        keyboard = dict(
+            component = "Maschine_Playable",
+            octave_select_buttons = "group_buttons",
+        ),
+        drum_rack = dict(
+            component = "Drum_Group",
+            select_buttons = "group_buttons",
+        ),
+        simpler = dict(
+            component = "Sliced_Simpler",
+            select_buttons = "upper_group_buttons",
+        ),
+        chord = dict(
+            component = "Velocity_Levels",
+            # No mapping, just placeholder
+        ),
+        step = dict(
+            component = "Step_Sequence",
+            loop_buttons = "group_buttons",
+        ),
+        note_repeat = dict(
+            component = "Note_Repeat",
+            rate_select_buttons = "group_buttons",
         ),
     )
 
@@ -386,8 +411,10 @@ def create_mappings(surface):
     mappings["Note_Repeat"] = dict(
         repeat_button = "noterep",
         lock_button = "lock_with_noterep",
-        rate_select_mode_button = "notes",
-        rate_select_buttons = "group_buttons_with_notes"
+    )
+
+    mappings["Group_Button_Mode_Control"] = dict(
+        notes_button = "notes"
     )
 
     return mappings

@@ -75,6 +75,7 @@ from .ClipEditorComponent import ClipEditorComponent
 from .BrowserComponent import BrowserComponent
 from .RecordingMethod import FixedLengthRecordingMethod, CustomViewBasedRecordingComponent
 from .EncoderModeControlComponent import EncoderModeControlComponent
+from .GroupButtonModeControlComponent import GroupButtonModeControlComponent
 from .CustomTransportComponent import CustomTransportComponent
 
 from .Logger import logger
@@ -126,6 +127,7 @@ class Specification(ControlSurfaceSpecification):
     component_map = {
         "Transport": CustomTransportComponent,
         "Encoder_Mode_Control": EncoderModeControlComponent,
+        "Group_Button_Mode_Control": GroupButtonModeControlComponent,
         "View_Based_Recording": partial(CustomViewBasedRecordingComponent, recording_method_type = recording_method_type),
         "Browser": BrowserComponent,
         "Clip_Editor": ClipEditorComponent,
@@ -275,6 +277,9 @@ class CustomMaschineMK3(ControlSurface):
             display_mode = self.component_map["Display_Modes"]
             encoder_mode_control.set_display_modes(display_mode)
             self.component_map["Browser"].set_display_modes(display_mode)
+            group_button_control = self.component_map["Group_Button_Mode_Control"]
+            group_button_control.set_pad_modes(self.component_map["Pad_Modes"])
+            group_button_control.set_group_button_modes(self.component_map["Group_Button_Modes"])
 
     def disconnect(self):
         super().disconnect()

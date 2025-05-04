@@ -157,12 +157,13 @@ class ControlElements(ElementsBase):
         add_button(49, "Pitch")
         add_modifier_button(50, "Mod")
         add_modifier_button(51, "Perform")
-        self.add_element(
-            "Notes",
-            ForceToggleButtonElement,
-            identifier = 52,
-            channel = default_channel,
-            resource_type = PrioritizedResource)
+        add_button(52, "Notes")
+        # self.add_element(
+        #     "Notes",
+        #     ForceToggleButtonElement,
+        #     identifier = 52,
+        #     channel = default_channel,
+        #     resource_type = PrioritizedResource)
 
         # For simulating pitch bend behaviour, touch strip controls use some trick.
         # Touch strip movement("Touchstrip") is mapped to channel 1 pitch bend.
@@ -331,7 +332,7 @@ class ControlElements(ElementsBase):
         self.add_modified_control(self.left_half_track_buttons, self.mute)
         self.add_modified_control(self.left_half_track_buttons, self.solo)
         self.add_modified_control(self.upper_group_buttons, self.perform)
-        self.add_modified_control(self.group_buttons, self.notes)
+        # self.add_modified_control(self.group_buttons, self.notes)
         self.add_modified_control(self.group_buttons, self.pattern)
         self.add_modified_control(self.mod, self.erase)
         self.add_modified_control(self.lock, self.plugin)

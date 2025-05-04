@@ -174,6 +174,11 @@ class MaschinePlayableComponent(ClipNotesSelectMixin, PlayableComponent, PageCom
         for button in self.matrix:
             button.set_mode(PlayableControl.Mode.playable_and_listenable)
 
+    def set_octave_select_buttons(self, matrix):
+        self.octave_select_buttons.set_control_element(matrix)
+        if matrix != None:
+            self._update_led_feedback()
+
     def set_scale_system(self, scale_system):
         self._scale_system = scale_system
         self._scale_mode_changed.subject = scale_system

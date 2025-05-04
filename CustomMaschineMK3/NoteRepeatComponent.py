@@ -54,7 +54,6 @@ class CustomSendValueEncoderControl(SendValueEncoderControl):
 class NoteRepeatComponent(Component, Renderable):
     repeat_button = ButtonControl(color = "NoteRepeat.Off", on_color = "NoteRepeat.On")
     lock_button = ButtonControl(color = "NoteRepeat.LockOff", on_color = "NoteRepeat.LockOn")
-    rate_select_mode_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
     rate_select_buttons = control_matrix(ButtonControl, color = "NoteRepeat.Rate", on_color = "NoteRepeat.RateSelected")
 
     _note_repeat = None
@@ -90,14 +89,6 @@ class NoteRepeatComponent(Component, Renderable):
         if self._enabled:
             self._lock_enabled = True
         self._update_led_feedback()
-
-    @rate_select_mode_button.pressed
-    def _on_rate_select_mode_button_pressed(self, button):
-        self.rate_select_mode_button.is_on = True
-
-    @rate_select_mode_button.released
-    def _on_rate_select_mode_button_released(self, button):
-        self.rate_select_mode_button.is_on = False
 
     @rate_select_buttons.pressed
     def _on_rate_selector_changed(self, button):
