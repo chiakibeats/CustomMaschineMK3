@@ -276,7 +276,7 @@ def create_mappings(surface):
         ),
     )
 
-    mappings["Buttons_And_Knobs_Modes"] = dict(
+    mappings["Display_Modes"] = dict(
         default_behaviour = LatchingBehaviour(),
         default_button = "mixer",
         device_button = "plugin",

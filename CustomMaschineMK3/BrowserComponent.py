@@ -141,7 +141,7 @@ class BrowserComponent(Component, Renderable):
     _browser = None
     _target_track = None
     _close_browser = False
-    _buttons_and_knobs_modes = None
+    _display_modes = None
 
     @property
     def selected_item(self):
@@ -179,8 +179,8 @@ class BrowserComponent(Component, Renderable):
         self._update_preview_state(True)
         self._update_led_feedback()
 
-    def set_buttons_and_knobs_modes(self, modes):
-        self._buttons_and_knobs_modes = modes
+    def set_display_modes(self, modes):
+        self._display_modes = modes
 
     def _update_folder_stack(self, new_root_item, current_stack):
         # Update stack items based on its URI
@@ -301,8 +301,8 @@ class BrowserComponent(Component, Renderable):
     @load_button.released
     def _on_load_button_released(self, button):
         if self._close_browser:
-            if self._buttons_and_knobs_modes != None:
-                pop_last_mode(self._buttons_and_knobs_modes, "browser")
+            if self._display_modes != None:
+                pop_last_mode(self._display_modes, "browser")
             self._close_browser = False
 
     @enter_folder_button.pressed

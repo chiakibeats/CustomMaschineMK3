@@ -201,7 +201,7 @@ class CustomMaschineMK3(ControlSurface):
         self.register_slot(self.elements.channel, self._on_update_triggered, "is_pressed")
         self.register_slot(self.elements.keyboard, self._on_playable_mode_selected, "is_pressed")
         self.register_slot(self.component_map["Pad_Modes"], self._on_pad_mode_changed, "selected_mode")
-        self.register_slot(self.component_map["Buttons_And_Knobs_Modes"], self._on_upper_section_mode_changed, "selected_mode")
+        self.register_slot(self.component_map["Display_Modes"], self._on_display_mode_changed, "selected_mode")
     
     # Sometimes pad leds couldn't update correctly
     # I don't know why this happens now, push "CHANNEL" button for refresh state
@@ -272,9 +272,9 @@ class CustomMaschineMK3(ControlSurface):
             self.component_map["Clip_Editor"].set_step_sequence(self.component_map["Step_Sequence"])
             encoder_mode_control = self.component_map["Encoder_Mode_Control"]
             encoder_mode_control.set_encoder_modes(self.component_map["Encoder_Modes"])
-            buttons_knobs = self.component_map["Buttons_And_Knobs_Modes"]
-            encoder_mode_control.set_buttons_and_knobs_modes(buttons_knobs)
-            self.component_map["Browser"].set_buttons_and_knobs_modes(buttons_knobs)
+            display_mode = self.component_map["Display_Modes"]
+            encoder_mode_control.set_display_modes(display_mode)
+            self.component_map["Browser"].set_display_modes(display_mode)
 
     def disconnect(self):
         super().disconnect()
@@ -300,8 +300,8 @@ class CustomMaschineMK3(ControlSurface):
         state = "On" if is_playable_enabled else "Off"
         self.elements.keyboard.send_value(MaschineSkin[f"DefaultButton.{state}"].midi_value)
 
-    def _on_upper_section_mode_changed(self, component):
-        mode = self.component_map["Buttons_And_Knobs_Modes"].selected_mode
+    def _on_display_mode_changed(self, component):
+        mode = self.component_map["Display_Modes"].selected_mode
         if mode == "default":
             return
         elif mode == "device":

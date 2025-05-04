@@ -268,7 +268,7 @@ def create_root_view():
 
     def knob_control_view(state, content):
         #logger.info(f"index = {TOUCH_STATES.active_index}")
-        display_mode = state.buttons_and_knobs_modes.selected_mode
+        display_mode = state.display_modes.selected_mode
         if display_mode == DEVICE_CONTROL and liveobj_valid(state.device.device):
             index = TOUCH_STATES.active_index
             if index != -1:
@@ -343,7 +343,7 @@ def create_root_view():
     def main_view(state):
         TOUCH_STATES.update([k.is_pressed for k in state.elements.knob_touch_buttons], state.elements.encodercap.is_pressed)
         content = Content()
-        display_mode = state.buttons_and_knobs_modes.selected_mode
+        display_mode = state.display_modes.selected_mode
         if display_mode == TRACK_MIXER:
             mixer_view(state, content)
         elif display_mode == DEVICE_CONTROL:

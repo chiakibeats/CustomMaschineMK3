@@ -26,7 +26,7 @@ class EncoderModeControlComponent(Component):
     tempo_modes = ("tempo", "scale")
 
     _encoder_modes = None
-    _buttons_and_knobs_modes = None
+    _display_modes = None
     _last_selected_mode = None
 
     def __init__(self, name = "Encoder_Mode_Control", *a, **k):
@@ -70,15 +70,15 @@ class EncoderModeControlComponent(Component):
     def set_encoder_modes(self, modes):
         self._encoder_modes = modes
 
-    def set_buttons_and_knobs_modes(self, modes):
-        self._buttons_and_knobs_modes = modes
-        self._on_buttons_and_knobs_mode_changed.subject = modes
+    def set_display_modes(self, modes):
+        self._display_modes = modes
+        self._on_display_mode_changed.subject = modes
         if modes != None:
-            self._on_buttons_and_knobs_mode_changed(modes)
+            self._on_display_mode_changed(modes)
 
     @listens("selected_mode")
-    def _on_buttons_and_knobs_mode_changed(self, component):
-        new_selected_mode = self._buttons_and_knobs_modes.selected_mode
+    def _on_display_mode_changed(self, component):
+        new_selected_mode = self._display_modes.selected_mode
         if self._last_selected_mode != "browser" and new_selected_mode == "browser":
             # Push "browser" mode to encoder modes stack
             if self._encoder_modes != None:
