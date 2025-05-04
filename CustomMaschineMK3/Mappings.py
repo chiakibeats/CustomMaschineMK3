@@ -97,6 +97,16 @@ def create_mappings(surface):
                     page_left_button = "encoderleft_with_shift",
                     page_right_button = "encoderright_with_shift",
                 )]),
+        device = dict(
+            modes = [
+                dict(component = "Misc_Control",
+                    select_track_encoder = "encoder",
+                    exclusive_arm_button = "encoderpush",
+                    arm_button = "encoderpush_with_shift"),
+                dict(component = "Device_Navigation",
+                    scroll_up_button = "encoderleft",
+                    scroll_down_button = "encoderright",
+                )]),
         volume = dict(
             component = "Master_Volume",
             master_volume = "encoder",

@@ -61,6 +61,8 @@ class CustomDeviceNavigationComponent(DeviceNavigationComponent):
     delete_button = ButtonControl(color = None)
     view_button = ButtonControl(color = None)
     select_encoder = StepEncoderControl(num_steps = 64)
+    prev_page_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
+    next_page_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
 
     _scroll_position = 0
 
@@ -81,26 +83,15 @@ class CustomDeviceNavigationComponent(DeviceNavigationComponent):
     @scroll_position.setter
     def scroll_position(self, position):
         self._scroll_position = position
+        self._update_page_scroll_state()
         self._update_on_off_mappings()
         self._update_select_button_state()
 
-    def can_scroll_down(self):
-        return self.scroll_position + self.bank_size < ceil(len(self._item_provider.items) / float(self.bank_size)) * self.bank_size
+    # def scroll_down(self):
+    #     super().scroll_down()
     
-    def can_scroll_up(self):
-        return self.scroll_position - self.bank_size >= 0
-    
-    def scroll_down(self):
-        self.scroll_position += self.bank_size
-    
-    def scroll_up(self):
-        self.scroll_position -= self.bank_size
-
-    def set_prev_page_button(self, control):
-        self.set_scroll_up_button(control)
-
-    def set_next_page_button(self, control):
-        self.set_scroll_down_button(control)
+    # def scroll_up(self):
+    #     super().scroll_up()
 
     @select_buttons.pressed
     def _on_select_buttons_pressed(self, target_button):
@@ -137,6 +128,22 @@ class CustomDeviceNavigationComponent(DeviceNavigationComponent):
         self.song.view.select_device(target_device)
         self.notify(self.notifications.Device.select, target_device.name)
 
+    def _can_scroll_prev_page(self):
+        return self.scroll_position - self.bank_size >= 0
+    
+    def _can_scroll_next_page(self):
+        return self.scroll_position + self.bank_size < ceil(len(self._item_provider.items) / float(self.bank_size)) * self.bank_size
+
+    @prev_page_button.pressed
+    def _on_prev_page_button_pressed(self, button):
+        if self._can_scroll_prev_page():
+            self.scroll_position -= self.bank_size
+
+    @next_page_button.pressed
+    def _on_next_page_button_pressed(self, button):
+        if self._can_scroll_next_page():
+            self.scroll_position += self.bank_size
+
     def _on_device_chain_changed(self):
         logger.info("Device chain changed")
         logger.info(f"Devices = {[device.name for device in self._item_provider.items]}")
@@ -146,6 +153,7 @@ class CustomDeviceNavigationComponent(DeviceNavigationComponent):
         else:
             self.scroll_position = floor(self._item_provider.selected_index / float(self.bank_size)) * self.bank_size
 
+        self._update_page_scroll_state()
         self._update_on_off_mappings()
         self._update_select_button_state()
 
@@ -153,6 +161,10 @@ class CustomDeviceNavigationComponent(DeviceNavigationComponent):
         logger.info(f"Selected device changed index = {self._item_provider.selected_index}")
         self._update_select_button_state()
     
+    def _update_page_scroll_state(self):
+        self.prev_page_button.is_on = self._can_scroll_prev_page()
+        self.next_page_button.is_on = self._can_scroll_next_page()
+
     def _update_on_off_mappings(self):
         for button in self.on_off_buttons:
             actual_position = self.scroll_position + button.index

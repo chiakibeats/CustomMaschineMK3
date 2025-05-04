@@ -352,8 +352,8 @@ class MaschineLEDColors:
         Off = BasicColors.OFF
         LockOn = BasicColors.ON
         LockOff = BasicColors.OFF
-        NavigationPressed = BasicColors.ON
-        Navigation = BasicColors.OFF
+        NavigationPressed = make_color(WHITE, LEVEL_4)
+        Navigation = make_color(WHITE, LEVEL_2)
 
         class Bank:
             Selected = BasicColors.ON

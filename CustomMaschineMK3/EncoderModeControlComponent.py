@@ -27,7 +27,7 @@ class EncoderModeControlComponent(Component):
 
     _encoder_modes = None
     _display_modes = None
-    _last_selected_mode = None
+    _selected_encoder_mode = None
 
     def __init__(self, name = "Encoder_Mode_Control", *a, **k):
         super().__init__(name, *a, **k)
@@ -59,12 +59,17 @@ class EncoderModeControlComponent(Component):
                 do_return = selected_mode == modes[0]
         
             if do_return:
-                self._encoder_modes.push_mode(self._encoder_modes.modes[0])
-                self._encoder_modes.pop_unselected_modes()
+                display_mode = self._display_modes.selected_mode
+                if display_mode == "device":
+                    self._encoder_modes.selected_mode = "device"
+                else:
+                    self._encoder_modes.selected_mode = "default"
+                self._selected_encoder_mode = None
             else:
                 # Otherwise push mode chosen by shift button state
-                self._encoder_modes.push_mode(modes[1 if self.shift_button.is_pressed and len(modes) > 1 else 0])
-
+                self._selected_encoder_mode = modes[1 if self.shift_button.is_pressed and len(modes) > 1 else 0]
+                self._encoder_modes.selected_mode = self._selected_encoder_mode
+                
         self._update_led_feedback()
 
     def set_encoder_modes(self, modes):
@@ -78,16 +83,17 @@ class EncoderModeControlComponent(Component):
 
     @listens("selected_mode")
     def _on_display_mode_changed(self, component):
-        new_selected_mode = self._display_modes.selected_mode
-        if self._last_selected_mode != "browser" and new_selected_mode == "browser":
-            # Push "browser" mode to encoder modes stack
-            if self._encoder_modes != None:
-                self._encoder_modes.push_mode("browser")
-        elif self._last_selected_mode == "browser" and new_selected_mode != "browser":
-            if self._encoder_modes != None:
-                pop_last_mode(self._encoder_modes, "browser")
+        display_mode = self._display_modes.selected_mode
+        if display_mode == "browser":
+            self._encoder_modes.selected_mode = "browser"
+        else:
+            if self._selected_encoder_mode != None:
+                self._encoder_modes.selected_mode = self._selected_encoder_mode
+            elif display_mode == "device":
+                self._encoder_modes.selected_mode = "device"
+            else:
+                self._encoder_modes.selected_mode = "default"
 
-        self._last_selected_mode = new_selected_mode
         self._update_led_feedback()
 
     def _update_led_feedback(self):
