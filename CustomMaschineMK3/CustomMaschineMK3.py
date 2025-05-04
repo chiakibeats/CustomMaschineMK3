@@ -77,6 +77,7 @@ from .RecordingMethod import FixedLengthRecordingMethod, CustomViewBasedRecordin
 from .EncoderModeControlComponent import EncoderModeControlComponent
 from .GroupButtonModeControlComponent import GroupButtonModeControlComponent
 from .CustomTransportComponent import CustomTransportComponent
+from .SettingsComponent import SettingsRepository, SettingsComponent
 
 from .Logger import logger
 from . import Config
@@ -125,6 +126,7 @@ class Specification(ControlSurfaceSpecification):
     recording_method_type = FixedLengthRecordingMethod
     feedback_channels = [1]
     component_map = {
+        "Settings": SettingsComponent,
         "Transport": CustomTransportComponent,
         "Encoder_Mode_Control": EncoderModeControlComponent,
         "Group_Button_Mode_Control": GroupButtonModeControlComponent,
@@ -196,10 +198,14 @@ class CustomMaschineMK3(ControlSurface):
     }
     _current_drum_group = None
     _current_sliced_simpler = None
+    _settings = None
 
     def __init__(self, *a, **k):
+        # Settings must be loaded before initialization
+        self._settings = SettingsRepository()
         super().__init__(Specification, *a, **k)
         logger.info(dir(self._c_instance))
+
         self.register_slot(self.elements.channel, self._on_update_triggered, "is_pressed")
         self.register_slot(self.elements.keyboard, self._on_playable_mode_selected, "is_pressed")
         self.register_slot(self.component_map["Pad_Modes"], self._on_pad_mode_changed, "selected_mode")
@@ -259,7 +265,8 @@ class CustomMaschineMK3(ControlSurface):
             "sequencer_clip": lambda: self._create_sequencer_clip,
             "note_repeat": const(self._c_instance.note_repeat),
             "velocity_levels": const(self._c_instance.velocity_levels),
-            "get_knob_mapped_parameter": const(self._get_knob_mapped_parameter)
+            "get_knob_mapped_parameter": const(self._get_knob_mapped_parameter),
+            "settings": const(self._settings),
         }
         
         return inject_dict
@@ -280,9 +287,13 @@ class CustomMaschineMK3(ControlSurface):
             group_button_control = self.component_map["Group_Button_Mode_Control"]
             group_button_control.set_pad_modes(self.component_map["Pad_Modes"])
             group_button_control.set_group_button_modes(self.component_map["Group_Button_Modes"])
+            self.component_map["Note_Repeat"].set_group_button_control(group_button_control)
 
     def disconnect(self):
         super().disconnect()
+
+        # Save settings
+        self._settings.save()
 
         # Clear display
         for line in range(4):

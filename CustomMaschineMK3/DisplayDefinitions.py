@@ -41,6 +41,7 @@ TRACK_MIXER = "default"
 DEVICE_CONTROL = "device"
 CLIP_CONTROL = "clip"
 BROWSER = "browser"
+SETTINGS = "settings"
 
 def make_mcu_display_header(line):
     return (0xF0, 0x00, 0x00, 0x66, 0x17, 0x12, 28 * min(line, LCD_LINES - 1))
@@ -257,7 +258,6 @@ def create_root_view():
             content.lines[3] = ""
 
     def browser_view(state, content):
-        content.lines[0] = ""
         folder_name = state.browser.parent_folder_name or NO_ITEM
         item_name = state.browser.selected_item_name or NO_ITEM
 
@@ -265,6 +265,14 @@ def create_root_view():
         content.lines[1] = ""
         content.lines[2] = f">{item_name[:LCD_LINE_LENGTH - 1]}"
         content.lines[3] = f"{item_name[LCD_LINE_LENGTH - 1:]}"
+
+    def settings_view(state, content):
+        description = state.settings.current_description
+
+        content.lines[0] = f"{description[:LCD_LINE_LENGTH - 1]}"
+        content.lines[1] = f"{description[LCD_LINE_LENGTH - 1:]}"
+        content.lines[2] = f">{state.settings.current_value}"
+        content.lines[3] = ""
 
     def knob_control_view(state, content):
         #logger.info(f"index = {TOUCH_STATES.active_index}")
@@ -352,12 +360,14 @@ def create_root_view():
             clip_view(state, content)
         elif display_mode == BROWSER:
             browser_view(state, content)
+        elif display_mode == SETTINGS:
+            settings_view(state, content)
 
         knob_control_view(state, content)
 
-        if state.elements.setting.is_pressed:
-            content.lines[0] = "CustomMaschineMK3 by chiaki"
-            content.lines[2] = "Version 1.00"
+        # if state.elements.setting.is_pressed:
+        #     content.lines[0] = "CustomMaschineMK3 by chiaki"
+        #     content.lines[2] = "Version 1.00"
         
         return content    
 

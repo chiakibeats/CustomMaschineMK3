@@ -50,7 +50,7 @@ class EncoderModeControlComponent(Component):
         
         selected_mode = self._encoder_modes.selected_mode
         # In browser mode, encoder mode buttons do nothing to avoid confusing 
-        if selected_mode != "browser":
+        if selected_mode != "browser" and selected_mode != "settings":
             shift = self.shift_button.is_pressed
             if len(modes) > 1:
                 # If a mode button has two modes and press mode button with shift when non-shift mode is selected, don't return to default
@@ -86,6 +86,8 @@ class EncoderModeControlComponent(Component):
         display_mode = self._display_modes.selected_mode
         if display_mode == "browser":
             self._encoder_modes.selected_mode = "browser"
+        elif display_mode == "settings":
+            self._encoder_modes.selected_mode = "settings"
         else:
             if self._selected_encoder_mode != None:
                 self._encoder_modes.selected_mode = self._selected_encoder_mode

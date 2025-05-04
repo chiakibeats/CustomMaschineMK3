@@ -144,6 +144,9 @@ def create_mappings(surface):
             leave_folder_button = "encoderleft",
             jump_next_button = "encoderdown",
             jump_prev_button = "encoderup"),
+        settings = dict(
+            component = "Settings",
+            select_encoder = "encoder"),
     )
 
     mappings["Encoder_Mode_Control"] = dict(
@@ -317,6 +320,7 @@ def create_mappings(surface):
         device_button = "plugin",
         clip_button = "sampling",
         browser_button = "browser",
+        settings_button = "setting",
         default = dict(
             component = "Mixer",
             shift_button = "shift",
@@ -370,6 +374,11 @@ def create_mappings(surface):
             preview_toggle_button = "track_buttons_raw[0]",
             preview_volume_encoder = "knobs_raw[0]",
             select_folder_buttons = "track_buttons_with_macro"
+        ),
+        settings = dict(
+            behaviour = ToggleBehaviour(),
+            component = "Settings",
+            value_encoder = "knobs_raw[0]"
         )
     )
 
