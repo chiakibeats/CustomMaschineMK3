@@ -53,9 +53,6 @@ class CustomStepSequenceComponent(StepSequenceComponent, Renderable):
     def set_select_button(self, button):
         self._note_editor.select_button.set_control_element(button)
 
-    def set_copy_button(self, button):
-        self._loop_selector.set_copy_button(button)
-
     def _on_grid_resolution_changed(self):
         grid, triplet = self._grid_resolution.clip_grid
         self.notify(self.notifications.StepSequence.grid_resolution, GRID_RESOLUTION_NAMES[grid] + ("T" if triplet else ""))

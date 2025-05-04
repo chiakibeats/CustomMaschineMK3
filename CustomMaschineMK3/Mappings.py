@@ -278,11 +278,11 @@ def create_mappings(surface):
             step_buttons = "pads" if Config.REVERSE_STEP_PADS else "original_order_pads",
             resolution_buttons = "group_buttons_with_pattern",
             loop_buttons = "group_buttons",
+            loop_copy_button = "duplicate",
             loop_delete_button = "erase",
             prev_page_button = "row0_pads_with_shift_raw[2]",
             next_page_button = "row0_pads_with_shift_raw[3]",
             select_button = "select",
-            copy_button = "duplicate"
         ),
     )
 
