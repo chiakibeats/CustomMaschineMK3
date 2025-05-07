@@ -78,6 +78,7 @@ from .EncoderModeControlComponent import EncoderModeControlComponent
 from .GroupButtonModeControlComponent import GroupButtonModeControlComponent
 from .CustomTransportComponent import CustomTransportComponent
 from .SettingsComponent import SettingsRepository, SettingsComponent
+from .CustomClipSlotComponent import LEDBlinker, CustomClipSlotComponent
 
 from .Logger import logger
 from . import Config
@@ -128,6 +129,7 @@ class Specification(ControlSurfaceSpecification):
     component_map = {
         "Settings": SettingsComponent,
         "Transport": CustomTransportComponent,
+        "Session": partial(SessionComponent, clip_slot_component_type = CustomClipSlotComponent),
         "Encoder_Mode_Control": EncoderModeControlComponent,
         "Group_Button_Mode_Control": GroupButtonModeControlComponent,
         "View_Based_Recording": partial(CustomViewBasedRecordingComponent, recording_method_type = recording_method_type),
@@ -251,6 +253,11 @@ class CustomMaschineMK3(ControlSurface):
     def _create_sequencer_clip(self):
         self._sequencer_clip = SequencerClip()
         return self._sequencer_clip
+        
+    @lazy_attribute
+    def _create_blinker(self):
+        self._blinker = LEDBlinker()
+        return self._blinker
     
     def _get_knob_mapped_parameter(self, index):
         if index >= 0 and index < len(self.elements.knobs_raw):
@@ -267,6 +274,7 @@ class CustomMaschineMK3(ControlSurface):
             "velocity_levels": const(self._c_instance.velocity_levels),
             "get_knob_mapped_parameter": const(self._get_knob_mapped_parameter),
             "settings": const(self._settings),
+            "blinker": lambda: self._create_blinker,
         }
         
         return inject_dict

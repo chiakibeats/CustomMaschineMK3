@@ -320,6 +320,8 @@ class MaschineLEDColors:
         ClipTriggeredRecord = make_color(RED, LEVEL_1)
         ClipPlaying = make_color(GREEN, LEVEL_3)
         ClipRecording = make_color(RED, LEVEL_3)
+        ClipPlayingDimmed = make_color(GREEN, LEVEL_2)
+        ClipRecordingDimmed = make_color(RED, LEVEL_2)
         Scene = make_color_from_element
         SceneTriggered = make_color(GREEN, LEVEL_3)
         NoScene = BasicColors.OFF
