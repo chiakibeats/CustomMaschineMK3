@@ -120,6 +120,7 @@ class NoteRepeatComponent(Component, Renderable):
             button.is_on = index == self._selected_index
 
     def _update_note_repeat_state(self):
+        logger.info(f"Note repeat state = {self._enabled}")
         if self._automatic_switching and self._group_button_control != None:
             self._group_button_control.set_note_repeat_selector_state(self._enabled)
 

@@ -43,6 +43,7 @@ class VelocityLevelsComponent(PlayableComponent, Renderable):
     _velocity_levels = None
     _source_notes = list(range(60, 76))
     _selected_level = 0
+    _enabled = False
 
     @property
     def selected_velocity(self):
@@ -76,13 +77,10 @@ class VelocityLevelsComponent(PlayableComponent, Renderable):
         return super()._note_translation_for_button(button)
     
     def set_matrix(self, matrix):
+        logger.info(f"matrix = {matrix}")
         super().set_matrix(matrix)
-        if matrix != None:
-            logger.info("Velocity levels mode enabled")
-            self._velocity_levels.enabled = True
-        else:
-            logger.info("Velocity levels mode disabled")
-            self._velocity_levels.enabled = False
+        self._enabled = matrix != None
+        self._update_velocity_levels_state()
 
     def _on_matrix_pressed(self, button):
         row, column = button.coordinate
@@ -97,14 +95,7 @@ class VelocityLevelsComponent(PlayableComponent, Renderable):
 
     def update(self):
         super().update()
-        self._velocity_levels.enabled = self.is_enabled()
-        if self._pitch_provider != None:
-            self._on_pitches_changed(self._pitch_provider.pitches)
-        else:
-            self._velocity_levels.target_note = DEFAULT_NOTE
-        self._velocity_levels.target_channel = 1
-        self._velocity_levels.source_channel = 0
-        self._velocity_levels.notes = self._source_notes
+        self._update_velocity_levels_state()
 
     def _update_button_color(self, button):
         row, column = button.coordinate
@@ -119,13 +110,23 @@ class VelocityLevelsComponent(PlayableComponent, Renderable):
         button.color = LiveObjSkinEntry(color_name, self._target_track.target_track)
         button.pressed_color = LiveObjSkinEntry("VelocityLevels.Pressed", self._target_track.target_track)
 
+    def _update_velocity_levels_state(self):
+        self._velocity_levels.enabled = self._enabled
+        pitch = self._pitch_provider.pitches[0] if len(self._pitch_provider.pitches) else DEFAULT_NOTE
+        self._velocity_levels.target_note = pitch
+        self._velocity_levels.target_channel = 1
+        self._velocity_levels.source_channel = 0
+        self._velocity_levels.notes = self._source_notes
+        logger.info(f"Fixed velocity state = {self._velocity_levels.enabled}, note = {self._velocity_levels.target_note}")
+
     @listens("pitches")
     def _on_pitches_changed(self, pitches):
-        pitch = self._pitch_provider.pitches[0] if len(self._pitch_provider.pitches) > 0 else DEFAULT_NOTE
+        pitch = pitches[0] if len(pitches) else DEFAULT_NOTE
+        logger.info(f"Selected note = {pitch}")
         if self._velocity_levels.target_note != pitch:
             # Reset velocity level if target note is changed
             self._select_velocity_level(DEFAULT_LEVEL_INDEX)
-        self._velocity_levels.target_note = pitches[0] if len(pitches) > 0 else DEFAULT_NOTE
+        self._update_velocity_levels_state()
 
     @listens("target_track")
     def _on_target_track_changed(self):
