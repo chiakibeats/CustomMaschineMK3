@@ -16,8 +16,6 @@ from ableton.v3.control_surface.mode import (
     ImmediateBehaviour
 )
 
-from . import Config
-
 class LatchingBehaviour(LatchingBehaviourBase):
     def __init__(self, return_on_hold = False):
         super().__init__()
@@ -182,6 +180,7 @@ def create_mappings(surface):
         # )
     )
 
+    sequencer_style = surface._settings.get_value("sequencer_style")
     mappings["Pad_Modes"] = dict(
         default_behaviour = LatchingBehaviour(),
         default_button = "padmode",
@@ -273,7 +272,7 @@ def create_mappings(surface):
         ),
         step = dict(
             component = "Step_Sequence",
-            step_buttons = "pads" if Config.REVERSE_STEP_PADS else "original_order_pads",
+            step_buttons = "pads" if sequencer_style == "Push" else "original_order_pads",
             resolution_buttons = "group_buttons_with_pattern",
             loop_copy_button = "duplicate",
             loop_delete_button = "erase",

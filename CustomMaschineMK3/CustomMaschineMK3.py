@@ -83,12 +83,6 @@ from .CustomClipSlotComponent import LEDBlinker, CustomClipSlotComponent
 from .Logger import logger
 from . import Config
 
-pad_row_notes = list(range(60, 76, 4))
-if Config.REVERSE_STEP_PADS:
-    pad_row_notes = pad_row_notes[::-1]
-playhead_notes = [base_note + offset for base_note, offset in product(pad_row_notes, range(4))]
-triplet_playhead_notes = [base_note + offset for base_note, offset in product(pad_row_notes, range(3))]
-
 class CustomTargetTrackComponent(TargetTrackComponent):
         
     def _target_clip_from_session(self):
@@ -148,23 +142,8 @@ class Specification(ControlSurfaceSpecification):
         "Maschine_Playable": MaschinePlayableComponent,
         "Misc_Control": MiscControlComponent,
         "Device_Navigation": CustomDeviceNavigationComponent,
-        "Step_Sequence": partial(
-            CustomStepSequenceComponent,
-            note_editor_component_type = CustomNoteEditorComponent,
-            playhead_notes = tuple(playhead_notes),
-            playhead_triplet_notes = tuple(triplet_playhead_notes),
-            playhead_channels = [1])
     }
     parameter_bank_definitions = CUSTOM_BANK_DEFINITIONS
-
-Specification.component_map["Device"] = partial(
-    CustomDeviceComponent,
-    device_decorator_factory = CustomDeviceDecoratorFactory(),
-    bank_definitions = Specification.parameter_bank_definitions,
-    bank_size = Specification.parameter_bank_size,
-    continuous_parameter_sensitivity = Specification.continuous_parameter_sensitivity,
-    quantized_parameter_sensitivity = Specification.quantized_parameter_sensitivity)
-    # ,bank_navigation_component_type=CustomDeviceBankNavigationComponent)
 
 class BypassIdentification(IdentificationComponent):
     def request_identity(self):
@@ -205,6 +184,7 @@ class CustomMaschineMK3(ControlSurface):
     def __init__(self, *a, **k):
         # Settings must be loaded before initialization
         self._settings = SettingsRepository()
+        self._init_specification()
         super().__init__(Specification, *a, **k)
         logger.info(dir(self._c_instance))
 
@@ -213,6 +193,28 @@ class CustomMaschineMK3(ControlSurface):
         self.register_slot(self.component_map["Pad_Modes"], self._on_pad_mode_changed, "selected_mode")
         self.register_slot(self.component_map["Display_Modes"], self._on_display_mode_changed, "selected_mode")
     
+    def _init_specification(self):
+        Specification.component_map["Device"] = partial(
+            CustomDeviceComponent,
+            device_decorator_factory = CustomDeviceDecoratorFactory(),
+            bank_definitions = Specification.parameter_bank_definitions,
+            bank_size = Specification.parameter_bank_size,
+            continuous_parameter_sensitivity = Specification.continuous_parameter_sensitivity,
+            quantized_parameter_sensitivity = Specification.quantized_parameter_sensitivity)
+
+        pad_row_notes = list(range(60, 76, 4))
+        if self._settings.get_value("sequencer_style") == "Push":
+            pad_row_notes = pad_row_notes[::-1]
+        playhead_notes = [base_note + offset for base_note, offset in product(pad_row_notes, range(4))]
+        triplet_playhead_notes = [base_note + offset for base_note, offset in product(pad_row_notes, range(3))]
+
+        Specification.component_map["Step_Sequence"] = partial(
+            CustomStepSequenceComponent,
+            note_editor_component_type = CustomNoteEditorComponent,
+            playhead_notes = tuple(playhead_notes),
+            playhead_triplet_notes = tuple(triplet_playhead_notes),
+            playhead_channels = [1])
+
     # Sometimes pad leds couldn't update correctly
     # I don't know why this happens now, push "CHANNEL" button for refresh state
     def _on_update_triggered(self):

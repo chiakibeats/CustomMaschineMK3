@@ -36,7 +36,7 @@ class LEDBlinker(EventObject):
 
     def timer_callback(self):
         self._blink_state = not self._blink_state
-        logger.info(f"Blink state = {self._blink_state}")
+        #logger.info(f"Blink state = {self._blink_state}")
         self._timer.restart()
         self.notify_blink_state()
 

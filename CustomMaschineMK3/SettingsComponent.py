@@ -23,14 +23,17 @@ from ableton.v3.base import (
     clamp,
     depends,
     listenable_property,
+    EventObject
 )
+
+from ableton.v2.control_surface.internal_parameter import EnumWrappingParameter
 
 from .Logger import logger
 
 def beat_ratio(denominator):
     return 4.0 / denominator
 
-SETTING_FILE_NAME = "preferences.json"
+SETTINGS_FILE_NAME = "settings.json"
 BASE_LENGTH_LIST = [1, 2, 4, 8, 16, 32, 64, 128]
 
 NOTE_REPEAT_RATES = []
@@ -40,8 +43,15 @@ NOTE_REPEAT_RATES += [(beat_ratio(l) * 1.5, f"1/{l}D") for l in BASE_LENGTH_LIST
 
 REPEAT_RATE_KEYS = [x[1] for x in NOTE_REPEAT_RATES]
 
+def get_repeat_rate_value(name, definition = NOTE_REPEAT_RATES):
+    for value, rate_name in definition:
+        if name == rate_name:
+            return value
+    
+    return NOTE_REPEAT_RATES[0][0]
+
 # Settings scheme example
-# Bool ()
+# Bool
 # {
 #     "key": "bool_option",
 #     "description": "Bool Option",
@@ -68,7 +78,7 @@ REPEAT_RATE_KEYS = [x[1] for x in NOTE_REPEAT_RATES]
 #     "enum": ["A", "B", "C"],
 # },
 #
-# Special (display only)
+# Special (for display purpose)
 # {
 #     "key": "__special", # must starts with double underscore(__)
 #     "description": "I have a message for you",
@@ -79,8 +89,8 @@ REPEAT_RATE_KEYS = [x[1] for x in NOTE_REPEAT_RATES]
 
 SETTINGS = [
     {
-        "key": "auto_switch_selector",
-        "description": "Auto Switch Repeat Rate Selector",
+        "key": "automatic_selector_switching",
+        "description": "Automatic Rate Selector Switching",
         "type": "bool",
         "default_value": False,
     },
@@ -142,7 +152,7 @@ SETTINGS = [
     },
     {
         "key": "sequencer_style",
-        "description": "Sequencer Pad Style",
+        "description": "Sequencer Style (Reload required)",
         "type": "enum",
         "default_value": "Maschine",
         "enum": ["Maschine", "Push"]
@@ -155,16 +165,36 @@ SETTINGS = [
     },    
 ]
 
-class SettingsRepository:
-    def __init__(self, file_name = SETTING_FILE_NAME, scheme = SETTINGS):
+
+class SettingsRepository(EventObject):
+    def __init__(self, file_name = SETTINGS_FILE_NAME, scheme = SETTINGS):
         self._file_path = Path(__file__).absolute().parent.joinpath(file_name)
-        self._scheme = scheme
+        self._scheme = {}
+        for entry in scheme:
+            self._scheme[entry["key"]] = entry
         self._settings = {}
         self.load()
 
+    @listenable_property
+    def value_changed(self):
+        # Just for using callback
+        return False
+
     def load(self):
         if self._file_path.exists():
-            self._settings = json.loads(self._file_path.read_text())
+            settings = json.loads(self._file_path.read_text())
+            for key, entry in self._scheme.items():
+                if key.startswith("__"):
+                    # Ignore special items
+                    continue
+                elif key in settings:
+                    # Sanitize value and load it
+                    settings[key] = self.sanitize_value(settings[key], entry)
+                else:
+                    # Load default value if not exists
+                    settings[key] = entry["default_value"]
+            
+            self._settings = settings
         else:
             self.clear_settings()
             self.save()
@@ -174,21 +204,45 @@ class SettingsRepository:
             settings_file.write(json.dumps(self._settings, indent = 4))
 
     def clear_settings(self):
-        for entry in self._scheme:
-            if not entry["key"].startswith("__"):
+        for key, entry in self._scheme.items():
+            if entry["key"].startswith("__"):
+                # Skip options which start with double underscore(__)
+                pass
+            else:
                 self._settings[entry["key"]] = entry["default_value"]
 
+    def sanitize_value(self, value, entry):
+        value_type = entry["type"]
+        if value_type == "bool":
+            if isinstance(value, bool):
+                return value
+        elif value_type == "int":
+            try:
+                value = int(value)
+                if value >= entry["min"] and value <= entry["max"]:
+                    return value
+            except:
+                pass
+        elif value_type == "enum":
+            try:
+                value = str(value)
+                if value in entry["enum"]:
+                    return value
+            except:
+                pass
+
+        return entry["default_value"]
+        
     def set_value(self, key, value):
-        # must be sanitized
-        self._settings[key] = value
+        if key in self._scheme:
+            self._settings[key] = self.sanitize_value(value, self._scheme[key])
+        
+        self.notify_value_changed()
 
     def get_value(self, key):
         if key.startswith("__"):
-            for entry in self._scheme:
-                if entry["key"] == key:
-                    return entry["default_value"]
+            return self._scheme[key]["default_value"]
         else:
-            # must be sanitized
             return self._settings[key]
 
 class SettingsComponent(Component, Renderable):
@@ -247,6 +301,5 @@ class SettingsComponent(Component, Renderable):
         elif type == "none":
             # ignore
             pass
-
 
         self.notify_current_value()
