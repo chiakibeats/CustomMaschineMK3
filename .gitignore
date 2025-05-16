@@ -163,3 +163,4 @@ cython_debug/
 
 # Repository specific
 misc/
+settings.json
