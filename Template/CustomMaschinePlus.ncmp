@@ -635,7 +635,7 @@
       <page name="Knob Page 1" colorColumn1-index="18" colorColumn1B-index="18" colorColumn2-index="18" colorColumn2B-index="18" colorColumn3-index="18" colorColumn3B-index="18" colorColumn4-index="18" colorColumn4B-index="18" colorColumn5-index="18" colorColumn5B-index="18" colorColumn6-index="18" colorColumn6B-index="18" colorColumn7-index="18" colorColumn7B-index="18" colorColumn8-index="18" colorColumn8B-index="18" explicitMCU="0">
         <button version="1" id="Button1">
           <name>1</name>
-          <controller>22</controller>
+          <note>36</note>
           <channel>1</channel>
           <off>0</off>
           <on>127</on>
@@ -644,7 +644,7 @@
         </button>
         <button version="1" id="Button2">
           <name>2</name>
-          <controller>23</controller>
+          <note>37</note>
           <channel>1</channel>
           <off>0</off>
           <on>127</on>
@@ -653,7 +653,7 @@
         </button>
         <button version="1" id="Button3">
           <name>3</name>
-          <controller>24</controller>
+          <note>38</note>
           <channel>1</channel>
           <off>0</off>
           <on>127</on>
@@ -662,7 +662,7 @@
         </button>
         <button version="1" id="Button4">
           <name>4</name>
-          <controller>25</controller>
+          <note>39</note>
           <channel>1</channel>
           <off>0</off>
           <on>127</on>
@@ -671,7 +671,7 @@
         </button>
         <button version="1" id="Button5">
           <name>5</name>
-          <controller>26</controller>
+          <note>40</note>
           <channel>1</channel>
           <off>0</off>
           <on>127</on>
@@ -680,7 +680,7 @@
         </button>
         <button version="1" id="Button6">
           <name>6</name>
-          <controller>27</controller>
+          <note>41</note>
           <channel>1</channel>
           <off>0</off>
           <on>127</on>
@@ -689,7 +689,7 @@
         </button>
         <button version="1" id="Button7">
           <name>7</name>
-          <controller>28</controller>
+          <note>42</note>
           <channel>1</channel>
           <off>0</off>
           <on>127</on>
@@ -698,7 +698,7 @@
         </button>
         <button version="1" id="Button8">
           <name>8</name>
-          <controller>29</controller>
+          <note>43</note>
           <channel>1</channel>
           <off>0</off>
           <on>127</on>
