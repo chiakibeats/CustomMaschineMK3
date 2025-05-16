@@ -35,7 +35,9 @@ from ableton.v3.control_surface.components import (
     SequencerClip,
     GridResolutionComponent,
     SessionComponent,
-    TargetTrackComponent
+    TargetTrackComponent,
+    DEFAULT_SIMPLER_TRANSLATION_CHANNEL,
+    DEFAULT_DRUM_TRANSLATION_CHANNEL
 )
 
 from ableton.v3.control_surface.components.grid_resolution import GridResolution
@@ -79,6 +81,7 @@ from .GroupButtonModeControlComponent import GroupButtonModeControlComponent
 from .CustomTransportComponent import CustomTransportComponent
 from .SettingsComponent import SettingsRepository, SettingsComponent
 from .CustomClipSlotComponent import LEDBlinker, CustomClipSlotComponent
+from .PageableBackgroundComponent import PageableBackgroundComponent
 
 from .Logger import logger
 from . import Config
@@ -119,8 +122,9 @@ class Specification(ControlSurfaceSpecification):
     identity_response_id_bytes = [0x00, 0x00, 0x00]
     create_mappings_function = create_mappings
     recording_method_type = FixedLengthRecordingMethod
-    feedback_channels = [1]
+    feedback_channels = [DEFAULT_SIMPLER_TRANSLATION_CHANNEL, DEFAULT_DRUM_TRANSLATION_CHANNEL]
     component_map = {
+        "Pageable_Background": PageableBackgroundComponent,
         "Settings": SettingsComponent,
         "Transport": CustomTransportComponent,
         "Session": partial(SessionComponent, clip_slot_component_type = CustomClipSlotComponent),
@@ -179,6 +183,7 @@ class CustomMaschineMK3(ControlSurface):
     }
     _current_drum_group = None
     _current_sliced_simpler = None
+    _display_mode = None
     _settings = None
 
     def __init__(self, *a, **k):
@@ -188,7 +193,7 @@ class CustomMaschineMK3(ControlSurface):
         super().__init__(Specification, *a, **k)
         logger.info(dir(self._c_instance))
 
-        self.register_slot(self.elements.channel, self._on_update_triggered, "is_pressed")
+        self.register_slot(self.elements.variation, self._on_update_triggered, "is_pressed")
         self.register_slot(self.elements.keyboard, self._on_playable_mode_selected, "is_pressed")
         self.register_slot(self.component_map["Pad_Modes"], self._on_pad_mode_changed, "selected_mode")
         self.register_slot(self.component_map["Display_Modes"], self._on_display_mode_changed, "selected_mode")
@@ -218,9 +223,10 @@ class CustomMaschineMK3(ControlSurface):
     # Sometimes pad leds couldn't update correctly
     # I don't know why this happens now, push "CHANNEL" button for refresh state
     def _on_update_triggered(self):
-        if self.elements.channel.is_pressed:
+        if self.elements.variation.is_pressed:
             logger.info("Display update triggered")
             self.update()
+            self.refresh_state()
 
     def _do_send_midi(self, midi_event_bytes):
         logger.debug(f"_do_send_midi {midi_event_bytes}")
@@ -328,6 +334,10 @@ class CustomMaschineMK3(ControlSurface):
 
     def _on_display_mode_changed(self, component):
         mode = self.component_map["Display_Modes"].selected_mode
+        if self._display_mode == "custom":
+            self._refresh_track_buttons_state(mode)
+            # self._refresh_task = self._tasks.add(task.sequence(task.wait(0.1), task.run(lambda: self._refresh_upper_button_state(mode))))
+        self._display_mode = mode
         if mode == "default":
             return
         elif mode == "device":
@@ -341,6 +351,28 @@ class CustomMaschineMK3(ControlSurface):
             self.application.view.show_view(target_view)
 
         self.application.view.focus_view(target_view)
+
+    def _refresh_track_buttons_state(self, mode):
+        # LED state sync failure happens when the display mode switches to another mode from the custom(MIDI mapping) mode
+        # Triggering update manually to sync LED state
+        # The easiest solution is just calling update(), but it refreshes all components and controls state.
+        # I confine the targets to objects that affect this issue to reduce unnecessary processes.
+        logger.info("Trigger upper button state update")
+
+        with self.component_guard():
+            for button in self.elements.track_buttons_raw:
+                button.clear_send_cache()
+
+            if mode == "default":
+                self.component_map["Mixer"].update()
+            elif mode == "device":
+                self.component_map["Device_Navigation"].update()
+            elif mode == "clip":
+                self.component_map["Clip_Editor"].update()
+            elif mode == "browser":
+                self.component_map["Browser"].update()
+            elif mode == "settings":
+                self.component_map["Settings"].update()
 
     def drum_group_changed(self, drum_group):
         logger.info(f"Drum Group = {drum_group}")

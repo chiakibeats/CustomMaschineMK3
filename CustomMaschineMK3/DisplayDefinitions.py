@@ -42,6 +42,7 @@ DEVICE_CONTROL = "device"
 CLIP_CONTROL = "clip"
 BROWSER = "browser"
 SETTINGS = "settings"
+CUSTOM = "custom"
 
 def make_mcu_display_header(line):
     return (0xF0, 0x00, 0x00, 0x66, 0x17, 0x12, 28 * min(line, LCD_LINES - 1))
@@ -274,6 +275,13 @@ def create_root_view():
         content.lines[2] = f">{state.settings.current_value}"
         content.lines[3] = ""
 
+    def custom_view(state, content):
+        page = state.pageable_background.page_index
+        content.lines[0] = f"Page:{page + 1}"
+        content.lines[1] = ""
+        content.lines[2] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[page * 8 + i for i in [1, 2, 3, 4]])
+        content.lines[3] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[page * 8 + i for i in [5, 6, 7, 8]])
+
     def knob_control_view(state, content):
         #logger.info(f"index = {TOUCH_STATES.active_index}")
         display_mode = state.display_modes.selected_mode
@@ -362,6 +370,8 @@ def create_root_view():
             browser_view(state, content)
         elif display_mode == SETTINGS:
             settings_view(state, content)
+        elif display_mode == CUSTOM:
+            custom_view(state, content)
 
         knob_control_view(state, content)
 

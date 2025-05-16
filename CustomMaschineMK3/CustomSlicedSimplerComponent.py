@@ -27,7 +27,7 @@ class CustomSlicedSimplerComponent(ClipNotesSelectMixin, SlicedSimplerComponent)
     _has_slice_list = [False] * 4
 
     def __init__(self, *a, **k):
-        super().__init__(translation_channel = 1, *a, **k, matrix_always_listenable = True)
+        super().__init__(*a, **k, matrix_always_listenable = True)
 
     def set_select_buttons(self, matrix):
         self._select_buttons.set_control_element(matrix)

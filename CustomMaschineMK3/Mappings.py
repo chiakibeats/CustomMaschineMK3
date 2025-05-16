@@ -320,6 +320,7 @@ def create_mappings(surface):
         clip_button = "sampling",
         browser_button = "browser",
         settings_button = "setting",
+        custom_button = "channel",
         default = dict(
             component = "Mixer",
             shift_button = "shift",
@@ -378,6 +379,13 @@ def create_mappings(surface):
             behaviour = ToggleBehaviour(),
             component = "Settings",
             value_encoder = "knobs_raw[0]"
+        ),
+        custom = dict(
+            component = "Pageable_Background",
+            buttons = "track_buttons",
+            knobs = "knobs",
+            scroll_up_button = "left",
+            scroll_down_button = "right"
         )
     )
 

@@ -217,7 +217,7 @@ class MaschinePlayableComponent(ClipNotesSelectMixin, PlayableComponent, PageCom
         pad_index = inverted_row * self.width + column
         notes = self.available_notes
         target_note = notes[min(self.position + pad_index, len(notes) - 1)]
-        channel = 1 if self.position + pad_index < len(notes) else 2
+        channel = 0 if self.position + pad_index < len(notes) else 1
         return (target_note, channel)
         #return super()._note_translation_for_button(button)
     
