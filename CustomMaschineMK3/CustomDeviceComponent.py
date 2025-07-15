@@ -8,10 +8,11 @@
 #
 # ==================================================
 
-from ableton.v3.base import listens, listenable_property
+from CustomMaschineMK3.ClipEditorComponent import BoolWrappingParameter
+from ableton.v3.base import listens, listenable_property, nop
 from ableton.v2.base.collection import IndexedDict
 from ableton.v3.live import find_parent_track, liveobj_valid
-from ableton.v3.control_surface import DEFAULT_BANK_SIZE, use
+from ableton.v3.control_surface import DEFAULT_BANK_SIZE, use, NotifyingList
 from ableton.v3.control_surface.components import (
     DeviceComponent,
     DeviceBankNavigationComponent,
@@ -50,11 +51,42 @@ from ableton.v2.control_surface import (
     DelayDeviceDecorator,
     SimplerDeviceDecorator,
     WavetableDeviceDecorator,
-    IntegerParameter
+    IntegerParameter,
+    EnumWrappingParameter,
+    WrappingParameter
 )
 
 from .KnobTouchStateMixin import KnobTouchStateMixin
 from .Logger import logger
+
+class FloatParameter(WrappingParameter):
+    def __init__(
+            self,
+            property_host = None,
+            source_property = None,
+            min_value = 0.0,
+            max_value = 1.0,
+            from_property_value = None,
+            to_property_value = None,
+            display_value_conversion = nop, *a, **k):
+        super().__init__(
+            property_host,
+            source_property,
+            from_property_value,
+            to_property_value,
+            display_value_conversion, *a, **k)
+        
+        self._min_value = min_value
+        self._max_value = max_value
+
+    @property
+    def min(self):
+        return self._min_value
+    
+    @property
+    def max(self):
+        return self._max_value
+    
 
 class Eq8DeviceDecorator(DeviceDecorator):
     def create_additional_parameters(self):
@@ -73,43 +105,158 @@ class Eq8DeviceDecorator(DeviceDecorator):
     def parameters(self):
         return tuple(self._live_object.parameters) + tuple(self._additional_parameters)
 
+class MeldDeviceDecorator(DeviceDecorator):
+    def create_additional_parameters(self):
+        self._additional_parameters = []
+        self.available_engines = NotifyingList(available_values = ["A", "B"], default_value = 0)
+        self.available_voice_modes = NotifyingList(available_values = ["Mono", "Poly"], default_value = 1)
+        self.available_voice_counts = NotifyingList(available_values = ["2", "3", "4", "5", "6", "8", "12"], default_value = 6)
+        self.available_unison_counts = NotifyingList(available_values = ["Off", "2", "3"], default_value = 0)
+
+        self._additional_parameters.append(EnumWrappingParameter(
+            name = "Engine",
+            parent = self,
+            index_property_host = self._live_object,
+            index_property = "selected_engine",
+            values_host = self.available_engines,
+            values_property = "available_values"))
+
+        self._additional_parameters.append(EnumWrappingParameter(
+            name = "Mono Poly",
+            parent = self,
+            index_property_host = self._live_object,
+            index_property = "mono_poly",
+            values_host = self.available_voice_modes,
+            values_property = "available_values"))
+
+        self._additional_parameters.append(EnumWrappingParameter(
+            name = "Poly Voices",
+            parent = self,
+            index_property_host = self._live_object,
+            index_property = "poly_voices",
+            values_host = self.available_voice_counts,
+            values_property = "available_values"))
+
+        self._additional_parameters.append(EnumWrappingParameter(
+            name = "Stack Voices",
+            parent = self,
+            index_property_host = self._live_object,
+            index_property = "unison_voices",
+            values_host = self.available_unison_counts,
+            values_property = "available_values"))
+
+    @property
+    def parameters(self):
+        return tuple(self._live_object.parameters) + tuple(self._additional_parameters)
+
+class HybridReverbDeviceDecorator(DeviceDecorator):
+    def create_additional_parameters(self):
+        self._additional_parameters = []
+        self._additional_parameters.append(FloatParameter(
+            name = "IR Attack Time",
+            property_host = self._live_object,
+            source_property = "ir_attack_time",
+            min_value = 0.0,
+            max_value = 3.0,
+            display_value_conversion = self._to_time_display_value))
+        
+        self._additional_parameters.append(EnumWrappingParameter(
+            name = "IR Category",
+            parent = self,
+            index_property_host = self._live_object,
+            index_property = "ir_category_index",
+            values_host = self._live_object,
+            values_property = "ir_category_list"))
+        
+        self._additional_parameters.append(FloatParameter(
+            name = "IR Decay Time",
+            property_host = self._live_object,
+            source_property = "ir_decay_time",
+            min_value = 0.0,
+            max_value = 20.0,
+            # default_value = 20.0
+            display_value_conversion = self._to_time_display_value))
+        
+        self._additional_parameters.append(EnumWrappingParameter(
+            name = "IR File",
+            parent = self,
+            index_property_host = self._live_object,
+            index_property = "ir_file_index",
+            values_host = self._live_object,
+            values_property = "ir_file_list"))
+        
+        self._additional_parameters.append(FloatParameter(
+            name = "IR Size Factor",
+            property_host = self._live_object,
+            source_property = "ir_size_factor",
+            min_value = 0.2,
+            max_value = 5.0,
+            # default_value = 1.0
+            display_value_conversion = self._to_percentage_value))
+
+        self._additional_parameters.append(BoolWrappingParameter(
+            name = "IR Time Shaping",
+            property_host = self._live_object,
+            source_property = "ir_time_shaping_on",
+            display_value_conversion = lambda x: "On" if x else "Off"))
+    
+    def _to_time_display_value(self, value):
+        if value >= 10.0:
+            return f"{value:.1f} s"
+        elif value >= 1.0:
+            return f"{value:.2f} s"
+        elif value >= 0.1:
+            return f"{value * 1000:.0f} ms"
+        elif value >= 0.01:
+            return f"{value * 1000:.1f} ms"
+        else:
+            return f"{value * 1000:.2f} ms"
+        
+    def _to_percentage_value(self, value):
+        return f"{value * 100:.0f} %"
+
+    @property
+    def parameters(self):
+        return tuple(self._live_object.parameters) + tuple(self._additional_parameters)
+
 # Device decorator is extender for device object
 # Usually wrap special parameters (wavetable index, simpler playback mode, etc.) for using them like normal device parameters
 # Wavetable device decorator is removed from v3 decorator factory (reason is unknown), so I put all decorators into this class
 class CustomDeviceDecoratorFactory(DeviceDecoratorFactory):
     DECORATOR_CLASSES = {
-        'Delay': DelayDeviceDecorator,
-        'Drift': DriftDeviceDecorator,
-        'Eq8': Eq8DeviceDecorator,
-        'OriginalSimpler': SimplerDeviceDecorator,
-        'Transmute': TransmuteDeviceDecorator,
-        'InstrumentVector': WavetableDeviceDecorator
+        "Delay": DelayDeviceDecorator,
+        "Drift": DriftDeviceDecorator,
+        "Eq8": Eq8DeviceDecorator,
+        "OriginalSimpler": SimplerDeviceDecorator,
+        "Transmute": TransmuteDeviceDecorator,
+        "InstrumentVector": WavetableDeviceDecorator,
+        "Hybrid": HybridReverbDeviceDecorator
     }
 
 CUSTOM_BANK_DEFINITIONS = BANK_DEFINITIONS.copy()
 CUSTOM_BANK_DEFINITIONS["InstrumentVector"]["Oscillator 1"] = {
     BANK_PARAMETERS_KEY: (
-        'Osc 1 Category',
-        'Osc 1 Table',
-        'Osc 1 Pos',
-        'Osc 1 Pitch',
-        'Osc 1 Effect 1',
-        'Osc 1 Effect 2',
-        'Osc 1 Gain',
-        'Osc 1 On'
+        "Osc 1 Category",
+        "Osc 1 Table",
+        "Osc 1 Pos",
+        "Osc 1 Pitch",
+        "Osc 1 Effect 1",
+        "Osc 1 Effect 2",
+        "Osc 1 Gain",
+        "Osc 1 On"
     )
 }
 
 CUSTOM_BANK_DEFINITIONS["InstrumentVector"]["Oscillator 2"] = {
     BANK_PARAMETERS_KEY: (
-        'Osc 2 Category',
-        'Osc 2 Table',
-        'Osc 2 Pos',
-        'Osc 2 Pitch',
-        'Osc 2 Effect 1',
-        'Osc 2 Effect 2',
-        'Osc 2 Gain',
-        'Osc 2 On'
+        "Osc 2 Category",
+        "Osc 2 Table",
+        "Osc 2 Pos",
+        "Osc 2 Pitch",
+        "Osc 2 Effect 1",
+        "Osc 2 Effect 2",
+        "Osc 2 Gain",
+        "Osc 2 On"
     )
 }
 
@@ -203,8 +350,8 @@ CUSTOM_BANK_DEFINITIONS["OriginalSimpler"] = IndexedDict((
             "Transpose",
             "Detune",
             "Vol < Vel",
-            'Pan',
-            'Spread')}
+            "Pan",
+            "Spread")}
     ),
     (
         "Amplitude",
@@ -220,8 +367,8 @@ CUSTOM_BANK_DEFINITIONS["OriginalSimpler"] = IndexedDict((
             use("Ve Retrig").if_parameter("Ve Mode").has_value("Beat")
                     .or_parameter("Ve Mode").has_value("Sync")
                 .else_use("Ve Loop").if_parameter("Ve Mode").has_value("Loop"),
-            'Pan < Rnd',
-            'Pan < LFO')}
+            "Pan < Rnd",
+            "Pan < LFO")}
     ),
     (
         "Filter Envelope",
@@ -245,7 +392,7 @@ CUSTOM_BANK_DEFINITIONS["OriginalSimpler"] = IndexedDict((
             use("Pe Release"),
             use("Pe < Env"),
             "Pe < LFO",
-            'PB Range')}
+            "PB Range")}
     ),
     (
         "Sample & Warp",
@@ -280,7 +427,7 @@ CUSTOM_BANK_DEFINITIONS["OriginalSimpler"] = IndexedDict((
 
 CUSTOM_BANK_DEFINITIONS["Eq8"][BANK_MAIN_KEY] = {
     BANK_PARAMETERS_KEY: (
-        'Band',
+        "Band",
         use("1 Filter On A").if_parameter("Band").has_value("1")
             .else_use("2 Filter On A").if_parameter("Band").has_value("2")
             .else_use("3 Filter On A").if_parameter("Band").has_value("3")
@@ -326,6 +473,19 @@ CUSTOM_BANK_DEFINITIONS["Eq8"][BANK_MAIN_KEY] = {
     )
 }
 
+CUSTOM_BANK_DEFINITIONS["Hybrid"]["IR"] = {
+    BANK_PARAMETERS_KEY: (
+        "IR Category",
+        "IR File",
+        "IR Attack Time",
+        "IR Decay Time",
+        "IR Size Factor",
+        "IR Time Shaping",
+        "Blend",
+        "Dry/Wet"
+    )
+}
+
 def custom_mapping_sensitivities(original):
     def inner(parameter, device):
         default = original(parameter, device)
@@ -342,12 +502,180 @@ class CustomDeviceComponent(DeviceComponent):
     erase_button = ButtonControl(color = None)
     
     def __init__(self, name = "Device", *a, **k):
-        if self.application.get_major_version() == 12:
-            CustomDeviceDecoratorFactory.DECORATOR_CLASSES['Roar'] = decorators.RoarDeviceDecorator
+        if self.application.get_major_version() >= 12:
+            self._add_live_12_device_definitions()
 
         super().__init__(name, *a, **k)
         self._parameter_mapping_sensitivities = custom_mapping_sensitivities(self._parameter_mapping_sensitivities)
         self.register_slot(self, self.notify_current_parameters, "parameters")
+
+    def _add_live_12_device_definitions(self):
+        CustomDeviceDecoratorFactory.DECORATOR_CLASSES["Roar"] = decorators.RoarDeviceDecorator
+        CustomDeviceDecoratorFactory.DECORATOR_CLASSES["InstrumentMeld"] = MeldDeviceDecorator
+        CUSTOM_BANK_DEFINITIONS["InstrumentMeld"]["Oscillator"] = {
+            BANK_PARAMETERS_KEY: (
+                "Engine",
+                use("MeldVoice_EngineA_Oscillator_OscillatorType").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Oscillator_OscillatorType").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_Oscillator_Macro1").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Oscillator_Macro1").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_Oscillator_Macro2").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Oscillator_Macro2").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_Oscillator_Pitch_Transpose").if_parameter("Engine").has_value("A")
+                        .and_parameter("MeldVoice_UseScale").has_value("Off")
+                    .else_use("MeldVoice_EngineA_Oscillator_Pitch_TransposeScaleDegrees").if_parameter("Engine").has_value("A")
+                        .and_parameter("MeldVoice_UseScale").has_value("On")
+                    .else_use("MeldVoice_EngineB_Oscillator_Pitch_Transpose").if_parameter("Engine").has_value("B")
+                        .and_parameter("MeldVoice_UseScale").has_value("Off")
+                    .else_use("MeldVoice_EngineB_Oscillator_Pitch_TransposeScaleDegrees").if_parameter("Engine").has_value("B")
+                        .and_parameter("MeldVoice_UseScale").has_value("On"),
+                use("MeldVoice_EngineA_Oscillator_Pitch_Detune").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Oscillator_Pitch_Detune").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_Oscillator_Pitch_TransposeOctaves").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Oscillator_Pitch_TransposeOctaves").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_On").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_On").if_parameter("Engine").has_value("B"),
+            )
+        }
+        CUSTOM_BANK_DEFINITIONS["InstrumentMeld"]["Amp Envelope"] = {
+            BANK_PARAMETERS_KEY: (
+                "Engine",
+                use("MeldVoice_EngineA_AmpEnvelope_Times_Attack").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_AmpEnvelope_Times_Attack").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_AmpEnvelope_Times_Decay").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_AmpEnvelope_Times_Decay").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_AmpEnvelope_Sustain").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_AmpEnvelope_Sustain").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_AmpEnvelope_Times_Release").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_AmpEnvelope_Times_Release").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_AmpEnvelope_Slopes_Attack").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_AmpEnvelope_Slopes_Attack").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_AmpEnvelope_Slopes_Decay").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_AmpEnvelope_Slopes_Decay").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_AmpEnvelope_Slopes_Release").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_AmpEnvelope_Slopes_Release").if_parameter("Engine").has_value("B"),
+            )
+        }
+        CUSTOM_BANK_DEFINITIONS["InstrumentMeld"]["Mod Envelope"] = {
+            BANK_PARAMETERS_KEY: (
+                "Engine",
+                use("MeldVoice_EngineA_FilterEnvelope_Times_Attack").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_FilterEnvelope_Times_Attack").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_FilterEnvelope_Times_Decay").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_FilterEnvelope_Times_Decay").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_FilterEnvelope_Values_Sustain").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_FilterEnvelope_Values_Sustain").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_FilterEnvelope_Times_Release").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_FilterEnvelope_Times_Release").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_FilterEnvelope_Values_Initial").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_FilterEnvelope_Values_Initial").if_parameter("Engine").has_value("B"),
+                use("MeldVoice_EngineA_FilterEnvelope_Values_Peak").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_FilterEnvelope_Values_Peak").if_parameter("Engine").has_value("B"),
+                "MeldVoice_LinkAmpEnvelopes",
+            )
+        }        
+        CUSTOM_BANK_DEFINITIONS["InstrumentMeld"]["LFO 1"] = {
+            BANK_PARAMETERS_KEY: (
+                "Engine",
+                use("MeldVoice_EngineA_Lfo1_GeneratorType").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Lfo1_GeneratorType").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Lfo1_Rate").if_parameter("Engine").has_value("A")
+                        .and_parameter("MeldVoice_EngineA_Lfo1_Sync").has_value("Free")
+                    .else_use("MeldVoice_EngineA_Lfo1_SyncedRate").if_parameter("Engine").has_value("A")
+                        .and_parameter("MeldVoice_EngineA_Lfo1_Sync").has_value("Tempo")
+                    .else_use("MeldVoice_EngineB_Lfo1_Rate").if_parameter("Engine").has_value("B")
+                        .and_parameter("MeldVoice_EngineB_Lfo1_Sync").has_value("Free")
+                    .else_use("MeldVoice_EngineB_Lfo1_SyncedRate").if_parameter("Engine").has_value("B")
+                        .and_parameter("MeldVoice_EngineB_Lfo1_Sync").has_value("Tempo"),
+                use("MeldVoice_EngineA_Lfo1_Sync").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Lfo1_Sync").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Lfo1_GeneratorMacro1").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Lfo1_GeneratorMacro1").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Lfo1_GeneratorMacro2").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Lfo1_GeneratorMacro2").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Lfo1_PhaseOffset").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Lfo1_PhaseOffset").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Lfo1_Retrigger").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Lfo1_Retrigger").if_parameter("Engine").has_value("B"),                
+            )
+        }
+        CUSTOM_BANK_DEFINITIONS["InstrumentMeld"]["LFO 1 FX / LFO 2"] = {
+            BANK_PARAMETERS_KEY: (
+                "Engine",
+                use("MeldVoice_EngineA_Lfo1_Transformer1Type").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Lfo1_Transformer1Type").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Lfo1_Transformer1Macro").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Lfo1_Transformer1Macro").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Lfo1_Transformer2Type").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Lfo1_Transformer2Type").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Lfo1_Transformer2Macro").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Lfo1_Transformer2Macro").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Lfo2_Waveform").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Lfo2_Waveform").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Lfo2_Rate").if_parameter("Engine").has_value("A")
+                        .and_parameter("MeldVoice_EngineA_Lfo2_Sync").has_value("Free")
+                    .else_use("MeldVoice_EngineA_Lfo2_SyncedRate").if_parameter("Engine").has_value("A")
+                        .and_parameter("MeldVoice_EngineA_Lfo2_Sync").has_value("Tempo")
+                    .else_use("MeldVoice_EngineB_Lfo2_Rate").if_parameter("Engine").has_value("B")
+                        .and_parameter("MeldVoice_EngineB_Lfo2_Sync").has_value("Free")
+                    .else_use("MeldVoice_EngineB_Lfo2_SyncedRate").if_parameter("Engine").has_value("B")
+                        .and_parameter("MeldVoice_EngineB_Lfo2_Sync").has_value("Tempo"),
+                use("MeldVoice_EngineA_Lfo2_Sync").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Lfo2_Sync").if_parameter("Engine").has_value("B"),                
+            )
+        }
+        CUSTOM_BANK_DEFINITIONS["InstrumentMeld"]["Filter / Glide"] = {
+            BANK_PARAMETERS_KEY: (
+                "Engine",
+                use("MeldVoice_EngineA_Filter_FilterType").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Filter_FilterType").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Filter_Frequency").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Filter_Frequency").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Filter_Macro1").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Filter_Macro1").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Filter_Macro2").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Filter_Macro2").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Filter_On").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Filter_On").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_ToneFilter").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_ToneFilter").if_parameter("Engine").has_value("B"),                
+                use("").if_parameter("Engine").has_value("A")
+                    .else_use("").if_parameter("Engine").has_value("B"),                
+            )
+        }
+        CUSTOM_BANK_DEFINITIONS["InstrumentMeld"]["Mix"] = {
+            BANK_PARAMETERS_KEY: (
+                "Engine",
+                use("MeldVoice_EngineA_Volume").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Volume").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_Pan").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_Pan").if_parameter("Engine").has_value("B"),                
+                use("MeldVoice_EngineA_ToneFilter").if_parameter("Engine").has_value("A")
+                    .else_use("MeldVoice_EngineB_ToneFilter").if_parameter("Engine").has_value("B"),                
+                use("").if_parameter("Engine").has_value("A")
+                    .else_use("").if_parameter("Engine").has_value("B"),                
+                use("").if_parameter("Engine").has_value("A")
+                    .else_use("").if_parameter("Engine").has_value("B"),                
+                use("").if_parameter("Engine").has_value("A")
+                    .else_use("").if_parameter("Engine").has_value("B"),                
+                use("").if_parameter("Engine").has_value("A")
+                    .else_use("").if_parameter("Engine").has_value("B"),                
+            )
+        }
+
+        CUSTOM_BANK_DEFINITIONS["InstrumentMeld"]["Global"] = {
+            BANK_PARAMETERS_KEY: (
+                "MeldVoice_UseScale",
+                "Mono Poly",
+                use("MonoLegato").if_parameter("Mono Poly").has_value("Mono")
+                    .else_use("Poly Voices").if_parameter("Mono Poly").has_value("Poly"),
+                "MeldVoice_VoiceSpreadAmount",
+                "Stack Voices",
+                "MeldVoice_Drive",
+                "MeldVoice_LimiterOn",
+                "Volume",
+            )
+        }
 
     @listenable_property
     def current_parameters(self):
