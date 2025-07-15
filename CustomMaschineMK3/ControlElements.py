@@ -116,6 +116,9 @@ class ControlElements(ElementsBase):
 
         add_modifier_button(119, "Shift")
 
+        add_encoder(64, "PedalTip", map_mode = MapMode.Absolute)
+        add_encoder(65, "PedalRing", map_mode = MapMode.Absolute)
+
         add_button(34, "Channel")
         add_modifier_button(35, "Plugin")
 

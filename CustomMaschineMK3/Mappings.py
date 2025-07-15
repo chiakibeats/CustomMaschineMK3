@@ -433,4 +433,9 @@ def create_mappings(surface):
         notes_button = "notes"
     )
 
+    mappings["Maschine_Playable"] = dict(
+        pedal_tip_encoder = "pedaltip",
+        pedal_ring_encoder = "pedalring",
+    )
+
     return mappings

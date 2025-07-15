@@ -99,6 +99,8 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, ClipNotesSelec
     octave_select_buttons = control_matrix(ButtonControl)
     pitchbend_encoder = PlayableEncoderControl()
     pitchbend_reset = PlayableEncoderControl()
+    pedal_tip_encoder = PlayableEncoderControl()
+    pedal_ring_encoder = PlayableEncoderControl()
 
     _scale_notes_only = False
     _root_note = 0

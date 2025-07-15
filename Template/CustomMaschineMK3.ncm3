@@ -168,7 +168,7 @@
       </button>
       <footswitch version="1" id="FSwRing">
         <controller>65</controller>
-        <channel>0</channel>
+        <channel>1</channel>
         <off>0</off>
         <on>127</on>
         <behavior onIfDown="on">gate</behavior>
@@ -439,8 +439,8 @@
         <reaction>ondown</reaction>
       </button>
       <pedal version="1" id="Pedal">
-        <controller>11</controller>
-        <channel>0</channel>
+        <controller>64</controller>
+        <channel>1</channel>
         <min>0</min>
         <max>127</max>
         <default>0</default>
