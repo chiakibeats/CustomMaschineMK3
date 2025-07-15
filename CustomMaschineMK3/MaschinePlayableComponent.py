@@ -53,6 +53,7 @@ MODE_LISTENABLE = 1
 MODE_PLAYABLE_LISTENABLE = 2
 
 SELECT_PITCH_DELAY = 0.25
+DEFAULT_NOTE_TRANSLATION_CHANNEL = 9
 
 # This control class is just for bypass pitch bend message
 class PlayableEncoderControl(SendValueEncoderControl):
@@ -94,7 +95,7 @@ class PlayableEncoderControl(SendValueEncoderControl):
             self.connected_property_value = value
 
 
-class MaschinePlayableComponent(ClipNotesSelectMixin, PlayableComponent, PageComponent, Pageable, PitchProvider, Renderable):
+class MaschinePlayableComponent(PlayableComponent, PageComponent, ClipNotesSelectMixin, Pageable, PitchProvider, Renderable):
     octave_select_buttons = control_matrix(ButtonControl)
     pitchbend_encoder = PlayableEncoderControl()
     pitchbend_reset = PlayableEncoderControl()
@@ -151,8 +152,9 @@ class MaschinePlayableComponent(ClipNotesSelectMixin, PlayableComponent, PageCom
             return self._all_chromatic_scale_notes
 
     @depends(target_track = None)
-    def __init__(self, name = "Maschine_Playable", matrix_always_listenable = True, target_track = None, *a, **k):
+    def __init__(self, name = "Maschine_Playable", translation_channel = DEFAULT_NOTE_TRANSLATION_CHANNEL, matrix_always_listenable = True, target_track = None, *a, **k):
         super().__init__(name = name, matrix_always_listenable = matrix_always_listenable, scroll_skin_name = "Keyboard.Scroll", *a, **k)
+        self._translation_channel = translation_channel
         self._target_track = target_track
         self.pitchbend_encoder.value = 8192
         self.register_slot(self.song, self._scale_root_note_changed, "root_note")
@@ -217,7 +219,7 @@ class MaschinePlayableComponent(ClipNotesSelectMixin, PlayableComponent, PageCom
         pad_index = inverted_row * self.width + column
         notes = self.available_notes
         target_note = notes[min(self.position + pad_index, len(notes) - 1)]
-        channel = 0 if self.position + pad_index < len(notes) else 1
+        channel = self._translation_channel + (0 if self.position + pad_index < len(notes) else 1)
         return (target_note, channel)
         #return super()._note_translation_for_button(button)
     

@@ -23,7 +23,7 @@ from .ClipNotesSelectMixin import ClipNotesSelectMixin
 
 DEFAULT_GROUP_SIZE = 16
 
-class CustomDrumGroupComponent(ClipNotesSelectMixin, DrumGroupComponent):
+class CustomDrumGroupComponent(DrumGroupComponent, ClipNotesSelectMixin):
     select_buttons = control_matrix(ButtonControl, color = None)
     clear_all_solo_button = ButtonControl(color = None)
     clear_all_mute_button = ButtonControl(color = None)

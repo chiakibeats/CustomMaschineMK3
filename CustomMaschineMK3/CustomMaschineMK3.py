@@ -55,7 +55,7 @@ from .DisplayDefinitions import (
 )
 from .GroovePoolComponent import GroovePoolComponent
 from .MasterVolumeComponent import MasterVolumeComponent
-from .MaschinePlayableComponent import MaschinePlayableComponent
+from .MaschinePlayableComponent import MaschinePlayableComponent, DEFAULT_NOTE_TRANSLATION_CHANNEL
 from .CustomDrumGroupComponent import CustomDrumGroupComponent
 from .MiscControlComponent import MiscControlComponent
 from .CustomDeviceComponent import (
@@ -122,7 +122,7 @@ class Specification(ControlSurfaceSpecification):
     identity_response_id_bytes = [0x00, 0x00, 0x00]
     create_mappings_function = create_mappings
     recording_method_type = FixedLengthRecordingMethod
-    feedback_channels = [DEFAULT_SIMPLER_TRANSLATION_CHANNEL, DEFAULT_DRUM_TRANSLATION_CHANNEL]
+    feedback_channels = [DEFAULT_NOTE_TRANSLATION_CHANNEL, DEFAULT_SIMPLER_TRANSLATION_CHANNEL, DEFAULT_DRUM_TRANSLATION_CHANNEL]
     component_map = {
         "Pageable_Background": PageableBackgroundComponent,
         "Settings": SettingsComponent,
@@ -151,6 +151,9 @@ class Specification(ControlSurfaceSpecification):
 
 class BypassIdentification(IdentificationComponent):
     def request_identity(self):
+        logger.info("Request identity")
+        self.is_identified = False
+        sleep(0.01)
         self.is_identified = True
 
 DEFAULT_MODE = "default"
@@ -225,7 +228,6 @@ class CustomMaschineMK3(ControlSurface):
     def _on_update_triggered(self):
         if self.elements.variation.is_pressed:
             logger.info("Display update triggered")
-            self.update()
             self.refresh_state()
 
     def _do_send_midi(self, midi_event_bytes):
@@ -289,6 +291,7 @@ class CustomMaschineMK3(ControlSurface):
 
     def setup(self):
         super().setup()
+        self.set_can_update_controlled_track(True)
         self.set_can_auto_arm(True)
         with self.component_guard():
             self.component_map["Pad_Modes"].selected_mode = DEFAULT_MODE
