@@ -41,9 +41,10 @@ def get_capabilities():
                 model_name = ["Maschine MK3", "Maschine Plus"])),
         PORTS_KEY: [
             inport(props = [NOTES_CC, SYNC]),
-            inport(props = [NOTES_CC, SCRIPT, HIDDEN]),
+            inport(props = [NOTES_CC, SCRIPT, REMOTE, HIDDEN]),
             outport(props = [NOTES_CC, SYNC]),
-            outport(props = [NOTES_CC, SCRIPT, HIDDEN])]}
+            outport(props = [NOTES_CC, SCRIPT, REMOTE, HIDDEN])],
+    }
 
 def create_instance(c_instance):
     logger.info("Create instance")
