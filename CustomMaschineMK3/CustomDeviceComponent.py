@@ -624,42 +624,28 @@ class CustomDeviceComponent(DeviceComponent):
                     .else_use("MeldVoice_EngineB_Lfo2_Sync").if_parameter("Engine").has_value("B"),                
             )
         }
-        CUSTOM_BANK_DEFINITIONS["InstrumentMeld"]["Filter / Glide"] = {
+        CUSTOM_BANK_DEFINITIONS["InstrumentMeld"]["Filter"] = {
             BANK_PARAMETERS_KEY: (
-                "Engine",
-                use("MeldVoice_EngineA_Filter_FilterType").if_parameter("Engine").has_value("A")
-                    .else_use("MeldVoice_EngineB_Filter_FilterType").if_parameter("Engine").has_value("B"),                
-                use("MeldVoice_EngineA_Filter_Frequency").if_parameter("Engine").has_value("A")
-                    .else_use("MeldVoice_EngineB_Filter_Frequency").if_parameter("Engine").has_value("B"),                
-                use("MeldVoice_EngineA_Filter_Macro1").if_parameter("Engine").has_value("A")
-                    .else_use("MeldVoice_EngineB_Filter_Macro1").if_parameter("Engine").has_value("B"),                
-                use("MeldVoice_EngineA_Filter_Macro2").if_parameter("Engine").has_value("A")
-                    .else_use("MeldVoice_EngineB_Filter_Macro2").if_parameter("Engine").has_value("B"),                
-                use("MeldVoice_EngineA_Filter_On").if_parameter("Engine").has_value("A")
-                    .else_use("MeldVoice_EngineB_Filter_On").if_parameter("Engine").has_value("B"),                
-                use("MeldVoice_EngineA_ToneFilter").if_parameter("Engine").has_value("A")
-                    .else_use("MeldVoice_EngineB_ToneFilter").if_parameter("Engine").has_value("B"),                
-                use("").if_parameter("Engine").has_value("A")
-                    .else_use("").if_parameter("Engine").has_value("B"),                
+                "MeldVoice_EngineA_Filter_Frequency",
+                "MeldVoice_EngineA_Filter_FilterType",
+                "MeldVoice_EngineA_Filter_Macro1",
+                "MeldVoice_EngineA_Filter_Macro2",
+                "MeldVoice_EngineB_Filter_Frequency",
+                "MeldVoice_EngineB_Filter_FilterType",
+                "MeldVoice_EngineB_Filter_Macro1",
+                "MeldVoice_EngineB_Filter_Macro2",
             )
         }
-        CUSTOM_BANK_DEFINITIONS["InstrumentMeld"]["Mix"] = {
+        CUSTOM_BANK_DEFINITIONS["InstrumentMeld"]["Mix / Glide"] = {
             BANK_PARAMETERS_KEY: (
-                "Engine",
-                use("MeldVoice_EngineA_Volume").if_parameter("Engine").has_value("A")
-                    .else_use("MeldVoice_EngineB_Volume").if_parameter("Engine").has_value("B"),                
-                use("MeldVoice_EngineA_Pan").if_parameter("Engine").has_value("A")
-                    .else_use("MeldVoice_EngineB_Pan").if_parameter("Engine").has_value("B"),                
-                use("MeldVoice_EngineA_ToneFilter").if_parameter("Engine").has_value("A")
-                    .else_use("MeldVoice_EngineB_ToneFilter").if_parameter("Engine").has_value("B"),                
-                use("").if_parameter("Engine").has_value("A")
-                    .else_use("").if_parameter("Engine").has_value("B"),                
-                use("").if_parameter("Engine").has_value("A")
-                    .else_use("").if_parameter("Engine").has_value("B"),                
-                use("").if_parameter("Engine").has_value("A")
-                    .else_use("").if_parameter("Engine").has_value("B"),                
-                use("").if_parameter("Engine").has_value("A")
-                    .else_use("").if_parameter("Engine").has_value("B"),                
+                "MeldVoice_EngineA_Volume",                
+                "MeldVoice_EngineA_Pan",                
+                "MeldVoice_EngineA_ToneFilter",
+                "MeldVoice_EngineA_GlideTime",
+                "MeldVoice_EngineB_Volume",
+                "MeldVoice_EngineB_Pan",
+                "MeldVoice_EngineB_ToneFilter",
+                "MeldVoice_EngineB_GlideTime",
             )
         }
 
