@@ -220,7 +220,7 @@ class ControlElements(ElementsBase):
         add_modifier_button(91, "Solo")
         add_modifier_button(92, "Mute")
 
-        add_button_matrix([list(range(36, 44))], "track_buttons", msg_type = MIDI_NOTE_TYPE)
+        add_button_matrix([list(range(0, 8))], "track_buttons", msg_type = MIDI_NOTE_TYPE)
 
         # Another weird hack used for enabling Maschine display.
         # After some investigation, I found these facts:
