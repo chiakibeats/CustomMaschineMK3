@@ -66,6 +66,7 @@ class FloatParameter(WrappingParameter):
             source_property = None,
             min_value = 0.0,
             max_value = 1.0,
+            default_value = None,
             from_property_value = None,
             to_property_value = None,
             display_value_conversion = nop, *a, **k):
@@ -77,6 +78,7 @@ class FloatParameter(WrappingParameter):
             display_value_conversion, *a, **k)
         
         self._min_value = min_value
+        self._default_value = default_value or self._min_value
         self._max_value = max_value
 
     @property
@@ -87,6 +89,9 @@ class FloatParameter(WrappingParameter):
     def max(self):
         return self._max_value
     
+    @property
+    def default_value(self):
+        return self._default_value
 
 class Eq8DeviceDecorator(DeviceDecorator):
     def create_additional_parameters(self):
@@ -158,6 +163,7 @@ class HybridReverbDeviceDecorator(DeviceDecorator):
             source_property = "ir_attack_time",
             min_value = 0.0,
             max_value = 3.0,
+            default_value = 0.0,
             display_value_conversion = self._to_time_display_value))
         
         self._additional_parameters.append(EnumWrappingParameter(
@@ -174,7 +180,7 @@ class HybridReverbDeviceDecorator(DeviceDecorator):
             source_property = "ir_decay_time",
             min_value = 0.0,
             max_value = 20.0,
-            # default_value = 20.0
+            default_value = 20.0,
             display_value_conversion = self._to_time_display_value))
         
         self._additional_parameters.append(EnumWrappingParameter(
@@ -191,7 +197,7 @@ class HybridReverbDeviceDecorator(DeviceDecorator):
             source_property = "ir_size_factor",
             min_value = 0.2,
             max_value = 5.0,
-            # default_value = 1.0
+            default_value = 1.0,
             display_value_conversion = self._to_percentage_value))
 
         self._additional_parameters.append(BoolWrappingParameter(
@@ -473,18 +479,25 @@ CUSTOM_BANK_DEFINITIONS["Eq8"][BANK_MAIN_KEY] = {
     )
 }
 
-CUSTOM_BANK_DEFINITIONS["Hybrid"]["IR"] = {
-    BANK_PARAMETERS_KEY: (
-        "IR Category",
-        "IR File",
-        "IR Attack Time",
-        "IR Decay Time",
-        "IR Size Factor",
-        "IR Time Shaping",
-        "Blend",
-        "Dry/Wet"
-    )
-}
+# We have to build the parameter bank again because IndexedDict doesn't support insert
+HYBRID_REVERB_BANK = IndexedDict()
+for key in CUSTOM_BANK_DEFINITIONS["Hybrid"].keys():
+    HYBRID_REVERB_BANK[key] = CUSTOM_BANK_DEFINITIONS["Hybrid"][key]
+    if key == BANK_MAIN_KEY:
+        HYBRID_REVERB_BANK["IR"] = {
+            BANK_PARAMETERS_KEY: (
+                "IR Category",
+                "IR File",
+                "IR Attack Time",
+                "IR Decay Time",
+                "IR Size Factor",
+                "IR Time Shaping",
+                "Blend",
+                "Dry/Wet"
+            )
+        }
+
+CUSTOM_BANK_DEFINITIONS["Hybrid"] = HYBRID_REVERB_BANK
 
 def custom_mapping_sensitivities(original):
     def inner(parameter, device):
