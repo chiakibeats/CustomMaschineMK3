@@ -82,8 +82,8 @@ See [All Operations](https://chiakibeats.github.io/CustomMaschineDocs/docs/all-o
 https://chiakibeats.github.io/CustomMaschineDocs/
 
 # Known Issue
-* LED feedback of pass-through mode leaks into keyboard mode
-    * This happens in the very low range (C-2 to G-2)
+* LED feedback of custom MIDI mapping mode leaks into keyboard mode
+    * This happens in the very low range notes (C-2 to G-2)
     * Currently under investigation, but you can play these notes normally
 * Scrolling items in Collections and Max for Live folders is laggy in some cases
     * Maybe it depends on the size of the entire library
