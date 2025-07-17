@@ -2,8 +2,8 @@
 Ableton MIDI Remote Script for Maschine MK3 / Plus
 
 # Requirements
-* Ableton Live 11: 11.3 or later
-* Ableton Live 12: 12.1 or later (12.1.10 or later recommended)
+* Ableton Live 11: 11.3.35 or later
+* Ableton Live 12: 12.1.10 or later
 * Hardware: Maschine MK3, Maschine Plus
 
 # Install
@@ -64,6 +64,9 @@ See [All Operations](https://chiakibeats.github.io/CustomMaschineDocs/docs/all-o
     * Enable, disable sound preview
 * Text Display
     * Show parameter values and states about selected mode
+* Custom MIDI Mapping Mode
+    * Dedicated 16x knobs and buttons (8 elements, 2 pages) for MIDI mapping
+    * Work alongside other modes
 * Various Operations
     * Change master track volume
     * Change groove amount
@@ -79,9 +82,9 @@ See [All Operations](https://chiakibeats.github.io/CustomMaschineDocs/docs/all-o
 https://chiakibeats.github.io/CustomMaschineDocs/
 
 # Known Issue
-* ~~In Live 12 browser mode, digging into Instruments in Max for Live folder causes Live app crash~~
-  * This issue fixed on 12.1.10
-* Scrolling items in Collections and Max for Live folders is laggy (depends on size of library? need to check more details)
-
-# Support / Donation
-You can support the development via [Buy Me a Coffee](https://buymeacoffee.com/chiaki_).
+* LED feedback of pass-through mode leaks into keyboard mode
+    * This happens in the very low range (C-2 to G-2)
+    * Currently under investigation, but you can play these notes normally
+* Scrolling items in Collections and Max for Live folders is laggy in some cases
+    * Maybe it depends on the size of the entire library
+    * Still investigating
