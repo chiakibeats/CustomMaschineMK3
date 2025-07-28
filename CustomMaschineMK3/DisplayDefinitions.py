@@ -27,7 +27,7 @@ from .Logger import logger
 LCD_LINES = 4
 LCD_LINE_LENGTH = 28
 NO_ITEM = "---"
-PITCH_NAMES = ["C", "C#/Db", "D", "D#/Db", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"]
+PITCH_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 SESSION_RING = "default"
 MASTER_VOLUME = "volume"
