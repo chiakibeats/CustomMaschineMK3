@@ -382,8 +382,10 @@ def create_mappings(surface):
         ),
         custom = dict(
             component = "Pageable_Background",
-            buttons = "track_buttons",
-            knobs = "knobs",
+            user_buttons = "track_buttons",
+            user_knobs = "knobs",
+            learn_button = "macro",
+            knob_touch_buttons = "knob_touch_buttons",
             scroll_up_button = "left",
             scroll_down_button = "right"
         )

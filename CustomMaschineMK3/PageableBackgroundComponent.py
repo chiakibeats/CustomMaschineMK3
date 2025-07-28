@@ -13,29 +13,29 @@ from ableton.v3.control_surface.components import (
     ScrollComponent
 )
 
-from ableton.v3.control_surface.controls import control_list, ButtonControl
+from ableton.v3.control_surface.controls import control_list, ButtonControl, EncoderControl, InputControl
 from ableton.v3.control_surface.display import Renderable
 from ableton.v3.control_surface.elements import ButtonElement, ButtonMatrixElement
 from ableton.v3.base import listenable_property
 from .Logger import logger
 
 class PageableBackgroundComponent(BackgroundComponent, ScrollComponent, Renderable):
+    user_knobs = InputControl
+    user_buttons = InputControl
+    learn_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
+    knob_touch_buttons = InputControl
+
     def __init__(self, name = "Pageable_Background", translation_channel = 2, page_count = 2, *a, **k):
         super().__init__(name, *a, **k)
         self._base_translation_channel = translation_channel
         self._page_count = page_count
         self._page_index = 0
+        self._learn_enabled = False
 
     @listenable_property
     def page_index(self):
         return self._page_index
     
-    def set_scroll_up_button(self, button):
-        super().set_scroll_up_button(button)
-
-    def set_scroll_down_button(self, button):
-        super().set_scroll_down_button(button)
-
     def can_scroll_up(self):
         return self._page_index > 0
     
@@ -51,6 +51,31 @@ class PageableBackgroundComponent(BackgroundComponent, ScrollComponent, Renderab
         self._page_index += 1
         self._set_translation_channel()
         self.notify_page_index()
+
+    def set_learn_button(self, button):
+        if button == None:
+            # If user leaves from custom mapping mode, learn mode is disabled automatically
+            self._learn_enabled = False
+            self.learn_button.is_on = False
+        self.learn_button.set_control_element(button)
+
+    @learn_button.pressed
+    def _learn_button_pressed(self, button):
+        self._learn_enabled = not self._learn_enabled
+        self._update_learn_state()
+
+    def _update_learn_state(self):
+        self.learn_button.is_on = self._learn_enabled
+        element_count = min(len(self.user_knobs.control_element), len(self.knob_touch_buttons.control_element))
+        if self._learn_enabled:
+            for index in range(element_count):
+                touch_element = self.knob_touch_buttons.control_element[index]
+                knob_element = self.user_knobs.control_element[index]
+                touch_element.set_identifier(knob_element.message_identifier())
+        else:
+            for index in range(element_count):
+                element = self.knob_touch_buttons.control_element[index]
+                element.set_identifier(element.original_identifier())
     
     def _setup_control_state(self, name, control_state):
         control_state.channel = self._base_translation_channel + self._page_index
