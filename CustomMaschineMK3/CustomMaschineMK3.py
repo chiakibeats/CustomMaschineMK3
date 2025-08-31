@@ -65,6 +65,7 @@ from .CustomDeviceComponent import (
 )
 from .CustomDeviceNavigationComponent import CustomDeviceNavigationComponent
 from .CustomMixerComponent import CustomMixerComponent
+from .MaschineMixerComponent import MaschineMixerComponent
 from .CustomClipActionsComponent import CustomClipActionsComponent
 from .CustomSlicedSimplerComponent import CustomSlicedSimplerComponent
 from .NoteRepeatComponent import NoteRepeatComponent
@@ -139,7 +140,6 @@ class Specification(ControlSurfaceSpecification):
         "Note_Repeat": NoteRepeatComponent,
         "Sliced_Simpler": CustomSlicedSimplerComponent,
         "Drum_Group": CustomDrumGroupComponent,
-        "Mixer": CustomMixerComponent,
         "Clip_Actions": CustomClipActionsComponent,
         "Groove_Pool": GroovePoolComponent,
         "Master_Volume": MasterVolumeComponent,
@@ -222,6 +222,14 @@ class CustomMaschineMK3(ControlSurface):
             playhead_notes = tuple(playhead_notes),
             playhead_triplet_notes = tuple(triplet_playhead_notes),
             playhead_channels = [1])
+        
+        mixer_mode = self._settings.get_value("mixer_mode")
+        if mixer_mode == "4Track":
+            mixer_component = CustomMixerComponent
+        elif mixer_mode == "8Track":
+            mixer_component = MaschineMixerComponent
+
+        Specification.component_map["Mixer"] = mixer_component
 
     # Sometimes pad leds couldn't update correctly
     # I don't know why this happens now, push "CHANNEL" button for refresh state

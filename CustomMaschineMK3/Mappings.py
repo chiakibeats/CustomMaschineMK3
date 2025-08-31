@@ -26,6 +26,10 @@ class LatchingBehaviour(LatchingBehaviourBase):
             super().release_delayed(component, mode)
 
 def create_mappings(surface):
+    # Load settings
+    sequencer_style = surface._settings.get_value("sequencer_style")
+    mixer_mode = surface._settings.get_value("mixer_mode")
+
     mappings = {}
     mappings["Transport"] = dict(
         stop_button = "stop",
@@ -34,15 +38,11 @@ def create_mappings(surface):
         nudge_up_button = "row2_pads_with_shift_raw[3]"
     )
 
-    mappings["Mixer"] = dict(
-        crossfade_cycle_buttons = "upper_group_buttons_with_perform"
-    )
-
     mappings["View_Based_Recording"] = dict(
         overdub_button = "erase_with_shift"
     )
 
-    # mapping names not found in component map are recognized as mode definition
+    # Mapping names not found in component map are recognized as mode definition
     mappings["Transport_Modes"] = dict(
         default_behaviour = MomentaryBehaviour(),
         shift_button = "shift",
@@ -180,7 +180,6 @@ def create_mappings(surface):
         # )
     )
 
-    sequencer_style = surface._settings.get_value("sequencer_style")
     mappings["Pad_Modes"] = dict(
         default_behaviour = LatchingBehaviour(),
         default_button = "padmode",
@@ -198,9 +197,6 @@ def create_mappings(surface):
                     select_button = "select",
                     delete_button = "erase",
                     copy_button = "duplicate"),
-                dict(component = "Mixer",
-                    clear_all_solo_button = "solo_with_erase",
-                    clear_all_mute_button = "mute_with_erase"),
                 dict(component = "View_Based_Recording",
                     fixed_button = "pattern",
                     length_select_buttons = "group_buttons_with_pattern"),
@@ -321,19 +317,7 @@ def create_mappings(surface):
         browser_button = "browser",
         settings_button = "setting",
         custom_button = "channel",
-        default = dict(
-            component = "Mixer",
-            shift_button = "shift",
-            pan_or_send_controls = "left_half_knobs",
-            prev_control_button = "left",
-            next_control_button = "right",
-            volume_controls = "right_half_knobs",
-            arm_buttons = "left_half_track_buttons",
-            mute_buttons = "left_half_track_buttons_with_mute",
-            solo_buttons = "left_half_track_buttons_with_solo",
-            track_select_buttons = "right_half_track_buttons",
-            knob_touch_buttons = "knob_touch_buttons",
-            erase_button = "erase"),
+        default = dict(), # This is placeholder, first-defined mode will be default mode at initial state
         device = dict(
             modes = [
                 dict(component = "Device",
@@ -390,6 +374,45 @@ def create_mappings(surface):
             scroll_down_button = "right"
         )
     )
+
+    if mixer_mode == "4Track":
+        mappings["Display_Modes"]["default"] = dict(
+            component = "Mixer",
+            shift_button = "shift",
+            pan_or_send_controls = "left_half_knobs",
+            prev_control_button = "left",
+            next_control_button = "right",
+            volume_controls = "right_half_knobs",
+            arm_buttons = "left_half_track_buttons",
+            mute_buttons = "left_half_track_buttons_with_mute",
+            solo_buttons = "left_half_track_buttons_with_solo",
+            track_select_buttons = "right_half_track_buttons",
+            knob_touch_buttons = "knob_touch_buttons",
+            erase_button = "erase"
+        )
+        mappings["Mixer"] = dict(
+            crossfade_cycle_buttons = "upper_group_buttons_with_perform"
+        )
+    else:
+        mappings["Display_Modes"]["default"] = dict(
+            component = "Mixer",
+            shift_button = "shift",
+            parameter_controls = "knobs",
+            parameter_select_buttons = "track_buttons_with_macro",
+            prev_parameter_button = "left_with_macro",
+            next_parameter_button = "right_with_macro",
+            scroll_up_button = "left",
+            scroll_down_button = "right",
+            arm_buttons = "track_buttons_with_select",
+            mute_buttons = "track_buttons_with_mute",
+            solo_buttons = "track_buttons_with_solo",
+            track_select_buttons = "track_buttons",
+            knob_touch_buttons = "knob_touch_buttons",
+            erase_button = "erase"
+        )
+        mappings["Mixer"] = dict(
+            crossfade_cycle_buttons = "group_buttons_with_perform"
+        )
 
     mappings["Session"] = dict(stop_all_clips_button = "stop_with_shift")
 

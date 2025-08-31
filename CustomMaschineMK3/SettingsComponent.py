@@ -158,10 +158,17 @@ SETTINGS = [
         "enum": ["Maschine", "Push"]
     },
     {
+        "key": "mixer_mode",
+        "description": "Mixer Mode (Reload required)",
+        "type": "enum",
+        "default_value": "8Track",
+        "enum": ["8Track", "4Track"]
+    },
+    {
         "key": "__version",
         "description": "CustomMaschineMK3 by chiaki",
         "type": "none",
-        "default_value": "Version 1.2",
+        "default_value": "Version 1.3",
     },    
 ]
 

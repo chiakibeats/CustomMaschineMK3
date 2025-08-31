@@ -310,6 +310,10 @@ class MaschineLEDColors:
         CycleSendIndex = BasicColors.ON
         CycleSendIndexDisabled = BasicColors.OFF
         NoTrack = BasicColors.OFF
+        TrackScroll = BasicColors.ON
+        TrackScrollPressed = BasicColors.ON
+        Parameter = BasicColors.OFF
+        ParameterSelected = BasicColors.ON
 
     class Session:
         Slot = BasicColors.OFF

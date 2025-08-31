@@ -72,7 +72,7 @@ def get_display_value(parameter):
     else:
         return ""
 
-def to_pan_or_send_value(knob):
+def to_pan_or_gain_value(knob):
     if str.startswith(knob.parameter_name, "Pan"):
         return knob.parameter_value
     else:
@@ -204,13 +204,13 @@ def create_root_view():
     logger.info("Init display")
 
     def mixer_view(state, content):
-        control_name = state.mixer.control_name
-        content.lines[0] = f"Param:{control_name}"
-        content.lines[2] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[to_pan_or_send_value(knob) for knob in state.elements.knobs[:4]])
+        parameter_name = state.mixer.parameter_name
+        content.lines[0] = f"Param:{parameter_name}"
+        content.lines[2] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[to_pan_or_gain_value(knob) for knob in state.elements.knobs[:4]])
 
         content.lines[1] = f"{'Lock' if state.target_track.is_locked_to_track else 'Track'}:"
         content.lines[1] += state.target_track.target_track.name[:LCD_LINE_LENGTH - len(content.lines[1])]
-        content.lines[3] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[adjust_gain_string(knob.parameter_value) for knob in state.elements.knobs[4:]])
+        content.lines[3] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[to_pan_or_gain_value(knob) for knob in state.elements.knobs[4:]])
 
     def device_view(state, content):
         if liveobj_valid(state.device.device):
