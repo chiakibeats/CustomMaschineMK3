@@ -10,7 +10,7 @@
 
 from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.components import RecordingMethod, ViewBasedRecordingComponent
-from ableton.v3.control_surface.controls import ButtonControl, FixedRadioButtonGroup
+from ableton.v3.control_surface.controls import ButtonControl, RadioButtonGroup
 from ableton.v3.control_surface.display import Renderable
 
 # Record length in beats
@@ -54,7 +54,7 @@ class FixedLengthRecordingMethod(RecordingMethod):
 
 class CustomViewBasedRecordingComponent(ViewBasedRecordingComponent):
     fixed_button = ButtonControl(color = "RecordLength.FixedOff", on_color = "RecordLength.FixedOn")
-    length_select_buttons = FixedRadioButtonGroup(
+    length_select_buttons = RadioButtonGroup(
         unchecked_color = "RecordLength.Length",
         checked_color = "RecordLength.LengthSelected",
         control_count = len(RECORD_LENGTH_LIST))

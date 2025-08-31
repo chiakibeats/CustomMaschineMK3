@@ -484,7 +484,7 @@ HYBRID_REVERB_BANK = IndexedDict()
 for key in CUSTOM_BANK_DEFINITIONS["Hybrid"].keys():
     HYBRID_REVERB_BANK[key] = CUSTOM_BANK_DEFINITIONS["Hybrid"][key]
     if key == BANK_MAIN_KEY:
-        HYBRID_REVERB_BANK["IR"] = {
+        HYBRID_REVERB_BANK["Convolution"] = {
             BANK_PARAMETERS_KEY: (
                 "IR Category",
                 "IR File",
