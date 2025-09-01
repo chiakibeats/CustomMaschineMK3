@@ -136,6 +136,7 @@ class BrowserComponent(Component, Renderable):
     _preview_enabled = True
     _parent_folder = None
     _parent_folder_name = None
+    _children_count = 0
     _root_item = None
     _folder_stack = []
     _browser = None
@@ -145,7 +146,7 @@ class BrowserComponent(Component, Renderable):
 
     @property
     def selected_item(self):
-        if len(self.parent_folder.children) > 0:
+        if self._children_count > 0:
             return self.parent_folder.children[self._selected_item_index]
         else:
             return None
@@ -162,6 +163,8 @@ class BrowserComponent(Component, Renderable):
     def parent_folder(self, folder):
         self._parent_folder = folder
         self._parent_folder_name = folder.name
+        # Counting items in folder is time intensive, so the return value is cached
+        self._children_count = len(self._parent_folder.children)
         self.notify_parent_folder_name()
 
     @listenable_property
@@ -182,7 +185,7 @@ class BrowserComponent(Component, Renderable):
     def set_display_modes(self, modes):
         self._display_modes = modes
 
-    def _update_folder_stack(self, new_root_item, current_stack):
+    def _refresh_folder_stack(self, new_root_item, current_stack):
         # Update stack items based on its URI
         # If matched item didn't find, stop searching and select first item of current folder instead
         new_stack = [new_root_item]
@@ -202,11 +205,12 @@ class BrowserComponent(Component, Renderable):
         
         return new_stack
 
-    def _update_browser_items(self):
+    def _refresh_browser_items(self):
         # We have to scan library folders periodcally because not all items listed at startup.
+        logger.info("Browser item refresh")
         current_selected_item = self.selected_item
         new_root_item = BrowserRootItem(self._browser, self._target_track.target_track.has_midi_input)
-        new_folder_stack = self._update_folder_stack(new_root_item, self._folder_stack)
+        new_folder_stack = self._refresh_folder_stack(new_root_item, self._folder_stack)
 
         new_selected_index = 0
         if len(new_folder_stack[-1].children) > 0 and current_selected_item != None:
@@ -222,7 +226,7 @@ class BrowserComponent(Component, Renderable):
 
     def update(self):
         super().update()
-        self._update_browser_items()
+        self._refresh_browser_items()
         self._update_led_feedback()
         if not self.is_enabled():
             self._browser.stop_preview()
@@ -230,17 +234,17 @@ class BrowserComponent(Component, Renderable):
     def _set_item_index(self, new_index, force_preview = False):
         old_index = self._selected_item_index
         self._selected_item_index = new_index
-        self._selected_item_name = self.selected_item.name if self.selected_item else None
-        logger.info(f"Select item {self._selected_item_name}")
+        selected_item = self.selected_item
+        self._selected_item_name = selected_item.name if selected_item else None
+        logger.debug(f"Select item {self._selected_item_name}")
         self.notify_selected_item_name()
 
-        # Preview item function is blocking call (time depends on sample length and storage bandwidth)
+        # Preview item function is time intensive (due to item loading)
         # We need to finish other tasks before item preview
         if self._preview_enabled and (old_index != new_index or force_preview):
             self._browser.stop_preview()
-            preview_item = self.selected_item
-            if isinstance(preview_item, BrowserItem):
-                self._browser.preview_item(preview_item)
+            if isinstance(selected_item, BrowserItem):
+                self._browser.preview_item(selected_item)
 
     def enter_folder(self, folder):
         self._folder_stack.append(folder)
