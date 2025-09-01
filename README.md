@@ -25,6 +25,7 @@ See [All Operations](https://chiakibeats.github.io/CustomMaschineDocs/docs/all-o
     * Drum Rack: Trigger drum pads in Drum Rack device and pad LED colors reflect each pad color and states (mute or solo)
     * Simpler: If Simpler playback mode is "Slicing", You can trigger simpler slices
     * Auto-switching depends on inserted instrument type
+    * Pad LED also reacts to note trigger from clip
 * Additional Features for Keyboard Modes
     * Quick page / octave jump by using group buttons
     * Note repeat
@@ -48,13 +49,11 @@ See [All Operations](https://chiakibeats.github.io/CustomMaschineDocs/docs/all-o
     * Select parameter bank
     * Enable, disable and delete device
     * Modify device parameter by using 8x knobs
-    * Special device parameters like Push
-        * Wavetable selection for Wavetable device
-        * Playback mode selection & slice editing for Simpler device
-* Mixer Control
-    * Arm, mute and solo track
+    * Custom parameter banks like Push
+        * Available for Simpler, Wavetable, EQ Eight, Hybrid Reverb, and Meld
+* Mixer Control (updated to 8-track version since v1.3)
     * Change volume, panning and send amount
-    * Change selected track
+    * Select, arm, mute and solo track
 * Clip Editor
     * Change clip start, clip end, loop start and loop length
     * Change various options (activation, loop, warp settings, launch settings, pitch, etc…)
@@ -85,6 +84,3 @@ https://chiakibeats.github.io/CustomMaschineDocs/
 * LED feedback of custom MIDI mapping mode leaks into keyboard mode
     * This happens in the very low range notes (C-2 to G-2)
     * Currently under investigation, but you can play these notes normally
-* Scrolling items in Collections and Max for Live folders is laggy in some cases
-    * Maybe it depends on the size of the entire library
-    * Still investigating
