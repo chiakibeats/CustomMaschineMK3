@@ -76,7 +76,6 @@ class MaschineMixerComponent(ScrollComponent, Renderable, Scrollable):
         self.parameter_select_buttons.checked_index = 0
 
         self._assign_tracks()
-        self._assign_parameters()
 
     @parameter_select_buttons.pressed
     def _on_parameter_select_buttons_pressed(self, button):
@@ -118,7 +117,6 @@ class MaschineMixerComponent(ScrollComponent, Renderable, Scrollable):
 
         self._track_position = value
         self._assign_tracks()
-        self._assign_parameters()
     
     @property
     def parameter_index(self):
@@ -204,10 +202,10 @@ class MaschineMixerComponent(ScrollComponent, Renderable, Scrollable):
                 self.parameter_controls[index].mapped_parameter = None
 
     def _assign_tracks(self):
+        logger.info("Assign tracks to mixer")
         self._all_tracks = self.song.visible_tracks
         self._all_tracks += self.song.return_tracks
         self._all_tracks += (self.song.master_track,)
-        super().update()
 
         for index in range(self._track_count):
             track_index = self.track_position + index
@@ -215,6 +213,10 @@ class MaschineMixerComponent(ScrollComponent, Renderable, Scrollable):
                 self._channel_strips[index].set_track(self._all_tracks[track_index])
             else:
                 self._channel_strips[index].set_track(None)
+        
+        self._assign_parameters()
+
+        super().update()
 
     def _set_strip_controls(self, name, controls):
         # Assign each control elements to the corresponding control in channel strip
@@ -224,7 +226,6 @@ class MaschineMixerComponent(ScrollComponent, Renderable, Scrollable):
     def update(self):
         super().update()
         self._assign_tracks()
-        self._assign_parameters()
         if self.is_enabled():
             self.crossfader_control.mapped_parameter = self.song.master_track.mixer_device.crossfader
         else:
