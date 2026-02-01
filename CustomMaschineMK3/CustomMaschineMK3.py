@@ -194,7 +194,7 @@ class CustomMaschineMK3(ControlSurface):
         super().__init__(Specification, *a, **k)
         logger.info(dir(self._c_instance))
 
-        self.register_slot(self.elements.variation, self._on_update_triggered, "is_pressed")
+        #self.register_slot(self.elements.variation, self._on_update_triggered, "is_pressed")
         self.register_slot(self.elements.keyboard, self._on_playable_mode_selected, "is_pressed")
         self.register_slot(self.component_map["Pad_Modes"], self._on_pad_mode_changed, "selected_mode")
         self.register_slot(self.component_map["Display_Modes"], self._on_display_mode_changed, "selected_mode")

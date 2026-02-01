@@ -326,7 +326,9 @@ def create_mappings(surface):
                     prev_bank_button = "left",
                     next_bank_button = "right",
                     bank_select_buttons = "track_buttons_with_macro",
-                    erase_button = "erase"
+                    erase_button = "erase",
+                    compare_ab_button = "variation",
+                    copy_to_other_button = "variation_with_duplicate"
                 ),
                 dict(component = "Device_Navigation",
                     select_buttons = "track_buttons",

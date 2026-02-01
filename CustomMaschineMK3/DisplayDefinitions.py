@@ -159,6 +159,8 @@ class Notifications(DefaultNotifications):
         lock = DefaultNotifications.DefaultText()
         select = DefaultNotifications.DefaultText()
         bank = DefaultNotifications.DefaultText()
+        copy_to_other = "Copy parameters\n{} -> {}".format
+        copy_to_other: "Notification[Fn[str, str]]"
 
     class Track(DefaultNotifications.Track):
         lock = DefaultNotifications.DefaultText()

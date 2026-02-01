@@ -513,6 +513,8 @@ def custom_mapping_sensitivities(original):
 class CustomDeviceComponent(DeviceComponent):
     knob_touch_buttons = control_list(ButtonControl, color = None)
     erase_button = ButtonControl(color = None)
+    compare_ab_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
+    copy_to_other_button = ButtonControl(color = None)
     
     def __init__(self, name = "Device", *a, **k):
         if self.application.get_major_version() >= 12:
@@ -521,6 +523,9 @@ class CustomDeviceComponent(DeviceComponent):
         super().__init__(name, *a, **k)
         self._parameter_mapping_sensitivities = custom_mapping_sensitivities(self._parameter_mapping_sensitivities)
         self.register_slot(self, self.notify_current_parameters, "parameters")
+        # We have a flag to check current device is A/B comparable
+        # Because Live 11 doesn't have can_compare_ab property in Device class
+        self._can_compare_ab = False
 
     def _add_live_12_device_definitions(self):
         CustomDeviceDecoratorFactory.DECORATOR_CLASSES["Roar"] = decorators.RoarDeviceDecorator
@@ -687,3 +692,32 @@ class CustomDeviceComponent(DeviceComponent):
                 parameter = self.parameters[button.index].parameter
                 if liveobj_valid(parameter) and not parameter.is_quantized:
                     parameter.value = parameter.default_value
+
+    def _on_device_changed(self, device):
+        super()._on_device_changed(device)
+        if hasattr(device, "can_compare_ab") and device.can_compare_ab:
+            self._can_compare_ab = True
+            self._on_ab_selection_changed.subject = device
+            self._on_ab_selection_changed()
+        else:
+            self._can_compare_ab = False
+            self._on_ab_selection_changed.subject = None
+            self.compare_ab_button.is_on = False
+
+    @listens("is_using_compare_preset_b")
+    def _on_ab_selection_changed(self):
+        self.compare_ab_button.is_on = self.device.is_using_compare_preset_b
+
+    @compare_ab_button.pressed
+    def _on_compare_ab_button_pressed(self, button):
+        if liveobj_valid(self.device) and self._can_compare_ab:
+            self.device.is_using_compare_preset_b = not self.device.is_using_compare_preset_b
+
+    @copy_to_other_button.pressed
+    def _on_copy_to_other_button_pressed(self, button):
+        if liveobj_valid(self.device) and self._can_compare_ab:
+            self.device.save_preset_to_compare_ab_slot()
+            compare_state = self.device.is_using_compare_preset_b
+            copy_source = "B" if compare_state else "A"
+            copy_target = "A" if compare_state else "B"
+            self.notify(self.notifications.Device.copy_to_other, copy_source, copy_target)
