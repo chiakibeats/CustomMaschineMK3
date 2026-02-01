@@ -115,8 +115,6 @@ class Specification(ControlSurfaceSpecification):
     include_returns = True
     include_master = True
     include_auto_arming = True
-    link_session_ring_to_track_selection = True
-    link_session_ring_to_scene_selection = True
     target_track_component_type = CustomTargetTrackComponent
     continuous_parameter_sensitivity = 2.0
     quantized_parameter_sensitivity = 0.2
@@ -326,6 +324,9 @@ class CustomMaschineMK3(ControlSurface):
         for line in range(4):
             message = make_display_sysex_message(line, (ord(" "),) * 28)
             self._send_midi(message)
+        
+        # Clear touchstrip
+        self.elements.touchstrip.send_value(0, True)
 
     def _on_playable_mode_selected(self):
         logger.info(f"keyboard button state = {self.elements.keyboard.is_pressed}")
