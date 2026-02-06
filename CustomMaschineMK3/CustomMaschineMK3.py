@@ -326,7 +326,7 @@ class CustomMaschineMK3(ControlSurface):
             self._send_midi(message)
         
         # Clear touchstrip
-        self.elements.touchstrip.send_value(0, True)
+        self._send_midi((0xE0, 0x00, 0x00))
 
     def _on_playable_mode_selected(self):
         logger.info(f"keyboard button state = {self.elements.keyboard.is_pressed}")
