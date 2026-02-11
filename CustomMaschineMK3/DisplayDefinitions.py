@@ -338,6 +338,13 @@ def create_root_view():
                     elif index == 6:
                         content.lines[1] = "Warp mode"
                         content.lines[3] = WarpModeList.to_string(clip.warp_mode) if clip.warping else "No Warp"
+        elif display_mode == BROWSER:
+            index = TOUCH_STATES.active_index
+            if index == 0:
+                parameter = state.elements.knob_touch_buttons[index].controlled_parameter
+                if liveobj_valid(parameter):
+                    content.lines[0] = "Preview Volume"
+                    content.lines[2] = get_display_value(parameter)
 
         if TOUCH_STATES.encoder_active:
             encoder_mode = state.encoder_modes.selected_mode

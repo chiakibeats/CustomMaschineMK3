@@ -285,7 +285,7 @@ class BrowserComponent(Component, Renderable):
     jump_prev_button = ButtonControl(color = "Browser.CannotNavigateItem", on_color = "Browser.CanNavigateItem", pressed_color = "Browser.NavigateItemPressed", repeat = True)
     preview_toggle_button = ButtonControl(color = "Browser.PreviewOff", on_color = "Browser.PreviewOn")
     preview_volume_encoder = MappedSensitivitySettingControl()
-    select_folder_buttons = control_list(ButtonControl)
+    select_folder_buttons = control_list(ButtonControl, color = "DefaultColor.Off", pressed_color = "DefaultColor.On")
     hotswap_button = ButtonControl(color = "DefaultColor.Off", on_color = "DefaultButton.On")
     hotswap_content_button = ButtonControl(color = None)
         
