@@ -260,6 +260,7 @@ class BrowserTreeExplorer:
                 new_selected_item_index = 0
 
         self._tree_stack = new_stack
+        self._tree_item_count = len(self._tree_stack[-1].children)
         self._selected_item = new_selected_item
         self._selected_item_index = new_selected_item_index
         logger.info(f"Traverse completed tree = {[t.name for t in self._tree_stack]}, selected = {self._selected_item.name if self._selected_item else None}")

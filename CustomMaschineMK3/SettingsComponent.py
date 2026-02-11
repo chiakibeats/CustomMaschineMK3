@@ -168,7 +168,7 @@ SETTINGS = [
         "key": "__version",
         "description": "CustomMaschineMK3 by chiaki",
         "type": "none",
-        "default_value": "Version 1.3",
+        "default_value": "Version 1.4",
     },    
 ]
 

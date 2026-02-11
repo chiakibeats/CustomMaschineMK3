@@ -1,7 +1,9 @@
 # CustomMaschineMK3
+
 Ableton MIDI Remote Script for Maschine MK3 / Plus
 
 # Requirements
+
 * Ableton Live 11: 11.3.35 or later
 * Ableton Live 12: 12.1.10 or later
 * Hardware: Maschine MK3, Maschine Plus
@@ -11,74 +13,61 @@ See [How to Install](https://chiakibeats.github.io/CustomMaschineDocs/docs/how-t
 
 # Feature Summary
 See [All Operations](https://chiakibeats.github.io/CustomMaschineDocs/docs/all-operations) for exhaustive list.
+
 * Transport Control
-    * Play, stop and pause song
-    * Loop and metronome on / off
-    * Trigger record / capture MIDI
-    * Tap tempo
+    * Basic playback control, loop metronome ON / OFF, and tap tempo
 * Session View Control
-    * Launch, select, copy-paste and delete clips
-    * Launch, delete and duplicate scenes
-    * Quick page jump buttons available
-* 3 Keyboard Modes
+    * Clip and scene trigger and stop
+    * Copy and delete available
+    * Fixed-length recording
+* 3 Keyboard Modes (Auto-switching)
     * Normal: Typical MIDI keyboard integrated with Live's scale mode
-    * Drum Rack: Trigger drum pads in Drum Rack device and pad LED colors reflect each pad color and states (mute or solo)
-    * Simpler: If Simpler playback mode is "Slicing", You can trigger simpler slices
-    * Auto-switching depends on inserted instrument type
-    * Pad LED also reacts to note trigger from clip
+    * Drum Rack: Trigger drum pads in Drum Rack device, and pad LED colors reflect each pad color and states (mute or solo)
+    * Simpler: If Simpler playback mode is "Slicing", you can trigger and edit simpler slices
 * Additional Features for Keyboard Modes
-    * Quick page / octave jump by using group buttons
     * Note repeat
     * Fix note-on velocity to 127
     * 16 fixed velocity levels mode for selected note pitch / drum pad / simpler slice
-    * Select corresponding MIDI notes in clip
+    * Select notes in clip
 * Step Sequencer
-    * Add or delete notes by pressing pads
-    * Playback position highlight
-    * Bars select buttons available
-    * Select note velocity via 16 levels velocity mode
-    * Copy, paste and erase each bars
-    * Select each step notes in clip
-    * Edit note properties (position, length, velocity)
+    * Edit clip notes by pressing pads (tweak note position / length / velocity available)
+    * Select focused bar by group buttons
+    * Copy, paste, and erase each bar
 * Touch Strip Features
     * Pitch bend
-    * Assign device / mixer parameter to touch strip
-    * Crossfader control and change channel assignment
+    * Control device / mixer parameter
+    * Crossfader control
 * Device Control
-    * Change focusing device
-    * Select parameter bank
-    * Enable, disable and delete device
-    * Modify device parameter by using 8x knobs
-    * Custom parameter banks like Push
-        * Available for Simpler, Wavetable, EQ Eight, Hybrid Reverb, and Meld
+    * Select device and control its parameters
+    * Custom parameter banks are available for Simpler, Wavetable, EQ Eight, Hybrid Reverb, and Meld
 * Mixer Control (updated to 8-track version since v1.3)
-    * Change volume, panning and send amount
-    * Select, arm, mute and solo track
+    * Change volume, panning, and send amount
+    * Select, arm, mute, and solo track
+    * Change crossfader assign
 * Clip Editor
-    * Change clip start, clip end, loop start and loop length
-    * Change various options (activation, loop, warp settings, launch settings, pitch, etc…)
+    * Edit various clip properties
+    * Example: clip start, clip length, loop settings, warp settings, launch settings, mute, pitch, gain, etc.
 * Simple Browser
-    * It works!…But it's **isolated** from Ableton Live's internal browser
-    * Select item and load it
-    * Enable, disable sound preview
+    * It works!… But it's isolated from Ableton Live's internal browser
+    * Hot-swap available
 * Text Display
     * Show parameter values and states about selected mode
 * Custom MIDI Mapping Mode
     * Dedicated 16x knobs and buttons (8 elements, 2 pages) for MIDI mapping
-    * Work alongside other modes
 * Various Operations
     * Change master track volume
     * Change groove amount
     * Fast-forward, rewind playing position
     * Jump to next or previous cue point
     * Change song tempo
-    * Change scale options (on / off, scale mode, root note)
+    * Change scale options (ON / OFF, scale mode, root note)
     * Switch main view between session and arrangement
-    * Fixed length recording available in session view
-    * Lock target track
 
 # Documents
 https://chiakibeats.github.io/CustomMaschineDocs/
+
+# Support
+Contact via [NI forum thread](https://community.native-instruments.com/discussion/42193/) or open GitHub issue
 
 # Known Issue
 * LED feedback of custom MIDI mapping mode leaks into keyboard mode

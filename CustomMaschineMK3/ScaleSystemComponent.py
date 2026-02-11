@@ -49,7 +49,7 @@ class ScaleSystemComponent(Component, Renderable):
         
         self.register_slot(self.song, self._on_scale_name_changed, "scale_name")
         self.register_slot(self.song, self._on_root_note_changed, "root_note")
-        logger.info(f"Scales = {self._all_scales_list}")
+        #logger.info(f"Scales = {self._all_scales_list}")
 
     @listenable_property
     def scale_mode(self):
