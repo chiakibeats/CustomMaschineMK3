@@ -160,22 +160,23 @@ class BrowserTreeExplorer:
         self.traverse_tree(self._root_item, self._selected_item)
 
     def enter_to_selected_item(self):
-        # Cache item count to eliminate expensive operation
-        item_count = len(self._selected_item.children)
+        if self._selected_item != None:
+            # Cache item count to eliminate expensive operation
+            item_count = len(self._selected_item.children)
 
-        if self._selected_item.is_folder or item_count > 0:
-            self._tree_stack.append(self._selected_item)
-            self._tree_item_count = item_count
-            if item_count == 0:
-                self._selected_item = None
-            else:
-                self._selected_item = self._tree_stack[-1].children[0]
+            if self._selected_item.is_folder or item_count > 0:
+                self._tree_stack.append(self._selected_item)
+                self._tree_item_count = item_count
+                if item_count == 0:
+                    self._selected_item = None
+                else:
+                    self._selected_item = self._tree_stack[-1].children[0]
 
-            self._selected_item_index = 0
-            
-            return True
-        else:
-            return False
+                self._selected_item_index = 0
+                
+                return True
+
+        return False
 
     def leave_from_current_tree(self):
         if len(self._tree_stack) > 1:
@@ -488,7 +489,7 @@ class BrowserComponent(Component, Renderable):
                 
     @select_folder_buttons.pressed
     def _on_folder_buttons_pressed(self, button):
-        if button.index < 6:
+        if button.index < 7:
             for item in self._root_item.children:
                 if isinstance(item, BrowserCollectionRootItem):
                     target = item.children[min(button.index, len(item.children) - 1)]
