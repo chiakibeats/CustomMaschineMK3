@@ -359,7 +359,9 @@ def create_mappings(surface):
             component = "Browser",
             preview_toggle_button = "track_buttons_raw[0]",
             preview_volume_encoder = "knobs_raw[0]",
-            select_folder_buttons = "track_buttons_with_macro"
+            select_folder_buttons = "track_buttons_with_macro",
+            hotswap_button = "variation",
+            hotswap_content_button = "variation_with_select"
         ),
         settings = dict(
             behaviour = ToggleBehaviour(),

@@ -8,6 +8,7 @@
 #
 # ==================================================
 
+from faulthandler import is_enabled
 from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.display import Renderable
 from ableton.v3.control_surface.mode import pop_last_mode
@@ -17,8 +18,12 @@ from ableton.v3.control_surface.controls import (
     MappedSensitivitySettingControl,
     control_list
 )
-from ableton.v3.base import clamp, depends, listens, listenable_property
+from ableton.v3.base import clamp, depends, listens, listenable_property, task
+from ableton.v3.live import liveobj_valid
 from Live.Browser import BrowserItem # type: ignore
+from Live.Device import Device # type: ignore
+from Live.Sample import Sample # type: ignore
+from Live.DrumPad import DrumPad # type: ignore
 
 from .Logger import logger
 from . import Config
@@ -95,15 +100,14 @@ class WrapBrowserItem:
 
 class BrowserRootItem:
     name = "Browser Top"
-    children = []
     is_folder = True
     is_device = False
     is_loadable = False
-    uri = ""
 
     def __init__(self, browser, target_is_midi_track = True):
         self.uri = type(self).__name__
         self.children = [BrowserCollectionRootItem(browser)]
+
         audio_effects = WrapBrowserItem(browser.audio_effects, "Audio Effects")
         if target_is_midi_track:
             self.children.append(WrapBrowserItem(browser.sounds, "Sounds"))
@@ -120,6 +124,158 @@ class BrowserRootItem:
             WrapBrowserItem(browser.current_project, "Current Project"),
             BrowserUserFoldersRootItem(browser)]
 
+
+class BrowserTreeExplorer:
+
+    @property
+    def selected_item(self):
+        return self._selected_item
+    
+    @property
+    def selected_item_index(self):
+        return self._selected_item_index
+    
+    @property
+    def parent_item(self):
+        return self._tree_stack[-1]
+    
+    @property
+    def item_count(self):
+        return self._tree_item_count
+    
+    @property
+    def tree_depth(self):
+        return len(self._tree_stack)
+
+    def __init__(self, root_item):
+        self._selected_item = root_item.children[0]
+        self._selected_item_index = 0
+        self._root_item = root_item
+        # TODO: store URI for accurate traverse (items has identical name can be in same folder)
+        self._tree_stack = [root_item]
+        self._tree_item_count = len(self._tree_stack[-1].children)
+    
+    def set_root_item(self, new_root):
+        self._root_item = new_root
+        self.traverse_tree(self._root_item, self._selected_item)
+
+    def enter_to_selected_item(self):
+        # Cache item count to eliminate expensive operation
+        item_count = len(self._selected_item.children)
+
+        if self._selected_item.is_folder or item_count > 0:
+            self._tree_stack.append(self._selected_item)
+            self._tree_item_count = item_count
+            if item_count == 0:
+                self._selected_item = None
+            else:
+                self._selected_item = self._tree_stack[-1].children[0]
+
+            self._selected_item_index = 0
+            
+            return True
+        else:
+            return False
+
+    def leave_from_current_tree(self):
+        if len(self._tree_stack) > 1:
+            popped = self._tree_stack.pop()
+            self._tree_item_count = len(self._tree_stack[-1].children)
+            
+            self._selected_item_index = 0
+            for index, item in enumerate(self._tree_stack[-1].children):
+                if item.uri == popped.uri:
+                    self._selected_item_index = index
+                    break
+
+            self._selected_item = self._tree_stack[-1].children[self._selected_item_index]
+            return True
+        else:
+            return False
+
+    def move_pointer(self, offset):
+        new_index = clamp(self._selected_item_index + offset, 0, self._tree_item_count - 1)
+        if self._selected_item_index != new_index:
+            self._selected_item_index = new_index
+            self._selected_item = self.parent_item.children[self._selected_item_index]
+            return True
+        else:
+            return False
+
+    def is_valid_tree(self):
+        # Test item is valid or not, but probably this doesn't work
+        return liveobj_valid(self._selected_item) and liveobj_valid(self._tree_stack[-1])
+    
+    def refresh_tree(self):
+        self.traverse_tree(self._root_item, self._selected_item)
+
+    def traverse_tree(self, new_root, dest_item):
+        # Traverse trees and navigate to selected item
+        # Why did this: The design of browser intended to keep current selection even if the trees are modified by hot-swap filter
+        dest_item_uri = dest_item.uri if dest_item else None
+        logger.info(f"Start traverse tree = {[t.name for t in self._tree_stack]}, dest_item.uri = {dest_item_uri}")
+
+        new_stack = [new_root]
+        new_selected_item = None
+        new_selected_item_index = 0
+
+        traverse_succeeded = True
+        for old_tree_item in self._tree_stack[1:]:
+            item_found = False
+
+            new_tree = new_stack[-1]
+            logger.info(f"tree = {new_tree.name}, old_tree_item.uri = {old_tree_item.uri}")
+
+            item_count = 0
+            for item in new_tree.children:
+                item_count += 1
+                if item.uri == old_tree_item.uri:
+                    logger.info(f"Found item = {item.uri}")
+                    item_found = True
+                    new_stack.append(item)
+                    break
+
+            if not item_found:
+                logger.info("Tree item not found")
+                new_selected_item = new_tree.children[0] if item_count > 0 else None
+                new_selected_item_index = 0
+                traverse_succeeded = False
+                break
+
+        if traverse_succeeded:
+            item_found = False
+            item_count = 0
+
+            for index, item in enumerate(new_stack[-1].children):
+                item_count += 1
+                if item.uri == dest_item_uri:
+                    item_found = True
+                    new_selected_item = item
+                    new_selected_item_index = index
+                    break
+            
+            if not item_found:
+                logger.info(f"Selected item not found")
+                new_selected_item = new_stack[-1].children[0] if item_count > 0 else None
+                new_selected_item_index = 0
+
+        self._tree_stack = new_stack
+        self._selected_item = new_selected_item
+        self._selected_item_index = new_selected_item_index
+        logger.info(f"Traverse completed tree = {[t.name for t in self._tree_stack]}, selected = {self._selected_item.name if self._selected_item else None}")
+
+    def force_navigate_to(self, new_tree_stack):
+        # Overwrite internal state to specified one
+        # This is used for jumping to collections folder only!
+        self._tree_stack = new_tree_stack
+        self._tree_item_count = len(self._tree_stack[-1].children)
+        if self._tree_item_count > 0:
+            self._selected_item = self._tree_stack[-1].children[0]
+        else:
+            self._selected_item = None
+        
+        self._selected_item_index = 0
+
 class BrowserComponent(Component, Renderable):
     select_encoder = StepEncoderControl(num_steps = 64)
     load_button = ButtonControl(color = None)
@@ -130,177 +286,156 @@ class BrowserComponent(Component, Renderable):
     preview_toggle_button = ButtonControl(color = "Browser.PreviewOff", on_color = "Browser.PreviewOn")
     preview_volume_encoder = MappedSensitivitySettingControl()
     select_folder_buttons = control_list(ButtonControl)
-
-    _selected_item_index = 0
-    _selected_item_name = None
-    _preview_enabled = True
-    _parent_folder = None
-    _parent_folder_name = None
-    _children_count = 0
-    _root_item = None
-    _folder_stack = []
-    _browser = None
-    _target_track = None
-    _close_browser = False
-    _display_modes = None
-
-    @property
-    def selected_item(self):
-        if self._children_count > 0:
-            return self.parent_folder.children[self._selected_item_index]
-        else:
-            return None
+    hotswap_button = ButtonControl(color = "DefaultColor.Off", on_color = "DefaultButton.On")
+    hotswap_content_button = ButtonControl(color = None)
         
     @listenable_property
     def selected_item_name(self):
         return self._selected_item_name
     
-    @property
-    def parent_folder(self):
-        return self._parent_folder
-    
-    @parent_folder.setter
-    def parent_folder(self, folder):
-        self._parent_folder = folder
-        self._parent_folder_name = folder.name
-        # Counting items in folder is time intensive, so the return value is cached
-        self._children_count = len(self._parent_folder.children)
-        self.notify_parent_folder_name()
+    @selected_item_name.setter
+    def selected_item_name(self, value):
+        self._selected_item_name = value
+        self.notify_selected_item_name()
 
     @listenable_property
     def parent_folder_name(self):
         return self._parent_folder_name
+    
+    @parent_folder_name.setter
+    def parent_folder_name(self, value):
+        self._parent_folder_name = value
+        self.notify_parent_folder_name()
 
+    @property
+    def preview_enabled(self):
+        return self._preview_enabled
+    
+    @preview_enabled.setter
+    def preview_enabled(self, value):
+        self._preview_enabled = value
+        self.preview_toggle_button.is_on = value
+    
     @depends(target_track = None)
     def __init__(self, name = "Browser", target_track = None, *a, **k):
         super().__init__(name, *a, **k)
+        
         self._target_track = target_track
         self._browser = self.application.browser
         self._root_item = BrowserRootItem(self._browser)
-        self.enter_folder(self._root_item)
+        self._explorer = BrowserTreeExplorer(self._root_item)
+
+        # Folder iteration related
+        self.selected_item_name = self._explorer.selected_item.name
+        self.parent_folder_name = self._explorer.parent_item.name
+
+        # Behaviour related
+        self._close_browser = False
+        self._display_modes = None
+        self._preview_enabled = True
+        self._hotswap_target_type = None
+        self._tree_invalidated = False
+        
+        self.register_slot(self, self._update_led_feedback, "selected_item_name")
         self.preview_volume_encoder.mapped_parameter = self.song.master_track.mixer_device.cue_volume
         self._update_preview_state(True)
-        self._update_led_feedback()
+        self._on_browser_refresh_triggered.subject = self._browser
+        # It seems be not triggered on Live 12.3.5
+        self._on_hotswap_filter_type_changed.subject = self._browser
+        self._on_hotswap_target_changed.subject = self._browser
 
     def set_display_modes(self, modes):
         self._display_modes = modes
 
-    def _refresh_folder_stack(self, new_root_item, current_stack):
-        # Update stack items based on its URI
-        # If matched item didn't find, stop searching and select first item of current folder instead
-        new_stack = [new_root_item]
-        for old_item in current_stack[1:]:
-            matched_item = None
-
-            folder = new_stack[-1]
-            for new_item in folder.children:
-                if new_item.uri == old_item.uri:
-                    matched_item = new_item
-                    break
-
-            if matched_item != None:
-                new_stack.append(matched_item)
-            else:
-                break
-        
-        return new_stack
-
-    def _refresh_browser_items(self):
-        # We have to scan library folders periodcally because not all items listed at startup.
-        logger.info("Browser item refresh")
-        current_selected_item = self.selected_item
-        new_root_item = BrowserRootItem(self._browser, self._target_track.target_track.has_midi_input)
-        new_folder_stack = self._refresh_folder_stack(new_root_item, self._folder_stack)
-
-        new_selected_index = 0
-        if len(new_folder_stack[-1].children) > 0 and current_selected_item != None:
-            for index, item in enumerate(new_folder_stack[-1].children):
-                if item.uri == current_selected_item.uri:
-                    new_selected_index = index
-                    break
-
-        self._root_item = new_root_item
-        self._folder_stack = new_folder_stack
-        self.parent_folder = self._folder_stack[-1]
-        self._set_item_index(new_selected_index)
-
     def update(self):
+        logger.info("Update browser")
         super().update()
-        self._refresh_browser_items()
-        self._update_led_feedback()
-        if not self.is_enabled():
-            self._browser.stop_preview()
+        result = self._explorer.is_valid_tree()
+        logger.info(f"is_valid_tree() = {result}")
+        if not result or self._tree_invalidated:
+            self._do_refresh_browser()
 
-    def _set_item_index(self, new_index, force_preview = False):
-        old_index = self._selected_item_index
-        self._selected_item_index = new_index
-        selected_item = self.selected_item
-        self._selected_item_name = selected_item.name if selected_item else None
-        logger.debug(f"Select item {self._selected_item_name}")
-        self.notify_selected_item_name()
+        self._update_led_feedback()
+
+        if not self.is_enabled():
+            # Turn off preview and hotswap if the browser mode is inactive
+            self._browser.stop_preview()
+            self._browser.hotswap_target = None
+
+    def _preview_item(self):
+        item = self._explorer.selected_item
+        self.selected_item_name = item.name if item else None
+        uri = item.uri if item else None
+        logger.debug(f"Preview item = {self.selected_item_name}, uri = {uri}")
 
         # Preview item function is time intensive (due to item loading)
         # We need to finish other tasks before item preview
-        if self._preview_enabled and (old_index != new_index or force_preview):
+        if self._preview_enabled:
             self._browser.stop_preview()
-            if isinstance(selected_item, BrowserItem):
-                self._browser.preview_item(selected_item)
+            if isinstance(item, BrowserItem):
+                self._browser.preview_item(item)
 
-    def enter_folder(self, folder):
-        self._folder_stack.append(folder)
-        self.parent_folder = folder
-        self._set_item_index(0, True)
-        self._update_led_feedback()
+    def _refresh_browser(self):
+        # Just mark the flag and do actual refresh if this component is active
+        # 2 reasons why this mechanism exists:
+        # 1. Prevent excessive refresh
+        # 2. Quick fix for the issue that items are not filtered immediately after hot-swap target is changed
+        #    Sometimes happens, especially when hot-swap is enabled while browser is inactive
+        self._tree_invalidated = True
+        if self.is_enabled():
+            self._do_refresh_browser()
+
+    def _do_refresh_browser(self):
+        self._root_item = BrowserRootItem(self._browser, self._target_track.target_track.has_midi_input)
+        self._explorer.set_root_item(self._root_item)
+        item = self._explorer.selected_item
+        self.selected_item_name = item.name if item else None
+        self.parent_folder_name = self._explorer.parent_item.name
+
+        self._tree_invalidated = False
+
+    def enter_folder(self):
+        if self._explorer.enter_to_selected_item():
+            self.parent_folder_name = self._explorer.parent_item.name
+            self._preview_item()
 
     def leave_folder(self):
-        if len(self._folder_stack) > 1:
-            last_item = self._folder_stack[-1]
-            self._folder_stack.pop()
-            self.parent_folder = self._folder_stack[-1]
-            item_index = 0
-            for index, item in enumerate(self.parent_folder.children):
-                if item.uri == last_item.uri:
-                    item_index = index
-                    break
-
-            self._set_item_index(item_index, True)
+        if self._explorer.leave_from_current_tree():
+            self.parent_folder_name = self._explorer.parent_item.name
+            self._preview_item()
         
-        self._update_led_feedback()
-
     def _update_preview_state(self, new_state):
-        self._preview_enabled = new_state
-        if self._preview_enabled:
-            preview_item = self.selected_item 
+        self.preview_enabled = new_state
+        if self.preview_enabled:
+            preview_item = self._explorer.selected_item 
             if isinstance(preview_item, BrowserItem):
                 self._browser.preview_item(preview_item)
         else:
             self._browser.stop_preview()
 
     def _update_led_feedback(self):
-        item = self.selected_item
+        item = self._explorer.selected_item
         can_enter = False if item == None else item.is_folder or len(item.children) > 0
         self.enter_folder_button.is_on = can_enter
-        self.leave_folder_button.is_on = len(self._folder_stack) > 1
-        self.jump_next_button.is_on = self._selected_item_index < len(self.parent_folder.children) - 1
-        self.jump_prev_button.is_on = self._selected_item_index > 0
-        self.preview_toggle_button.is_on = self._preview_enabled
+        self.leave_folder_button.is_on = self._explorer.tree_depth > 1
+        self.jump_next_button.is_on = self._explorer.selected_item_index < self._explorer.item_count - 1
+        self.jump_prev_button.is_on = self._explorer.selected_item_index > 0
 
     @select_encoder.value
     def _on_select_encoder_value(self, value, encoder):
-        new_index = clamp(self._selected_item_index + value, 0, len(self.parent_folder.children) - 1)
-        self._set_item_index(new_index)
-        self._update_led_feedback()
+        if self._explorer.move_pointer(value):
+            self._preview_item()
 
     @load_button.pressed
     def _on_load_button_pressed(self, button):
-        item = self.selected_item
+        item = self._explorer.selected_item
         if item != None:
             if item.is_loadable:
-                logger.info(f"Load item {self.selected_item.name}")
-                self.application.browser.load_item(self.selected_item)
-                self._close_browser = True
-            elif item.is_folder or len(item.children) > 0:
-                self.enter_folder(item)
+                logger.info(f"Load item {item.name}")
+                self._browser.load_item(item)
+                self._close_browser = self._browser.hotswap_target == None
+            else:
+                self.enter_folder()
 
     @load_button.released
     def _on_load_button_released(self, button):
@@ -311,9 +446,7 @@ class BrowserComponent(Component, Renderable):
 
     @enter_folder_button.pressed
     def _on_enter_folder_button_pressed(self, button):
-        item = self.selected_item
-        if item != None and (item.is_folder or len(item.children) > 0):
-            self.enter_folder(item)
+        self.enter_folder()
 
     @leave_folder_button.pressed
     def _on_leave_folder_button_pressed(self, button):
@@ -321,33 +454,79 @@ class BrowserComponent(Component, Renderable):
 
     @jump_next_button.pressed
     def _on_jump_next_button_pressed(self, button):
-        new_index = clamp(self._selected_item_index + Config.SKIP_ITEM_COUNT, 0, len(self.parent_folder.children) - 1)
-        self._set_item_index(new_index)
-        self._update_led_feedback()
+        if self._explorer.move_pointer(Config.SKIP_ITEM_COUNT):
+            self._preview_item()
 
     @jump_prev_button.pressed
     def _on_jump_prev_button_pressed(self, button):
-        new_index = clamp(self._selected_item_index - Config.SKIP_ITEM_COUNT, 0, len(self.parent_folder.children) - 1)
-        self._set_item_index(new_index)
-        self._update_led_feedback()
+        if self._explorer.move_pointer(Config.SKIP_ITEM_COUNT):
+            self._preview_item()
 
     @preview_toggle_button.pressed
     def _on_preview_toggle_button_pressed(self, button):
-        self._update_preview_state(not self._preview_enabled)
-        self._update_led_feedback()
+        self._update_preview_state(not self.preview_enabled)
                 
     @select_folder_buttons.pressed
     def _on_folder_buttons_pressed(self, button):
-        if button.index == 0:
-            self.parent_folder = self._root_item
-            self._folder_stack = [self._root_item]
-        else:
+        if button.index < 6:
             for item in self._root_item.children:
                 if isinstance(item, BrowserCollectionRootItem):
-                    self.parent_folder = item.children[min(button.index - 1, len(item.children) - 1)]
-                    self._folder_stack = [self._root_item, self.parent_folder]
+                    target = item.children[min(button.index, len(item.children) - 1)]
+                    self._explorer.force_navigate_to([self._root_item, item, target])
                     break
+        else:
+            self._explorer.force_navigate_to([self._root_item])
         
-        logger.info(f"Select folder {self.parent_folder.name}")
-        self._set_item_index(0, True)
-     
+        logger.info(f"Jump to {self._explorer.parent_item.name}")
+        self.parent_folder_name = self._explorer.parent_item.name
+        self._preview_item()
+
+    @hotswap_button.pressed
+    def _on_hotswap_button_pressed(self, button):
+        if liveobj_valid(self._browser.hotswap_target):
+            self._browser.hotswap_target = None
+        else:
+            self._browser.hotswap_target = self.song.view.selected_track.view.selected_device
+
+    @hotswap_content_button.pressed
+    def _on_hotswap_content_pressed(self, button):
+        selected_device = self.song.view.selected_track.view.selected_device
+
+        if liveobj_valid(self._browser.hotswap_target):
+            self._browser.hotswap_target = None        
+        elif selected_device.class_name == "OriginalSimpler":
+            self._browser.hotswap_target = selected_device.sample
+        elif selected_device.class_name == "DrumGroupDevice":
+            self._browser.hotswap_target = selected_device.view.selected_drum_pad
+
+    @listens("full_refresh")
+    def _on_browser_refresh_triggered(self):
+        # Refersh browser tree when 'Live.Browser.Browser.full_refersh' is triggered
+        logger.info("Full refresh triggered")
+        self._refresh_browser()
+
+    @listens("filter_type")
+    def _on_hotswap_filter_type_changed(self):
+        logger.info("Hotswap type changed")
+
+    @listens("hotswap_target")
+    def _on_hotswap_target_changed(self):
+        # Changing hotswap target causes browser item filtering, so refresh browser
+        target = self._browser.hotswap_target
+
+        self.hotswap_button.is_on = liveobj_valid(target)
+
+        if target == None:
+            new_target_type = None
+        elif isinstance(target, Device):
+            new_target_type = Device
+        elif isinstance(target, DrumPad):
+            new_target_type = DrumPad
+        elif isinstance(target, Sample):
+            new_target_type = Sample
+
+        logger.info(f"Hotswap target = {target}, type = {new_target_type}")
+
+        if self._hotswap_target_type != new_target_type:
+            self._hotswap_target_type = new_target_type
+            self._refresh_browser()
