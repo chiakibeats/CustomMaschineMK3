@@ -8,7 +8,7 @@
 #
 # ==================================================
 
-from faulthandler import is_enabled
+import math
 from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.display import Renderable
 from ableton.v3.control_surface.mode import pop_last_mode
@@ -335,6 +335,7 @@ class BrowserComponent(Component, Renderable):
         self._preview_enabled = True
         self._hotswap_target_type = None
         self._tree_invalidated = False
+        self._scroll_trigger_count = 0
         
         self.register_slot(self, self._update_led_feedback, "selected_item_name")
         self.preview_volume_encoder.mapped_parameter = self.song.master_track.mixer_device.cue_volume
@@ -421,6 +422,14 @@ class BrowserComponent(Component, Renderable):
         self.jump_next_button.is_on = self._explorer.selected_item_index < self._explorer.item_count - 1
         self.jump_prev_button.is_on = self._explorer.selected_item_index > 0
 
+    def _get_scroll_speed(self, trigger_count):
+        if trigger_count <= 1:
+            return 1
+        elif trigger_count <= 20:
+            return 5
+        else:
+            return 10
+
     @select_encoder.value
     def _on_select_encoder_value(self, value, encoder):
         if self._explorer.move_pointer(value):
@@ -454,13 +463,23 @@ class BrowserComponent(Component, Renderable):
 
     @jump_next_button.pressed
     def _on_jump_next_button_pressed(self, button):
-        if self._explorer.move_pointer(Config.SKIP_ITEM_COUNT):
+        self._scroll_trigger_count += 1
+        if self._explorer.move_pointer(self._get_scroll_speed(self._scroll_trigger_count)):
             self._preview_item()
+
+    @jump_next_button.released
+    def _on_jump_next_button_released(self, button):
+        self._scroll_trigger_count = 0
 
     @jump_prev_button.pressed
     def _on_jump_prev_button_pressed(self, button):
-        if self._explorer.move_pointer(Config.SKIP_ITEM_COUNT):
+        self._scroll_trigger_count += 1
+        if self._explorer.move_pointer(-self._get_scroll_speed(self._scroll_trigger_count)):
             self._preview_item()
+
+    @jump_prev_button.released
+    def _on_jump_prev_button_released(self, button):
+        self._scroll_trigger_count = 0
 
     @preview_toggle_button.pressed
     def _on_preview_toggle_button_pressed(self, button):
