@@ -55,8 +55,8 @@ from ableton.v2.control_surface import (
     WrappingParameter
 )
 
-from .ClipEditorComponent import BoolWrappingParameter
-from .Logger import logger
+from .clip_editor import BoolWrappingParameter
+from .logger import logger
 
 class FloatParameter(WrappingParameter):
     def __init__(

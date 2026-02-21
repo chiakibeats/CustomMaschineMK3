@@ -33,7 +33,7 @@ from Live.Clip import ( # type: ignore
     WarpMarker
 )
 
-from .Logger import logger
+from .logger import logger
 
 class ClipLaunchQuantizationList():
     values = [

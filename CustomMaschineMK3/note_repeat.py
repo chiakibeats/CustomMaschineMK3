@@ -20,8 +20,8 @@ from ableton.v3.base import (
     listens
 )
 
-from .SettingsComponent import get_repeat_rate_value
-from .Logger import logger
+from .settings import get_repeat_rate_value
+from .logger import logger
 
 # def beat_ratio(denominator):
 #     return 4.0 / denominator

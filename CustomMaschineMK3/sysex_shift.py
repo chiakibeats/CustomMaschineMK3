@@ -9,7 +9,7 @@
 # ==================================================
 
 from ableton.v3.control_surface.elements import SysexElement
-from .Logger import logger
+from .logger import logger
 
 # relay sysex button message to normal button
 

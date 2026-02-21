@@ -11,7 +11,7 @@
 from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.display import Renderable
 from ableton.v3.control_surface.controls import StepEncoderControl, MappedControl, ButtonControl
-from .Logger import logger
+from .logger import logger
 from ableton.v3.base import clamp, sign, listens, depends, listenable_property
 
 

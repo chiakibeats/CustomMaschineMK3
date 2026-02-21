@@ -11,7 +11,7 @@
 from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.display import Renderable
 from ableton.v3.control_surface.controls import StepEncoderControl
-from .Logger import logger
+from .logger import logger
 from ableton.v3.base import clamp, sign, listens, listenable_property
 
 MAX_GROOVE_AMOUNT = 1.3

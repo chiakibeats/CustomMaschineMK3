@@ -29,7 +29,7 @@ from ableton.v3.control_surface.controls import (
 from ableton.v3.control_surface.skin import LiveObjSkinEntry
 from ableton.v3.base import depends, listens
 
-from .Logger import logger
+from .logger import logger
 
 DEFAULT_NOTE = 60
 # Simulate Live's internal velocity calculation

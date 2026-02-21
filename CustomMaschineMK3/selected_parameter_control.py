@@ -24,7 +24,7 @@ from ableton.v3.control_surface import (
 from ableton.v3.base import depends
 from ableton.v3.live import liveobj_valid
 
-from .Logger import logger
+from .logger import logger
 
 class SelectedParameterControlComponent(Component, Renderable):
     select_buttons = control_list(ButtonControl, control_count = DEFAULT_BANK_SIZE, color = None)

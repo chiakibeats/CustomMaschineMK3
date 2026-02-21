@@ -18,8 +18,8 @@ from ableton.v3.control_surface.controls import (
     ButtonControl
 )
 
-from .Logger import logger
-from .ClipNotesSelectMixin import ClipNotesSelectMixin
+from .logger import logger
+from .clip_notes_select import ClipNotesSelectMixin
 
 DEFAULT_GROUP_SIZE = 16
 

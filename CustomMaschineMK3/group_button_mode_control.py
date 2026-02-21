@@ -13,7 +13,7 @@ from ableton.v3.control_surface.controls import ButtonControl
 from ableton.v3.control_surface.mode import pop_last_mode
 from ableton.v3.base import listens
 
-from .Logger import logger
+from .logger import logger
 
 class GroupButtonModeControlComponent(Component):
     notes_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")

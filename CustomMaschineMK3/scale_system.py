@@ -21,7 +21,7 @@ from ableton.v3.base import sign, listens, listenable_property
 from ableton.v3.live import application
 from Live import Song # type: ignore
 
-from .Logger import logger
+from .logger import logger
 
 class ScaleSystemComponent(Component, Renderable):
     select_encoder = StepEncoderControl(num_steps = 64)

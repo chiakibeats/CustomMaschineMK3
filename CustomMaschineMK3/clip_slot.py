@@ -22,7 +22,7 @@ from ableton.v3.control_surface import (
 
 from Live.Base import Timer # type: ignore
 
-from .Logger import logger
+from .logger import logger
 
 class LEDBlinker(EventObject):
     def __init__(self, blink_time = 0.5):

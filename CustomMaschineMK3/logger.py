@@ -10,7 +10,7 @@
 
 import logging
 from pathlib import Path
-from . import Config
+from . import config
 
 from datetime import datetime, timedelta, timezone
 
@@ -22,7 +22,7 @@ class ISOTimeFormatter(logging.Formatter):
         return time_string
 
 logger = logging.getLogger("CustomMaschineMK3")
-if Config.LOGGING == True and len(logger.handlers) == 0:
+if config.LOGGING == True and len(logger.handlers) == 0:
     file_name = Path(__file__).absolute().parent.joinpath("CustomMaschineMK3.log")
     handler = logging.FileHandler(str(file_name))
     
@@ -40,7 +40,7 @@ if Config.LOGGING == True and len(logger.handlers) == 0:
         "DEBUG": logging.DEBUG,
     }
 
-    logger.setLevel(level_table.get(Config.LOG_LEVEL, logging.INFO))
+    logger.setLevel(level_table.get(config.LOG_LEVEL, logging.INFO))
     logger.addHandler(handler)
 
 else:

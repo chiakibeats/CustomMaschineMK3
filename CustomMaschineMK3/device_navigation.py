@@ -52,7 +52,7 @@ from ableton.v3.control_surface.parameter_mapping_sensitivities import DEFAULT_C
 from ableton.v3.control_surface.components.device import get_on_off_parameter
 from ableton.v3.control_surface.components.device_navigation import DeviceNavigationComponent
 
-from .Logger import logger
+from .logger import logger
 
 class CustomDeviceNavigationComponent(DeviceNavigationComponent):
     bank_size = DEFAULT_BANK_SIZE

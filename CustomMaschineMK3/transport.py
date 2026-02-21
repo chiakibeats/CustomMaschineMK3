@@ -12,7 +12,7 @@ from ableton.v3.base import listens, listenable_property, task
 from ableton.v3.control_surface.components import TransportComponent
 from Live.Song import TimeFormat # type: ignore
 
-from .Logger import logger
+from .logger import logger
 from time import time_ns
 
 class CustomTransportComponent(TransportComponent):

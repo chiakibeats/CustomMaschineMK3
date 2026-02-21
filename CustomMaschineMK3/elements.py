@@ -39,10 +39,10 @@ from ableton.v2.control_surface.elements.encoder import ENCODER_VALUE_NORMALIZER
 from ableton.v3.base import in_range
 import Live # type: ignore
 
-from .Logger import logger
-from .SysexShiftButton import SysexShiftButton
-from . import Config
-from .DisplayDefinitions import (
+from .logger import logger
+from .sysex_shift import SysexShiftButton
+from . import config
+from .display import (
     LCD_LINES,
     LCD_LINE_LENGTH,
     make_mcu_display_header,
@@ -94,7 +94,7 @@ class ControlElements(ElementsBase):
         super().__init__(*a, **k)
         logger.info("Create elements")
 
-        if Config.LCD_ENABLED:
+        if config.LCD_ENABLED:
             default_channel = 1
         else:
             default_channel = 0
@@ -232,7 +232,7 @@ class ControlElements(ElementsBase):
         # Transport layer of MCU protocol is plain MIDI. Manufacturers define usage of each CCs and Notes.
         # MCU V-Pots(1 to 8) are mapped to CC 16 to CC 23 at channel 1.
         # The reason of changing MIDI channel is avoid conflict with MCU protocol(MCU uses MIDI channel 1)
-        if Config.LCD_ENABLED:
+        if config.LCD_ENABLED:
             self.add_encoder_matrix(
                 [list(range(16, 24))],
                 "Knobs",
@@ -285,7 +285,7 @@ class ControlElements(ElementsBase):
             use_first_byte_as_value = True,
             target_button = self.shift)
         
-        if Config.LCD_ENABLED:
+        if config.LCD_ENABLED:
             for line in range(LCD_LINES):
                 self.add_sysex_display_line(
                     make_mcu_display_header(line),

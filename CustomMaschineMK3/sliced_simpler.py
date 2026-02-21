@@ -19,8 +19,8 @@ from ableton.v3.control_surface.controls import (
 )
 from ableton.v3.control_surface.skin import LiveObjSkinEntry
 
-from .Logger import logger
-from .ClipNotesSelectMixin import ClipNotesSelectMixin
+from .logger import logger
+from .clip_notes_select import ClipNotesSelectMixin
 
 class CustomSlicedSimplerComponent(ClipNotesSelectMixin, SlicedSimplerComponent):
     _select_buttons = control_list(ButtonControl, control_count = 4, color = None)

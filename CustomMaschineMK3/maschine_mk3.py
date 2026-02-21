@@ -45,46 +45,46 @@ from Live.Clip import GridQuantization # type: ignore
 
 from ableton.v3.control_surface.elements import SimpleColor, RgbColor, create_rgb_color
 
-from .ControlElements import ControlElements
-from .Mappings import create_mappings
-from .ColorSkin import MaschineSkin
-from .DisplayDefinitions import (
+from .elements import ControlElements
+from .mappings import create_mappings
+from .skin import MaschineSkin
+from .display import (
     MaschineDisplay,
     make_mcu_display_header,
     make_display_sysex_message
 )
-from .GroovePoolComponent import GroovePoolComponent
-from .MasterVolumeComponent import MasterVolumeComponent
-from .MaschinePlayableComponent import MaschinePlayableComponent, DEFAULT_NOTE_TRANSLATION_CHANNEL
-from .CustomDrumGroupComponent import CustomDrumGroupComponent
-from .MiscControlComponent import MiscControlComponent
-from .CustomDeviceComponent import (
+from .groove_pool import GroovePoolComponent
+from .master_volume import MasterVolumeComponent
+from .maschine_playable import MaschinePlayableComponent, DEFAULT_NOTE_TRANSLATION_CHANNEL
+from .drum_group import CustomDrumGroupComponent
+from .misc_control import MiscControlComponent
+from .device import (
     CUSTOM_BANK_DEFINITIONS,
     CustomDeviceDecoratorFactory,
     CustomDeviceComponent
 )
-from .CustomDeviceNavigationComponent import CustomDeviceNavigationComponent
-from .CustomMixerComponent import CustomMixerComponent
-from .MaschineMixerComponent import MaschineMixerComponent
-from .CustomClipActionsComponent import CustomClipActionsComponent
-from .CustomSlicedSimplerComponent import CustomSlicedSimplerComponent
-from .NoteRepeatComponent import NoteRepeatComponent
-from .VelocityLevelsComponent import VelocityLevelsComponent
-from .ScaleSystemComponent import ScaleSystemComponent
-from .SelectedParameterControlComponent import SelectedParameterControlComponent
-from .CustomNoteEditorComponent import CustomNoteEditorComponent, CustomStepSequenceComponent
-from .ClipEditorComponent import ClipEditorComponent
-from .BrowserComponent import BrowserComponent
-from .RecordingMethod import FixedLengthRecordingMethod, CustomViewBasedRecordingComponent
-from .EncoderModeControlComponent import EncoderModeControlComponent
-from .GroupButtonModeControlComponent import GroupButtonModeControlComponent
-from .CustomTransportComponent import CustomTransportComponent
-from .SettingsComponent import SettingsRepository, SettingsComponent
-from .CustomClipSlotComponent import LEDBlinker, CustomClipSlotComponent
-from .PageableBackgroundComponent import PageableBackgroundComponent
+from .device_navigation import CustomDeviceNavigationComponent
+from .mixer import CustomMixerComponent
+from .maschine_mixer import MaschineMixerComponent
+from .clip_actions import CustomClipActionsComponent
+from .sliced_simpler import CustomSlicedSimplerComponent
+from .note_repeat import NoteRepeatComponent
+from .velocity_levels import VelocityLevelsComponent
+from .scale_system import ScaleSystemComponent
+from .selected_parameter_control import SelectedParameterControlComponent
+from .note_editor import CustomNoteEditorComponent, CustomStepSequenceComponent
+from .clip_editor import ClipEditorComponent
+from .browser import BrowserComponent
+from .recording import FixedLengthRecordingMethod, CustomViewBasedRecordingComponent
+from .encoder_mode_control import EncoderModeControlComponent
+from .group_button_mode_control import GroupButtonModeControlComponent
+from .transport import CustomTransportComponent
+from .settings import SettingsRepository, SettingsComponent
+from .clip_slot import LEDBlinker, CustomClipSlotComponent
+from .pageable_background import PageableBackgroundComponent
 
-from .Logger import logger
-from . import Config
+from .logger import logger
+from . import config
 
 class CustomTargetTrackComponent(TargetTrackComponent):
         
@@ -108,7 +108,7 @@ class CustomTargetTrackComponent(TargetTrackComponent):
 class Specification(ControlSurfaceSpecification):
     elements_type = ControlElements
     control_surface_skin = MaschineSkin
-    display_specification = MaschineDisplay if Config.LCD_ENABLED else None
+    display_specification = MaschineDisplay if config.LCD_ENABLED else None
     num_scenes = 4
     num_tracks = 4
     include_returns = True

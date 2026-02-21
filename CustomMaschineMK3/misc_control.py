@@ -12,7 +12,7 @@ from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.display import Renderable
 from ableton.v3.control_surface.controls import ButtonControl, StepEncoderControl
 from ableton.v3.base import sign
-from .Logger import logger
+from .logger import logger
 
 
 class MiscControlComponent(Component):

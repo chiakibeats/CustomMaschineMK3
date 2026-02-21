@@ -25,8 +25,7 @@ from Live.Device import Device # type: ignore
 from Live.Sample import Sample # type: ignore
 from Live.DrumPad import DrumPad # type: ignore
 
-from .Logger import logger
-from . import Config
+from .logger import logger
 
 COLLECTION_COLORS = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Gray"]
 

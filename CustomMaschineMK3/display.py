@@ -21,8 +21,8 @@ from ableton.v3.base import pitch_index_to_string
 from Live.DeviceParameter import DeviceParameter # type: ignore
 from Live.Base import Timer # type: ignore
 
-from .ClipEditorComponent import LaunchModeList, ClipLaunchQuantizationList, WarpModeList
-from .Logger import logger
+from .clip_editor import LaunchModeList, ClipLaunchQuantizationList, WarpModeList
+from .logger import logger
 
 LCD_LINES = 4
 LCD_LINE_LENGTH = 28

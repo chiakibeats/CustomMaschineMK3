@@ -17,7 +17,7 @@ from ableton.v3.control_surface.controls import control_list, ButtonControl, Enc
 from ableton.v3.control_surface.display import Renderable
 from ableton.v3.control_surface.elements import ButtonElement, ButtonMatrixElement
 from ableton.v3.base import listenable_property
-from .Logger import logger
+from .logger import logger
 
 class PageableBackgroundComponent(BackgroundComponent, ScrollComponent, Renderable):
     user_knobs = InputControl

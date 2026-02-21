@@ -43,7 +43,7 @@ from ableton.v3.base import (
 
 from ableton.v3.live import liveobj_valid
 
-from .Logger import logger
+from .logger import logger
 
 class MaschineMixerComponent(ScrollComponent, Renderable, Scrollable):
     parameter_controls = control_list(MappedControl)

@@ -15,7 +15,7 @@ from ableton.v3.control_surface.controls import (
 )
 from ableton.v3.base import depends
 
-from .Logger import logger
+from .logger import logger
 
 class ClipNotesSelectMixin():
     select_note_button = ButtonControl(color = None)

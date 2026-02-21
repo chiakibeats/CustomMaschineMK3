@@ -29,8 +29,8 @@ from ableton.v3.control_surface.capabilities import (
     outport
 )
 
-from .Logger import logger
-from .CustomMaschineMK3 import CustomMaschineMK3
+from .logger import logger
+from .maschine_mk3 import CustomMaschineMK3
 
 def get_capabilities():
     return {

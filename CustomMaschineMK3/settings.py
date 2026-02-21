@@ -28,7 +28,7 @@ from ableton.v3.base import (
 
 from ableton.v2.control_surface.internal_parameter import EnumWrappingParameter
 
-from .Logger import logger
+from .logger import logger
 
 def beat_ratio(denominator):
     return 4.0 / denominator

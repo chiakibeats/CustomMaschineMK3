@@ -45,8 +45,8 @@ from ableton.v3.base import (
 
 from ableton.v3.control_surface.skin import LiveObjSkinEntry
 
-from .Logger import logger
-from .ClipNotesSelectMixin import ClipNotesSelectMixin
+from .logger import logger
+from .clip_notes_select import ClipNotesSelectMixin
 
 MODE_PLAYABLE = 0
 MODE_LISTENABLE = 1
