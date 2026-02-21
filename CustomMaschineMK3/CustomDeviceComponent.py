@@ -56,7 +56,6 @@ from ableton.v2.control_surface import (
     WrappingParameter
 )
 
-from .KnobTouchStateMixin import KnobTouchStateMixin
 from .Logger import logger
 
 class FloatParameter(WrappingParameter):

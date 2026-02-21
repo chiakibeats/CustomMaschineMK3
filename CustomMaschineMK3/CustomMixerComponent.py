@@ -46,7 +46,6 @@ from ableton.v3.base import (
 
 from ableton.v3.live import liveobj_valid
 
-from .KnobTouchStateMixin import KnobTouchStateMixin
 from .Logger import logger
 
 class CustomMixerComponent(MixerComponent, Renderable):

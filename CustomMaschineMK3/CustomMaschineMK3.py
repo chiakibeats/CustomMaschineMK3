@@ -73,7 +73,6 @@ from .VelocityLevelsComponent import VelocityLevelsComponent
 from .ScaleSystemComponent import ScaleSystemComponent
 from .SelectedParameterControlComponent import SelectedParameterControlComponent
 from .CustomNoteEditorComponent import CustomNoteEditorComponent, CustomStepSequenceComponent
-from .CustomLoopSelectorComponent import CustomLoopSelectorComponent
 from .ClipEditorComponent import ClipEditorComponent
 from .BrowserComponent import BrowserComponent
 from .RecordingMethod import FixedLengthRecordingMethod, CustomViewBasedRecordingComponent
