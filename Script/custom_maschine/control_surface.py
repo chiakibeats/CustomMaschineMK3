@@ -170,7 +170,7 @@ CUSTOM_GRID_RESOLUTIONS = (
 )
 GRID_DEFAULT_INDEX = 4
 
-class CustomMaschineMK3(ControlSurface):
+class CustomMaschineBase(ControlSurface):
     _grid_resolution = None
     _sequencer_clip = None
     _pad_mode = None

@@ -409,7 +409,7 @@ class BrowserComponent(Component, Renderable):
     def _update_preview_state(self, new_state):
         self.preview_enabled = new_state
         if self.preview_enabled:
-            preview_item = self._explorer.selected_item 
+            preview_item = self._explorer.selected_item
             if isinstance(preview_item, BrowserItem):
                 self._browser.preview_item(preview_item)
         else:

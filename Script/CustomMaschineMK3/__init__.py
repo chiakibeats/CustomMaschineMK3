@@ -29,8 +29,8 @@ from ableton.v3.control_surface.capabilities import (
     outport
 )
 
-from .logger import logger
-from .maschine_mk3 import CustomMaschineMK3
+from custom_maschine.logger import logger
+from custom_maschine.control_surface import CustomMaschineBase
 
 def get_capabilities():
     return {
@@ -48,4 +48,4 @@ def get_capabilities():
 
 def create_instance(c_instance):
     logger.info("Create instance")
-    return CustomMaschineMK3(c_instance = c_instance)
+    return CustomMaschineBase(c_instance = c_instance)
