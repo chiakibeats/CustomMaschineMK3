@@ -16,7 +16,12 @@ from .logger import logger
 from time import time_ns
 
 class CustomTransportComponent(TransportComponent):
+    """
+    Extended transport control
 
+    This version implements:
+    - Song position / time monitor property
+    """
     def __init__(self, name = "Transport", *a, **k):
         super().__init__(name, *a, **k)
         self._timestamp = 0

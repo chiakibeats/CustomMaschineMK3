@@ -27,6 +27,11 @@ from ableton.v3.live import liveobj_valid
 from .logger import logger
 
 class SelectedParameterControlComponent(Component, Renderable):
+    """
+    Control parameter with using Maschine's touch strip
+
+    Target parameter is retrieved from knob control elements
+    """
     select_buttons = control_list(ButtonControl, control_count = DEFAULT_BANK_SIZE, color = None)
     select_modifier = ButtonControl(color = None, delay_time = 0.6)
     reset_value_button = ButtonControl(color = None)

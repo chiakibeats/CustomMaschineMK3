@@ -18,8 +18,12 @@ from ableton.v3.base import depends
 from .logger import logger
 
 class ClipNotesSelectMixin():
+    """
+    Mix-in helper for PlayableComponent to implement clip note manipulations
+    """
     select_note_button = ButtonControl(color = None)
     erase_note_button = ButtonControl(color = None)
+    # TODO: Add quantize selected pitch feature
 
     _sequencer_clip = None
     _trigger_deselect = True

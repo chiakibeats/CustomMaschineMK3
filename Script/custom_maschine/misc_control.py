@@ -16,6 +16,9 @@ from .logger import logger
 
 
 class MiscControlComponent(Component):
+    """
+    Audio / MIDI / Return track manipulation
+    """
     new_audio_or_return_track_button = ButtonControl()
     new_midi_track_button = ButtonControl()
     duplicate_track_button = ButtonControl()

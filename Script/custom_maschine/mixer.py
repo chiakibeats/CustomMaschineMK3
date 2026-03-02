@@ -49,6 +49,14 @@ from ableton.v3.live import liveobj_valid
 from .logger import logger
 
 class CustomMixerComponent(MixerComponent, Renderable):
+    """
+    Extended mixer control
+
+    This version implements:
+    - Renderable inheritance for display capable
+    - Selectable pan or send amount (A to L) parameter control
+    - Reset to default value feature
+    """
     pan_or_send_controls = control_list(MappedControl)
     knob_touch_buttons = control_list(ButtonControl, color = None)
     prev_control_button = ButtonControl()

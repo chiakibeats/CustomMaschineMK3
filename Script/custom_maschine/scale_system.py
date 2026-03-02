@@ -24,6 +24,9 @@ from Live import Song # type: ignore
 from .logger import logger
 
 class ScaleSystemComponent(Component, Renderable):
+    """
+    Live scale control component
+    """
     select_encoder = StepEncoderControl(num_steps = 64)
     toggle_button = ButtonControl(color = None)
     # For LED feedback & root note control

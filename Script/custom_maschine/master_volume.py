@@ -31,6 +31,7 @@ class MasterVolumeComponent(Component, Renderable):
 
     # Roughly 0.1dB step gain control
     # +6 to -18dB range has perfect linearity, lower range has different (exponential) scale.
+    # TODO: Improve decibel gain <-> param value calculation to tweak volume at accurate 0.1dB resolution
     @master_volume.value
     def _on_coarse_volume_changed(self, value, encoder):
         self._master_volume.value = clamp(self._master_volume.value + sign(value) / 400, 0.0, 1.0)

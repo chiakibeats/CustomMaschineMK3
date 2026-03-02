@@ -26,7 +26,8 @@ if config.LOGGING == True and len(logger.handlers) == 0:
     file_name = Path(__file__).absolute().parent.joinpath("CustomMaschineMK3.log")
     handler = logging.FileHandler(str(file_name))
     
-    formatter = ISOTimeFormatter("%(asctime)s\t%(levelname)s\t%(message)s") # logging.Formatterの代わりに自作のクラスを使う
+    # Use custom formatter for accurate timestamp
+    formatter = ISOTimeFormatter("%(asctime)s\t%(levelname)s\t%(message)s")
 
     handler.setFormatter(formatter)
 

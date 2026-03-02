@@ -38,6 +38,9 @@ VELOCITY_LEVELS = list(range(127, 0, -8))[::-1]
 DEFAULT_LEVEL_INDEX = 12
 
 class VelocityLevelsComponent(PlayableComponent, Renderable):
+    """
+    Interface for MPC-style fixed velocity mode
+    """
     _pitch_provider = None
     _target_track = None
     _velocity_levels = None

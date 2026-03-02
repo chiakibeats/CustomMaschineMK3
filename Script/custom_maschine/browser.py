@@ -30,7 +30,9 @@ from .logger import logger
 COLLECTION_COLORS = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Gray"]
 
 class BrowserCollectionRootItem:
-
+    """
+    Root item of "Collections" folder (colored folder)
+    """
     def __init__(self, browser):
         self.name = "Collections"
         self.children = []
@@ -56,7 +58,17 @@ class BrowserUserFoldersRootItem:
             self.children.append(item)
 
 class WrapBrowserItem:
-    
+    """
+    Wrapper class to override default item name
+
+    Some browser items have localized item name depends on language setting.
+
+    For example, Live.Browser.Browser.audio_effects is displayed as "Audio Effects" in English.
+
+    But it is also displayed as "オーディオエフェクト", if you select Japanese as UI language.
+
+    Maschine's display couldn't show Non-ASCII characters, so we need to enforce showing English version name. 
+    """
     def __init__(self, item, name):
         self._wrapped_item = item
         self._name = name
@@ -98,6 +110,9 @@ class WrapBrowserItem:
         return self._wrapped_item.uri
 
 class BrowserRootItem:
+    """
+    Root of the entire Live's browser tree
+    """
     name = "Browser Top"
     is_folder = True
     is_device = False
@@ -125,7 +140,11 @@ class BrowserRootItem:
 
 
 class BrowserTreeExplorer:
-
+    """
+    Explore across the entire browser tree structure
+    All item iterations are done by this class
+    
+    """
     @property
     def selected_item(self):
         return self._selected_item
@@ -212,6 +231,7 @@ class BrowserTreeExplorer:
     def traverse_tree(self, new_root, dest_item):
         # Traverse trees and navigate to selected item
         # Why did this: The design of browser intended to keep current selection even if the trees are modified by hot-swap filter
+        # Ableton's original (and official) implementation moves item focus to hot-swap target device
         dest_item_uri = dest_item.uri if dest_item else None
         logger.info(f"Start traverse tree = {[t.name for t in self._tree_stack]}, dest_item.uri = {dest_item_uri}")
 

@@ -37,8 +37,11 @@ SETTINGS_FILE_NAME = "settings.json"
 BASE_LENGTH_LIST = [1, 2, 4, 8, 16, 32, 64, 128]
 
 NOTE_REPEAT_RATES = []
+# Add normal length values
 NOTE_REPEAT_RATES += [(beat_ratio(l), f"1/{l}") for l in BASE_LENGTH_LIST]
+# Add triplet length values
 NOTE_REPEAT_RATES += [(beat_ratio(l * 1.5), f"1/{l}T") for l in BASE_LENGTH_LIST]
+# Add dotted length values
 NOTE_REPEAT_RATES += [(beat_ratio(l) * 1.5, f"1/{l}D") for l in BASE_LENGTH_LIST]
 
 REPEAT_RATE_KEYS = [x[1] for x in NOTE_REPEAT_RATES]
@@ -174,6 +177,9 @@ SETTINGS = [
 
 
 class SettingsRepository(EventObject):
+    """
+    Settings value holder
+    """
     def __init__(self, file_name = SETTINGS_FILE_NAME, scheme = SETTINGS):
         self._file_path = Path(__file__).absolute().parent.joinpath(file_name)
         self._scheme = {}
@@ -221,6 +227,7 @@ class SettingsRepository(EventObject):
     def sanitize_value(self, value, entry):
         value_type = entry["type"]
         if value_type == "bool":
+            # TODO: Fix incorrect bool value sanitization
             if isinstance(value, bool):
                 return value
         elif value_type == "int":
@@ -253,6 +260,9 @@ class SettingsRepository(EventObject):
             return self._settings[key]
 
 class SettingsComponent(Component, Renderable):
+    """
+    User interface for settings
+    """
     select_encoder = StepEncoderControl(num_steps = 64)
     value_encoder = StepEncoderControl(num_steps = 8)
 

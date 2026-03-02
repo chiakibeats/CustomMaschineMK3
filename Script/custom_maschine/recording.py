@@ -53,6 +53,13 @@ class FixedLengthRecordingMethod(RecordingMethod):
         self._fixed_length_enabled = enabled
 
 class CustomViewBasedRecordingComponent(ViewBasedRecordingComponent):
+    """
+    Extended recording control component
+
+    This version implements:
+    - Fixed length record trigger
+    - Fixed length record length selector (and notification)
+    """
     fixed_button = ButtonControl(color = "RecordLength.FixedOff", on_color = "RecordLength.FixedOn")
     length_select_buttons = RadioButtonGroup(
         unchecked_color = "RecordLength.Length",

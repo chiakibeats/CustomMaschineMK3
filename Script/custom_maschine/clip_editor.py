@@ -291,6 +291,16 @@ class EncoderCallbackSet:
         self.released = released
 
 class ClipEditorComponent(Component, Renderable):
+    """
+    MIDI / Audio clip editor
+
+    This component offers functionalities almost same as Push
+    And some extra features are added:
+    - Launch quantization control
+    - Legato ON / OFF
+    - Tweak selected notes' position / length / velocity
+        - Not limited to working with step sequencer
+    """
     bank_size = DEFAULT_BANK_SIZE
 
     mute_button = MappedButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")

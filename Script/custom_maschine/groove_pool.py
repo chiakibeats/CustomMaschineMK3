@@ -17,6 +17,11 @@ from ableton.v3.base import clamp, sign, listens, listenable_property
 MAX_GROOVE_AMOUNT = 1.3
 
 class GroovePoolComponent(Component, Renderable):
+    """
+    Groove pool control
+
+    But for now, this has global groove amount control only
+    """
     coarse_groove_amount = StepEncoderControl(num_steps = 64)
     fine_groove_amount = StepEncoderControl(num_steps = 64)
 

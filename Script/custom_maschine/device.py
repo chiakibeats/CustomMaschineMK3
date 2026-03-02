@@ -190,6 +190,7 @@ class HybridReverbDeviceDecorator(DeviceDecorator):
             values_host = self._live_object,
             values_property = "ir_file_list"))
         
+        # TODO: Improve parameter curve (be able to tweak under 100% range)
         self._additional_parameters.append(FloatParameter(
             name = "IR Size Factor",
             property_host = self._live_object,
@@ -499,6 +500,11 @@ for key in CUSTOM_BANK_DEFINITIONS["Hybrid"].keys():
 CUSTOM_BANK_DEFINITIONS["Hybrid"] = HYBRID_REVERB_BANK
 
 def custom_mapping_sensitivities(original):
+    # Hook original function to add extra sensitivity settings
+    # Device parameter mapping sensitivity is based on the value specified in ControlSurfaceSpecification
+    # This function changes sensitivity depends on target parameter for comfortable control
+    # Full list of modifiers can be found in parameter_mapping_sensitivities.py
+
     def inner(parameter, device):
         default = original(parameter, device)
         if liveobj_valid(parameter):
@@ -510,6 +516,17 @@ def custom_mapping_sensitivities(original):
     return inner
 
 class CustomDeviceComponent(DeviceComponent):
+    """
+    Extended device control
+
+    This version implements:
+    - Custom device macro banks that include some special parameters such as:
+        - Simpler's playback mode selection, slice nudge, and warp mode settings
+        - Wavetable's wave table category and waveform selection
+        - EQ Eight's focus band selection
+    - Reset parameter value to its default
+    - A/B comparison switching / duplicating (available on Live 12.3 or later)
+    """
     knob_touch_buttons = control_list(ButtonControl, color = None)
     erase_button = ButtonControl(color = None)
     compare_ab_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")

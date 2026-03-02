@@ -46,6 +46,9 @@ from ableton.v3.live import liveobj_valid
 from .logger import logger
 
 class MaschineMixerComponent(ScrollComponent, Renderable, Scrollable):
+    """
+    Another mixer component that has no session box restriction
+    """
     parameter_controls = control_list(MappedControl)
     parameter_select_buttons = RadioButtonGroup(
         unchecked_color = "Mixer.Parameter",

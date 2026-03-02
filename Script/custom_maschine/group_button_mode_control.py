@@ -16,6 +16,9 @@ from ableton.v3.base import listens
 from .logger import logger
 
 class GroupButtonModeControlComponent(Component):
+    """
+    Implements automatic switching behaviour for note repeat selector
+    """
     notes_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
 
     _pad_modes = None

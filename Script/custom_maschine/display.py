@@ -82,6 +82,9 @@ class Content:
     lines = [""] * 4
 
 class TouchStates:
+    """
+    Active touch knob detector
+    """
     def __init__(self, release_delay = 0.4, knob_count = 8):
         self._knob_count = knob_count
         self._knobs = [False] * self._knob_count
@@ -154,7 +157,13 @@ class TouchStates:
 TOUCH_STATES = TouchStates()
 
 class Notifications(DefaultNotifications):
+    """
+    Custom notification messages
 
+    DefaultNotifications.DefaultText() means use default message
+
+    These messages will send to NotificationView
+    """
     class Device(DefaultNotifications.Device):
         lock = DefaultNotifications.DefaultText()
         select = DefaultNotifications.DefaultText()

@@ -171,6 +171,9 @@ CUSTOM_GRID_RESOLUTIONS = (
 GRID_DEFAULT_INDEX = 4
 
 class CustomMaschineBase(ControlSurface):
+    """
+    Base class of all Maschine control surfaces
+    """
     _grid_resolution = None
     _sequencer_clip = None
     _pad_mode = None
@@ -228,25 +231,26 @@ class CustomMaschineBase(ControlSurface):
 
         Specification.component_map["Mixer"] = mixer_component
 
-    # Sometimes pad leds couldn't update correctly
-    # I don't know why this happens now, push "CHANNEL" button for refresh state
     def _on_update_triggered(self):
         if self.elements.variation.is_pressed:
+            # Refresh all LED states & component states
+            # It takes long time because of recursive process
             logger.info("Display update triggered")
             self.refresh_state()
 
     def _do_send_midi(self, midi_event_bytes):
         logger.debug(f"_do_send_midi {midi_event_bytes}")
         super()._do_send_midi(midi_event_bytes)
-        # Insert super short wait between each send to make sure LED feedback correctly.
-        # During development, I encountered problem some pads / buttons LEDs not change to current mode value.
-        # After several investigations, I found a wait inserted on old Maschine Ableton script.
-        # Maybe 500us or more wait prevent issue.
+        # Insert super short wait between each send to make sure LED feedback correctly
+        # During development, I encountered problem some pads / buttons LEDs not change to current mode value
+        # After several investigations, I found a wait inserted on old Maschine Ableton script
+        # Maybe 500us or more wait prevents issue.
         # This wait doesn't affect response speed, unless if you can play pads at 999 BPM...
         sleep(0.0005)
 
     # Session ring highlight is enabled only if hardware is identified by identity request
-    # But maschine didn't respond to this message, so bypass identification process
+    # Unfortunately, maschine doesn't respond to this message, so this process is bypassed
+    # TODO: Replace this with monkey patch for smarter solution
     def _create_identification(self, specification):
         #return super()._create_identification(specification)
         identification = BypassIdentification(
@@ -279,6 +283,7 @@ class CustomMaschineBase(ControlSurface):
             return self.elements.knobs_raw[index].mapped_parameter()
 
     def _get_additional_dependencies(self):
+        # TODO: Call original version and add objects to return value
         # Register objects to DI container
         # Dict key name came from @depends decorator of each component classes
         # Registered components pass to appropriate components on demand
@@ -296,8 +301,10 @@ class CustomMaschineBase(ControlSurface):
 
     def setup(self):
         super().setup()
+        # This enables pad note feedback
         self.set_can_update_controlled_track(True)
         self.set_can_auto_arm(True)
+        # Connect components
         with self.component_guard():
             self.component_map["Pad_Modes"].selected_mode = DEFAULT_MODE
             self.component_map["Maschine_Playable"].set_scale_system(self.component_map["Scale_System"])
@@ -364,10 +371,9 @@ class CustomMaschineBase(ControlSurface):
         self.application.view.focus_view(target_view)
 
     def _refresh_track_buttons_state(self, mode):
-        # LED state sync failure happens when the display mode switches to another mode from the custom(MIDI mapping) mode
+        # LED state sync failure happens when the display mode switched from the MIDI mapping mode to an another mode
         # Triggering update manually to sync LED state
-        # The easiest solution is just calling update(), but it refreshes all components and controls state.
-        # I confine the targets to objects that affect this issue to reduce unnecessary processes.
+        # It only refreshes newly selected mode, to reduce frequent update
         logger.info("Trigger upper button state update")
 
         with self.component_guard():

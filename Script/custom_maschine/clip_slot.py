@@ -25,6 +25,9 @@ from Live.Base import Timer # type: ignore
 from .logger import logger
 
 class LEDBlinker(EventObject):
+    """
+    Common timer class for synchronizing LED blink state
+    """
     def __init__(self, blink_time = 0.5):
         self._blink_time = blink_time * 1000
         self._blink_state = True
@@ -41,6 +44,9 @@ class LEDBlinker(EventObject):
         self.notify_blink_state()
 
 class CustomClipSlotComponent(ClipSlotComponent):
+    """
+    Custom clip slot that supports blinking in playing or recording states
+    """
     @depends(blinker = None)
     def __init__(self, clipboard = None, blinker = None, *a, **k):
         super().__init__(*a, **k)
@@ -52,10 +58,15 @@ class CustomClipSlotComponent(ClipSlotComponent):
         super()._update_launch_button_color()
     
     def _feedback_value(self, track, slot_or_clip):
+        # 3 different type values are returned from _feedback_value method
+        # 1. str, 2. LiveObjSkinEntry, 3. OptionalSkinEntry
+        # We must check object type and determine what to do
         skin_or_str = super()._feedback_value(track, slot_or_clip)
-        # Ableton has changed the return value of this function, so it has to consider two patterns
-        # Earlier version always returns LiveObjSkinEntry
-        # Later version (maybe 12.1?) returns str or OptionalSkinEntry
+
+        # Other Ableton ready controllers have blinking mechanism in controller side
+        # It is used by sending messages to dedicated "blink mode" MIDI channel instead of "normal" channel
+        # Maschine can't do that, so emulate blinking with periodic color update
+        # It is fine with 16 pads, but it potentially causes performance issue if the controller has 64 pads
         if not self._blink_state:
             if isinstance(skin_or_str, LiveObjSkinEntry):
                 if skin_or_str.name == "Session.ClipPlaying" or skin_or_str.name == "Session.ClipRecording":
@@ -71,5 +82,6 @@ class CustomClipSlotComponent(ClipSlotComponent):
     @listens("blink_state")
     def _on_blink_state_changed(self):
         self._blink_state = self._blinker.blink_state
+        # Call update if the component has mapped element
         if self.launch_button.control_element != None:
             self._update_launch_button_color()

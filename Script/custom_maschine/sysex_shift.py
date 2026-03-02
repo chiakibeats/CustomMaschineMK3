@@ -11,9 +11,10 @@
 from ableton.v3.control_surface.elements import SysexElement
 from .logger import logger
 
-# relay sysex button message to normal button
-
 class SysexShiftButton(SysexElement):
+    """
+    Sysex button with message forwarding to normal ButtonElement
+    """
     def __init__(self, target_button, *a, **k):
         super().__init__(*a, **k)
         self._target_button = target_button

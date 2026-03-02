@@ -24,6 +24,14 @@ from .clip_notes_select import ClipNotesSelectMixin
 DEFAULT_GROUP_SIZE = 16
 
 class CustomDrumGroupComponent(DrumGroupComponent, ClipNotesSelectMixin):
+    """
+    PlayableComponent especially for Drum Rack device
+    
+    This extended version has page jump buttons
+    
+    Which is intended to use Maschine's group buttons as quick page jump
+
+    """
     select_buttons = control_matrix(ButtonControl, color = None)
     clear_all_solo_button = ButtonControl(color = None)
     clear_all_mute_button = ButtonControl(color = None)

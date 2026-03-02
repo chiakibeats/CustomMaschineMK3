@@ -55,6 +55,14 @@ from ableton.v3.control_surface.components.device_navigation import DeviceNaviga
 from .logger import logger
 
 class CustomDeviceNavigationComponent(DeviceNavigationComponent):
+    """
+    Device focus navigation with extra features
+
+    - Direct select buttons to focus on specific device in the chain
+    - Device ON / OFF control
+    - Device delete
+    - Collapse / Expand each device
+    """
     bank_size = DEFAULT_BANK_SIZE
     select_buttons = control_list(ButtonControl, control_count = bank_size, color = "DefaultButton.Off", on_color = "DefaultButton.On")
     on_off_buttons = control_list(MappedButtonControl, control_count = bank_size, color = "DefaultButton.Off", on_color = "DefaultButton.On")

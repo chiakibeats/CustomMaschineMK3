@@ -14,6 +14,12 @@ from ableton.v3.control_surface.controls import ButtonControl
 from ableton.v3.live import display_name
 
 class CustomClipActionsComponent(ClipActionsComponent):
+    """
+    Extended clip actions
+
+    This version implements:
+    - Half quantize (quantize with 50% amount)
+    """
     half_quantize_button = ButtonControl(color = "ClipActions.Quantize", pressed_color = "ClipActions.QuantizePressed")
 
     @half_quantize_button.pressed

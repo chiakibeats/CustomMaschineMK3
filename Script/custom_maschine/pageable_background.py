@@ -20,6 +20,17 @@ from ableton.v3.base import listenable_property
 from .logger import logger
 
 class PageableBackgroundComponent(BackgroundComponent, ScrollComponent, Renderable):
+    """
+    MIDI CC / note message proxy with paging
+
+    BackgroundComponent passes through MIDI messages from control elements to Live's MIDI track
+
+    This is intended to work with Live's MIDI mapping mode
+
+    Also this component implements paging feature with CC / note number translation hack
+
+    It doubles the count of buttons and knobs available on custom MIDI mapping
+    """
     user_knobs = InputControl
     user_buttons = InputControl
     learn_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")

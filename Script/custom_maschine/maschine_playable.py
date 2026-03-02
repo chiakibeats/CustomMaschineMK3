@@ -96,6 +96,9 @@ class PlayableEncoderControl(SendValueEncoderControl):
 
 
 class MaschinePlayableComponent(PlayableComponent, PageComponent, ClipNotesSelectMixin, Pageable, PitchProvider, Renderable):
+    """
+    MIDI keyboard component with scale following, pitch bending, and octave select buttons
+    """
     octave_select_buttons = control_matrix(ButtonControl)
     pitchbend_encoder = PlayableEncoderControl()
     pitchbend_reset = PlayableEncoderControl()

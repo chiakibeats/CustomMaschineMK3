@@ -28,6 +28,14 @@ GRID_RESOLUTION_NAMES = {
 }
 
 class CustomStepSequenceComponent(StepSequenceComponent, Renderable):
+    """
+    Extended step sequence editor
+     
+    This version implements:
+    - Select individual step note selection
+    - Grid resolution change notification 
+
+    """
     def __init__(
             self,
             name = "Step_Sequence",
@@ -58,6 +66,8 @@ class CustomStepSequenceComponent(StepSequenceComponent, Renderable):
         self.notify(self.notifications.StepSequence.grid_resolution, GRID_RESOLUTION_NAMES[grid] + ("T" if triplet else ""))
 
 class CustomNoteEditorComponent(NoteEditorComponent):
+    """
+    """
     select_button = ButtonControl(color = None)
 
     _velocity_levels = None

@@ -16,6 +16,9 @@ from ableton.v3.base import listens
 from .logger import logger
 
 class EncoderModeControlComponent(Component):
+    """
+    Change Maschine's main encoder mapping depends on multiple mode states
+    """
     volume_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
     swing_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
     tempo_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")

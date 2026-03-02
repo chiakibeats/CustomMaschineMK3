@@ -23,6 +23,11 @@ from .logger import logger
 from .clip_notes_select import ClipNotesSelectMixin
 
 class CustomSlicedSimplerComponent(ClipNotesSelectMixin, SlicedSimplerComponent):
+    """
+    PlayableComponent especially for Simpler device's slice playback mode
+    
+    Like CustomDrumGroupComponent, this has page jump buttons to ensure triggering all 64 slices
+    """
     _select_buttons = control_list(ButtonControl, control_count = 4, color = None)
     _has_slice_list = [False] * 4
 
