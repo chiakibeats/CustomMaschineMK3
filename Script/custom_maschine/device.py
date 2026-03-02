@@ -507,9 +507,18 @@ def custom_mapping_sensitivities(original):
 
     def inner(parameter, device):
         default = original(parameter, device)
+
+        meld_osc_types = ("A Osc Type", "B Osc Type")
+        meld_filter_types = ("A Filter Type", "B Filter Type")
         if liveobj_valid(parameter):
             if device.class_name == "OriginalSimpler" and parameter.name == "Mode":
                 default = tuple(x * 6 for x in default)
+            elif device.class_name == "InstrumentMeld" and parameter.name == "Engine":
+                default = tuple(x * 4 for x in default)
+            elif device.class_name == "InstrumentMeld" and parameter.name in meld_osc_types:
+                default = tuple(x / 4 for x in default)
+            elif device.class_name == "InstrumentMeld" and parameter.name in meld_filter_types:
+                default = tuple(x / 4 for x in default)
         
         return default
     
