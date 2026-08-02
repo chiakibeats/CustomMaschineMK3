@@ -22,11 +22,17 @@ class ISOTimeFormatter(logging.Formatter):
         return time_string
 
 logger = logging.getLogger("CustomMaschineMK3")
+"""
+Global logger for this script.
+
+Log messages also send to `Log.txt` in Live's preference directory.
+"""
+
 if config.LOGGING == True and len(logger.handlers) == 0:
     file_name = Path(__file__).absolute().parent.joinpath("CustomMaschineMK3.log")
     handler = logging.FileHandler(str(file_name))
     
-    # Use custom formatter for accurate timestamp
+    # Use custom formatter to output accurate timestamp
     formatter = ISOTimeFormatter("%(asctime)s\t%(levelname)s\t%(message)s")
 
     handler.setFormatter(formatter)
@@ -45,5 +51,5 @@ if config.LOGGING == True and len(logger.handlers) == 0:
     logger.addHandler(handler)
 
 else:
-    # Set to max level for eliminating log output
+    # Set to max level for eliminating log outputs
     logger.setLevel(logging.CRITICAL)

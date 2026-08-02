@@ -17,7 +17,12 @@ from .logger import logger
 
 class GroupButtonModeControlComponent(Component):
     """
-    Implements automatic switching behaviour for note repeat selector
+    Mode management for Maschine's group buttons.
+
+    Group buttons are used by both pad modes and note repeat mode.
+    If note repeat mode is enabled, it will take over group buttons.
+
+    This behaviour can be disabled from settings.
     """
     notes_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
 

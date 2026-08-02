@@ -17,7 +17,31 @@ from .logger import logger
 
 class EncoderModeControlComponent(Component):
     """
-    Change Maschine's main encoder mapping depends on multiple mode states
+    Mode management for Maschine's main encoder.
+
+    The main encoder is used by various modes:
+        - Browser
+        - Settings
+        - Device control
+        - Main volume
+        - Global swing
+        - Song position
+        - Tempo
+        - Scale
+        - Session view
+
+    To manage complex mode transitions, these priorities are introduced.
+
+    1. Modes using the main encoder and using the display all the time
+        Browser and settings modes.
+        If they are enabled, the main encoder is taken over by them.
+    2. Modes using the main encoder and using the display partially
+        Main volume, global swing, song position, tempo, and scale modes.
+        They need to show value on the display, but it's enough to show only when the main encoder is touched.
+        If modes in both #1 and #2 groups are enabled, a mode in #1 is prioritized but a mode in #2 is still enabled in background.
+    3. Background modes
+        Session view and device control modes.
+        They will be enabled only if all other modes in above are inactive.
     """
     volume_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
     swing_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
@@ -52,11 +76,11 @@ class EncoderModeControlComponent(Component):
             return
         
         selected_mode = self._encoder_modes.selected_mode
-        # In browser mode, encoder mode buttons do nothing to avoid confusing 
+        # Encoder mode buttons do nothing to avoid confusion if the selected mode is browser or settings.
         if selected_mode != "browser" and selected_mode != "settings":
             shift = self.shift_button.is_pressed
             if len(modes) > 1:
-                # If a mode button has two modes and press mode button with shift when non-shift mode is selected, don't return to default
+                # If the active mode and the new mode are mapped to the same button with different modifier, don't return to default.
                 do_return = (selected_mode == modes[0] and not shift) or selected_mode == modes[1]
             else:
                 do_return = selected_mode == modes[0]
@@ -69,7 +93,7 @@ class EncoderModeControlComponent(Component):
                     self._encoder_modes.selected_mode = "default"
                 self._selected_encoder_mode = None
             else:
-                # Otherwise push mode chosen by shift button state
+                # Otherwise push mode chosen by shift modifier state.
                 self._selected_encoder_mode = modes[1 if self.shift_button.is_pressed and len(modes) > 1 else 0]
                 self._encoder_modes.selected_mode = self._selected_encoder_mode
                 
@@ -92,6 +116,7 @@ class EncoderModeControlComponent(Component):
         elif display_mode == "settings":
             self._encoder_modes.selected_mode = "settings"
         else:
+            # If the active mode is neither browser or settings, switch to encoder mode or background modes.
             if self._selected_encoder_mode != None:
                 self._encoder_modes.selected_mode = self._selected_encoder_mode
             elif display_mode == "device":

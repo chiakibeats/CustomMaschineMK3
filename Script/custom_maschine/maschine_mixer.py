@@ -47,7 +47,14 @@ from .logger import logger
 
 class MaschineMixerComponent(ScrollComponent, Renderable, Scrollable):
     """
-    Another mixer component that has no session box restriction
+    Another mixer component suitable for Maschine controller.
+
+    Stock version of `MixerComponent` ties to session box.
+    It constraints the count of tracks that the component can handle.
+    Also, the session box determines which tracks is assigned to `MixerComponent` by its position.
+    This desgin is useful if the controller's button row count and knob count are same, but not for Maschine.
+
+    This component has dedicated track count configuration and paging feature.
     """
     parameter_controls = control_list(MappedControl)
     parameter_select_buttons = RadioButtonGroup(
@@ -163,11 +170,22 @@ class MaschineMixerComponent(ScrollComponent, Renderable, Scrollable):
         self.erase_button.set_control_element(button)
 
     def __getattr__(self, name):
-        # How control elements are mapped to controls in this component
-        # If a function that starts with "set_{control name}", call that function
-        # Otherwise, call "__getattr__" to get the setter function
+        """
+        Proxy for mapping each control of array to each `ChannelStripComponent`.
+
+        This works under combination of Python's name lookup and Live's mapping behaviour.
+
+        1. Live's mapping system tries to find `set_{control name}` function to assign element to component.
+        2. If the function is in the instance dictionary, call that function.
+        3. If the function wasn't in the dictionary, Python calls `__getattr__` to retrieve the function dynamically.
+        4. If it wasn't found, try finding `{control name}` member to assign element directly.
+        5. If the member wasn't found, throw the error and abort the mapping procedure.
+
+        This function cooperates with this flow by returning improvised setter to assign each element to channel strip.
+        """
         if name.startswith("set_"):
             return partial(self._set_strip_controls, name[4:-1])
+        # TODO: Add name parameter to the error
         raise AttributeError
 
     def can_scroll_up(self):
@@ -222,7 +240,13 @@ class MaschineMixerComponent(ScrollComponent, Renderable, Scrollable):
         super().update()
 
     def _set_strip_controls(self, name, controls):
-        # Assign each control elements to the corresponding control in channel strip
+        """
+        Assign each control element to the corresponding control in channel strip.
+
+        Args:
+            name(str): Name of assignee.
+            controls(list): Control elements to assign.
+        """
         for strip, control in zip_longest(self._channel_strips, controls or []):
             getattr(strip, name).set_control_element(control)
 

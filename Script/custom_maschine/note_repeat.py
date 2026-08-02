@@ -53,12 +53,23 @@ class CustomSendValueEncoderControl(SendValueEncoderControl):
 
 class NoteRepeatComponent(Component, Renderable):
     """
-    Interface for note repeat feature
+    Note repeat control and display notification.
 
-    This component retrieves repeat rate settings from SettingsRepository
+    Note repeat fuction works via `note_repeat` object inside `c_instance` (special object that comes from Live app).
+
+    It has 2 properties:
+        - enabled(bool): Active state of note repeat.
+        - repeat_rate(float): Interval of repetition. `1.0` means 1/4 synced length in Live.
     """
     repeat_button = ButtonControl(color = "NoteRepeat.Off", on_color = "NoteRepeat.On")
+    # TODO: Add selectable behavior from Push (choose alternate or momentary by button press time) and Maschine (momentary default, dedicated lock button)
     lock_button = ButtonControl(color = "NoteRepeat.LockOff", on_color = "NoteRepeat.LockOn")
+    """
+    Lock enabled state of note repeat.
+
+    This doesn't work as toggle momentary / alternate behaviour button.
+    So the button does nothing when note repeat is disabled.
+    """
     rate_select_buttons = control_list(ButtonControl, color = "NoteRepeat.Rate", on_color = "NoteRepeat.RateSelected", control_count = 8)
 
     _note_repeat = None
@@ -70,14 +81,15 @@ class NoteRepeatComponent(Component, Renderable):
 
     @depends(note_repeat = None, settings = None)
     def __init__(self, name = "Note_Repeat", note_repeat = None, settings = None, *a, **k):
+        """
+        Args:
+            name(str): Component name. This should keep default.
+            note_repeat: Interface object for note repeat function. DI container will supply actual value.
+            settings(SettingsRepository): DI container will supply actual value.
+        """
         super().__init__(name, *a, **k)
 
-        # Note repeat fuction works via note_repeat object inside c_instance (special object comes from ableton live app)
-        # This object has 2 property, "enabled" and "repeat_rate"
-        # enabled: Enable or disable note repeat function, type is boolean
-        # repeat_rate: Interval of repetition, type is float, 1.0 means 1/4 synced length in ableton
         self._note_repeat = note_repeat
-
         self._settings = settings
         self._automatic_switching = False
         self._repeat_rates = [(1.0, "")] * self.rate_select_buttons.control_count

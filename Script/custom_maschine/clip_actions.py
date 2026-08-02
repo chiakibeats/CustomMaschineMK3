@@ -15,10 +15,10 @@ from ableton.v3.live import display_name
 
 class CustomClipActionsComponent(ClipActionsComponent):
     """
-    Extended clip actions
+    Extended clip actions.
 
-    This version implements:
-    - Half quantize (quantize with 50% amount)
+    This version has:
+        - Half quantize (quantize with 50% amount)
     """
     half_quantize_button = ButtonControl(color = "ClipActions.Quantize", pressed_color = "ClipActions.QuantizePressed")
 
@@ -29,5 +29,8 @@ class CustomClipActionsComponent(ClipActionsComponent):
         self.notify(self.notifications.Clip.quantize, display_name(target_clip), QUANTIZATION_OPTION_NAMES[self._quantization_value])
 
     def _update_quantize_button(self):
+        """
+        Update quantize operation availability.
+        """
         super()._update_quantize_button()
         self.half_quantize_button.enabled = self._get_target_clip() is not None

@@ -37,6 +37,7 @@ SETTINGS_FILE_NAME = "settings.json"
 BASE_LENGTH_LIST = [1, 2, 4, 8, 16, 32, 64, 128]
 
 NOTE_REPEAT_RATES = []
+"""List of repeat rate value and name string."""
 # Add normal length values
 NOTE_REPEAT_RATES += [(beat_ratio(l), f"1/{l}") for l in BASE_LENGTH_LIST]
 # Add triplet length values
@@ -45,19 +46,30 @@ NOTE_REPEAT_RATES += [(beat_ratio(l * 1.5), f"1/{l}T") for l in BASE_LENGTH_LIST
 NOTE_REPEAT_RATES += [(beat_ratio(l) * 1.5, f"1/{l}D") for l in BASE_LENGTH_LIST]
 
 REPEAT_RATE_KEYS = [x[1] for x in NOTE_REPEAT_RATES]
+"""Repeat rate name list for settings."""
 
 def get_repeat_rate_value(name, definition = NOTE_REPEAT_RATES):
+    """
+    Get repeat rate value from name string.
+
+    Args:
+        name(str): Repeat rate name. (like 1/4, 1/16T, etc.)
+        definition(list): List contains association of rate value and name string.
+
+    Returns:
+        number: Repeat rate value calculated by one quarter note = 1.0 basis.
+    """
     for value, rate_name in definition:
         if name == rate_name:
             return value
     
     return NOTE_REPEAT_RATES[0][0]
 
-# Settings scheme example
+# Settings schema example
 # Bool
 # {
 #     "key": "bool_option",
-#     "description": "Bool Option",
+#     "description": "Bool Option", # Description should be within 56 characters (MCU display size limit)
 #     "type": "bool",
 #     "default_value": False,
 # },
@@ -83,7 +95,7 @@ def get_repeat_rate_value(name, definition = NOTE_REPEAT_RATES):
 #
 # Special (for display purpose)
 # {
-#     "key": "__special", # must starts with double underscore(__)
+#     "key": "__special", # Key name starts with double underscore(__)
 #     "description": "I have a message for you",
 #     "type": "none",
 #     "default_value": "Be creative",
@@ -178,25 +190,30 @@ SETTINGS = [
 
 class SettingsRepository(EventObject):
     """
-    Settings value holder
+    Encapsulation of settings load / store.
     """
-    def __init__(self, file_name = SETTINGS_FILE_NAME, scheme = SETTINGS):
+    def __init__(self, file_name = SETTINGS_FILE_NAME, schema = SETTINGS):
         self._file_path = Path(__file__).absolute().parent.joinpath(file_name)
-        self._scheme = {}
-        for entry in scheme:
-            self._scheme[entry["key"]] = entry
+        self._schema = {}
+        for entry in schema:
+            self._schema[entry["key"]] = entry
         self._settings = {}
         self.load()
 
     @listenable_property
     def value_changed(self):
-        # Just for using callback
+        """
+        Notify setting value changes.
+
+        This property is used for notification only, not for serving actual value.
+        Other classes can observe changes of setting option from this property.
+        """
         return False
 
     def load(self):
         if self._file_path.exists():
             settings = json.loads(self._file_path.read_text())
-            for key, entry in self._scheme.items():
+            for key, entry in self._schema.items():
                 if key.startswith("__"):
                     # Ignore special items
                     continue
@@ -217,7 +234,7 @@ class SettingsRepository(EventObject):
             settings_file.write(json.dumps(self._settings, indent = 4))
 
     def clear_settings(self):
-        for key, entry in self._scheme.items():
+        for key, entry in self._schema.items():
             if entry["key"].startswith("__"):
                 # Skip options which start with double underscore(__)
                 pass
@@ -225,6 +242,18 @@ class SettingsRepository(EventObject):
                 self._settings[entry["key"]] = entry["default_value"]
 
     def sanitize_value(self, value, entry):
+        """
+        Convert raw string value to actual type value with sanitization.
+
+        Args:
+            value(any): Value to sanitize.
+            entry(dict): Setting schema entry corresponding to `value`.
+
+        Returns:
+            value:
+                If the raw value follows schema, this function just converts value type.
+                Otherwise returns the default value defined in schema.
+        """
         value_type = entry["type"]
         if value_type == "bool":
             # TODO: Fix incorrect bool value sanitization
@@ -248,73 +277,104 @@ class SettingsRepository(EventObject):
         return entry["default_value"]
         
     def set_value(self, key, value):
-        if key in self._scheme:
-            self._settings[key] = self.sanitize_value(value, self._scheme[key])
+        if key in self._schema:
+            self._settings[key] = self.sanitize_value(value, self._schema[key])
         
         self.notify_value_changed()
 
     def get_value(self, key):
         if key.startswith("__"):
-            return self._scheme[key]["default_value"]
+            return self._schema[key]["default_value"]
         else:
             return self._settings[key]
 
 class SettingsComponent(Component, Renderable):
     """
-    User interface for settings
+    User interface for viewing / modifying settings.
     """
     select_encoder = StepEncoderControl(num_steps = 64)
+    """Setting option scroll encoder."""
     value_encoder = StepEncoderControl(num_steps = 8)
+    """Option value scroll encoder."""
 
+    # TODO: Get schema from repository
     @depends(settings = None)
-    def __init__(self, name = "Settings", settings = None, scheme = SETTINGS, *a, **k):
+    def __init__(self, name = "Settings", settings = None, schema = SETTINGS, *a, **k):
+        """
+        Args:
+            name(str): Component name. This should keep default.
+            settings(SettingsRepository):
+                Repository of settings. 
+                DI container will supply actual value.
+            schema(list[dict]):
+                Schema of settings.
+                This must be same as the value specified in `SettingsRepository`.
+        """
         super().__init__(name, *a, **k)
 
         self._current_index = 0
-        self._scheme = scheme
+        self._schema = schema
         self._settings = settings
 
     @listenable_property
     def current_description(self):
-        return self._scheme[self._current_index]["description"]
+        return self._schema[self._current_index]["description"]
     
     @listenable_property
     def current_value(self):
-        key = self._scheme[self._current_index]["key"]
+        key = self._schema[self._current_index]["key"]
         if key.startswith("__"):
-            return self._scheme[self._current_index]["default_value"]
+            return self._schema[self._current_index]["default_value"]
         else:
             return self._settings.get_value(key)
 
     @select_encoder.value
     def _on_select_encoder_value(self, value, encoder):
-        self._current_index = clamp(self._current_index + value, 0, len(self._scheme) - 1)
+        """
+        Change the selection of the setting item to be displayed.
+
+        Args:
+            value(int): Offset to move the selection.
+            encoder(StepEncoderControl): Control object that triggered this event.
+        """
+        self._current_index = clamp(self._current_index + value, 0, len(self._schema) - 1)
         logger.info(f"Select setting {self.current_description}")
         self.notify_current_description()
         self.notify_current_value()
 
     @value_encoder.value
     def _on_value_encoder_value(self, value, encoder):
-        scheme = self._scheme[self._current_index]
-        current_value = self._settings.get_value(scheme["key"])
-        type = scheme["type"]
+        """
+        Change the option value of the selected setting item.
 
+        Any changes will send notification instantly.
+        But the contents of settings file doesn't change until calling `save()` method.
+
+        Args:
+            value(int): Offset to move the selection.
+            encoder(StepEncoderControl): Encoder control that triggered this event.
+        """
+        schema = self._schema[self._current_index]
+        current_value = self._settings.get_value(schema["key"])
+        type = schema["type"]
+
+        # Move forward or backward the option value by following the schema.
         if type == "bool":
             new_value = bool(clamp(int(current_value) + value, 0, 1))
-            self._settings.set_value(scheme["key"], new_value)
+            self._settings.set_value(schema["key"], new_value)
         elif type == "int":
-            new_value = clamp(int(current_value + value), scheme["min"], scheme["max"])
-            self._settings.set_value(scheme["key"], new_value)
+            new_value = clamp(int(current_value + value), schema["min"], schema["max"])
+            self._settings.set_value(schema["key"], new_value)
         elif type == "enum":
             index = -1
-            options = scheme["enum"]
+            options = schema["enum"]
             for i in range(len(options)):
                 if options[i] == current_value:
                     index = i
                     break
 
             new_value = clamp(int(index + value), 0, len(options) - 1)
-            self._settings.set_value(scheme["key"], scheme["enum"][new_value])
+            self._settings.set_value(schema["key"], schema["enum"][new_value])
         elif type == "none":
             # ignore
             pass

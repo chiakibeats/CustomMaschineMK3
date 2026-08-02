@@ -21,19 +21,18 @@ from .logger import logger
 
 class PageableBackgroundComponent(BackgroundComponent, ScrollComponent, Renderable):
     """
-    MIDI CC / note message proxy with paging
+    MIDI control change / note message pass-through with channel translation.
 
-    BackgroundComponent passes through MIDI messages from control elements to Live's MIDI track
-
-    This is intended to work with Live's MIDI mapping mode
-
-    Also this component implements paging feature with CC / note number translation hack
-
-    It doubles the count of buttons and knobs available on custom MIDI mapping
+    `BackgroundComponent` passes through all messages from assigned control elements to the Live.
+    This is intended to work with Live's MIDI mapping mode.
+    This component adds MIDI channel translation (a.k.a. paging) by using a little hack.
+    It multiplies the count of available buttons and knobs.
     """
+
     user_knobs = InputControl
     user_buttons = InputControl
     learn_button = ButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
+    """Enable / disable learn mode for knobs."""
     knob_touch_buttons = InputControl
 
     def __init__(self, name = "Pageable_Background", translation_channel = 2, page_count = 2, *a, **k):
@@ -45,6 +44,7 @@ class PageableBackgroundComponent(BackgroundComponent, ScrollComponent, Renderab
 
     @listenable_property
     def page_index(self):
+        """Current page index for display."""
         return self._page_index
     
     def can_scroll_up(self):
@@ -64,6 +64,9 @@ class PageableBackgroundComponent(BackgroundComponent, ScrollComponent, Renderab
         self.notify_page_index()
 
     def set_learn_button(self, button):
+        """
+        Assign element to 
+        """
         if button == None:
             # If user leaves from custom mapping mode, learn mode is disabled automatically
             self._learn_enabled = False

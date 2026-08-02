@@ -29,9 +29,10 @@ from .logger import logger
 
 COLLECTION_COLORS = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Gray"]
 
+# TODO: Consolidate these classes to WrapBrowserItem
 class BrowserCollectionRootItem:
     """
-    Root item of "Collections" folder (colored folder)
+    Root item of Collections (colored) folders.
     """
     def __init__(self, browser):
         self.name = "Collections"
@@ -45,7 +46,9 @@ class BrowserCollectionRootItem:
             self.children.append(item)
 
 class BrowserUserFoldersRootItem:
-
+    """
+    Root item of user folders.
+    """
     def __init__(self, browser):
         self.name = "User Files"
         self.children = []
@@ -59,17 +62,19 @@ class BrowserUserFoldersRootItem:
 
 class WrapBrowserItem:
     """
-    Wrapper class to override default item name
+    Wrapper class to override default item name.
 
-    Some browser items have localized item name depends on language setting.
-
+    Child items of browser root have localized item name depends on language setting.
     For example, Live.Browser.Browser.audio_effects is displayed as "Audio Effects" in English.
-
     But it is also displayed as "オーディオエフェクト", if you select Japanese as UI language.
-
-    Maschine's display couldn't show Non-ASCII characters, so we need to enforce showing English version name. 
+    Maschine's display couldn't show non-ASCII characters, so we need to enforce showing English version name.
     """
     def __init__(self, item, name):
+        """
+        Args:
+            item(Live.Browser.BrowserItem): Browser item to wrap.
+            name(str): Name to display instead of its original.
+        """
         self._wrapped_item = item
         self._name = name
     
@@ -111,16 +116,24 @@ class WrapBrowserItem:
 
 class BrowserRootItem:
     """
-    Root of the entire Live's browser tree
+    Root of the entire Live's browser tree.
     """
     name = "Browser Top"
     is_folder = True
     is_device = False
-    is_loadable = False
+    is_loadable = False    
 
     def __init__(self, browser, target_is_midi_track = True):
+        """
+        Args:
+            browser (Live.Browser.Browser): Live's browser object
+            target_is_midi_track (bool): Specify selected track type to adopt browser item list
+        """
+
         self.uri = type(self).__name__
+        """URI"""
         self.children = [BrowserCollectionRootItem(browser)]
+        """List of child items"""
 
         audio_effects = WrapBrowserItem(browser.audio_effects, "Audio Effects")
         if target_is_midi_track:
@@ -141,43 +154,87 @@ class BrowserRootItem:
 
 class BrowserTreeExplorer:
     """
-    Explore across the entire browser tree structure
-    All item iterations are done by this class
+    Explore across the entire browser tree structure.
     
+    This class is responsible to:
+        - Store / update focusing item position
+        - Enter / leave folder with breadcrumb-list update
+        - Keeping state consistency when tree items are added or deleted
     """
     @property
     def selected_item(self):
+        """
+        Selected browser item.
+
+        This can be `None` if a parent folder is empty.
+        It doesn't synchronize with selection of Live browser panel.
+        """
         return self._selected_item
     
     @property
     def selected_item_index(self):
+        """
+        Index of selected item.
+
+        If the folder has no children, this value is `0`.
+        """
         return self._selected_item_index
     
     @property
     def parent_item(self):
+        """
+        The folder currently looking into.
+        """
         return self._tree_stack[-1]
     
     @property
     def item_count(self):
+        """
+        Total item count of current folder.
+        """
         return self._tree_item_count
     
     @property
     def tree_depth(self):
+        """
+        Depth of tree.
+
+        This value is always >= 1.
+        """
         return len(self._tree_stack)
 
     def __init__(self, root_item):
+        """
+        Args:
+            root_item(BrowserItem): Root item of the tree.
+        """
         self._selected_item = root_item.children[0]
         self._selected_item_index = 0
         self._root_item = root_item
-        # TODO: store URI for accurate traverse (items has identical name can be in same folder)
+        # TODO: store URI for accurate traverse (items have identical name can be in same folder)
         self._tree_stack = [root_item]
         self._tree_item_count = len(self._tree_stack[-1].children)
     
     def set_root_item(self, new_root):
+        """
+        Set new root item and try to traverse tree.
+
+        Args:
+            new_root(BrowserItem): New root item of the tree.
+
+        """
         self._root_item = new_root
         self.traverse_tree(self._root_item, self._selected_item)
 
     def enter_to_selected_item(self):
+        """
+        Go inside of selected item.
+
+        Returns:
+            bool: Result of operation.
+                `True`: Succeeded
+                `False`: Failed because of item is not folder or has no children
+        """
         if self._selected_item != None:
             # Cache item count to eliminate expensive operation
             item_count = len(self._selected_item.children)
@@ -197,6 +254,14 @@ class BrowserTreeExplorer:
         return False
 
     def leave_from_current_tree(self):
+        """
+        Leave from current tree and go back to upper parent item.
+
+        Returns:
+            bool: Result of operation.
+                `True`: Succeeded
+                `False`: There is no item to go back (already in the top)
+        """
         if len(self._tree_stack) > 1:
             popped = self._tree_stack.pop()
             self._tree_item_count = len(self._tree_stack[-1].children)
@@ -213,6 +278,17 @@ class BrowserTreeExplorer:
             return False
 
     def move_pointer(self, offset):
+        """
+        Move item selection pointer by specified offset.
+        It clamps the move amount to avoid out-of-range errors.
+
+        Args:
+            offset(int): Amount of move. Positive value moves forward and Negative value moves backward.
+        
+        Returns:
+            bool: `True` means item selection pointer has changed.
+                `False` means pointer was not changed because of value was clamped.
+        """
         new_index = clamp(self._selected_item_index + offset, 0, self._tree_item_count - 1)
         if self._selected_item_index != new_index:
             self._selected_item_index = new_index
@@ -222,16 +298,32 @@ class BrowserTreeExplorer:
             return False
 
     def is_valid_tree(self):
-        # Test item is valid or not, but probably this doesn't work
+        """
+        Test item is valid or not, but it seems to be not working.
+        """
         return liveobj_valid(self._selected_item) and liveobj_valid(self._tree_stack[-1])
     
     def refresh_tree(self):
+        """
+        Refresh tree state to keep consistency.
+
+        This operation potentially changes item selection.
+        """
         self.traverse_tree(self._root_item, self._selected_item)
 
     def traverse_tree(self, new_root, dest_item):
-        # Traverse trees and navigate to selected item
-        # Why did this: The design of browser intended to keep current selection even if the trees are modified by hot-swap filter
-        # Ableton's original (and official) implementation moves item focus to hot-swap target device
+        """
+        Traverse trees and navigate to selected item
+
+        If traverse succeeded, this function keeps current item selection.
+        If traverse failed because item was not found, this function resets item selection to head of last traversed item
+
+        Why do this:
+            When the hot-swap is enabled, Live app filters out browser items.
+            This action invalidates item selection, children count, and even parent folder.
+            The design of browser intended to keep current selection on hot-swap.
+            So we need to validate each items in the breadcrumb-list and item selection.
+        """
         dest_item_uri = dest_item.uri if dest_item else None
         logger.info(f"Start traverse tree = {[t.name for t in self._tree_stack]}, dest_item.uri = {dest_item_uri}")
 
@@ -286,8 +378,15 @@ class BrowserTreeExplorer:
         logger.info(f"Traverse completed tree = {[t.name for t in self._tree_stack]}, selected = {self._selected_item.name if self._selected_item else None}")
 
     def force_navigate_to(self, new_tree_stack):
-        # Overwrite internal state to specified one
-        # This is used for jumping to collections folder only!
+        """
+        Overwrite breadcrumb-list to specified one.
+
+        This is only for implementing quick jump feature.
+        This function also resets item selection to head of `new_tree_stack[-1].children` or `None` if it has no children.
+        Args:
+            new_tree_stack(list): New breadcrumb-list. First item of `new_tree_stack` must be same as current root item.
+        """
+        # TODO: Add root item check
         self._tree_stack = new_tree_stack
         self._tree_item_count = len(self._tree_stack[-1].children)
         if self._tree_item_count > 0:
@@ -303,12 +402,16 @@ class BrowserComponent(Component, Renderable):
     enter_folder_button = ButtonControl(color = "Browser.CannotNavigateFolder", on_color = "Browser.CanNavigateFolder", pressed_color = "Browser.NavigateFolderPressed")
     leave_folder_button = ButtonControl(color = "Browser.CannotNavigateFolder", on_color = "Browser.CanNavigateFolder", pressed_color = "Browser.NavigateFolderPressed")
     jump_next_button = ButtonControl(color = "Browser.CannotNavigateItem", on_color = "Browser.CanNavigateItem", pressed_color = "Browser.NavigateItemPressed", repeat = True)
+    """Fast scroll forward button."""
     jump_prev_button = ButtonControl(color = "Browser.CannotNavigateItem", on_color = "Browser.CanNavigateItem", pressed_color = "Browser.NavigateItemPressed", repeat = True)
+    """Fast scroll backward button."""
     preview_toggle_button = ButtonControl(color = "Browser.PreviewOff", on_color = "Browser.PreviewOn")
     preview_volume_encoder = MappedSensitivitySettingControl()
     select_folder_buttons = control_list(ButtonControl, color = "DefaultColor.Off", pressed_color = "DefaultColor.On")
+    """Color folder quick select buttons."""
     hotswap_button = ButtonControl(color = "DefaultColor.Off", on_color = "DefaultButton.On")
     hotswap_content_button = ButtonControl(color = None)
+    """Hot-swap sample or drum pad button."""
         
     @listenable_property
     def selected_item_name(self):
@@ -339,6 +442,11 @@ class BrowserComponent(Component, Renderable):
     
     @depends(target_track = None)
     def __init__(self, name = "Browser", target_track = None, *a, **k):
+        """
+        Args:
+            name(str): Component name. You shouldn't change this because it is used in mapping.
+            target_track(TargetTrackComponent): This value will be supplied from DI mechanism.
+        """
         super().__init__(name, *a, **k)
         
         self._target_track = target_track
@@ -367,9 +475,18 @@ class BrowserComponent(Component, Renderable):
         self._on_hotswap_target_changed.subject = self._browser
 
     def set_display_modes(self, modes):
+        """
+        Connect ModesComponent that manages mapping modes about display.
+        
+        Args:
+            modes(ModesComponent): ModesComponent that manages display mapping modes.
+        """
         self._display_modes = modes
 
     def update(self):
+        """
+        Refresh component states.
+        """
         logger.info("Update browser")
         super().update()
         result = self._explorer.is_valid_tree()
@@ -385,6 +502,9 @@ class BrowserComponent(Component, Renderable):
             self._browser.hotswap_target = None
 
     def _preview_item(self):
+        """
+        Trigger sound preview of selected item.
+        """
         item = self._explorer.selected_item
         self.selected_item_name = item.name if item else None
         uri = item.uri if item else None
@@ -398,16 +518,23 @@ class BrowserComponent(Component, Renderable):
                 self._browser.preview_item(item)
 
     def _refresh_browser(self):
-        # Just mark the flag and do actual refresh if this component is active
-        # 2 reasons why this mechanism exists:
-        # 1. Prevent excessive refresh
-        # 2. Quick fix for the issue that items are not filtered immediately after hot-swap target is changed
-        #    Sometimes happens, especially when hot-swap is enabled while browser is inactive
+        """
+        Trigger browser refresh.
+
+        This function just marks the flag, actual refresh happens at component activation.
+        2 reasons why this mechanism exists:
+        1. Prevent excessive refresh
+        2. Quick fix for the issue that items are not filtered immediately after hot-swap target is changed
+            - Sometimes happens, especially when hot-swap is enabled while browser is inactive
+        """
         self._tree_invalidated = True
         if self.is_enabled():
             self._do_refresh_browser()
 
     def _do_refresh_browser(self):
+        """
+        Perform actual browser refresh action.
+        """
         self._root_item = BrowserRootItem(self._browser, self._target_track.target_track.has_midi_input)
         self._explorer.set_root_item(self._root_item)
         item = self._explorer.selected_item
@@ -417,16 +544,28 @@ class BrowserComponent(Component, Renderable):
         self._tree_invalidated = False
 
     def enter_folder(self):
+        """
+        Go inside selected item and trigger preview item.
+        """
         if self._explorer.enter_to_selected_item():
             self.parent_folder_name = self._explorer.parent_item.name
             self._preview_item()
 
     def leave_folder(self):
+        """
+        Go back to upper parent and trigger preview item.
+        """
         if self._explorer.leave_from_current_tree():
             self.parent_folder_name = self._explorer.parent_item.name
             self._preview_item()
         
     def _update_preview_state(self, new_state):
+        """
+        Set sound preview state.
+
+        Args:
+            new_state(bool): State of preview. `True` is enable, `False` is disable.
+        """
         self.preview_enabled = new_state
         if self.preview_enabled:
             preview_item = self._explorer.selected_item
@@ -436,7 +575,11 @@ class BrowserComponent(Component, Renderable):
             self._browser.stop_preview()
 
     def _update_led_feedback(self):
+        """
+        Refresh LED states.
+        """
         item = self._explorer.selected_item
+        # TODO: Check how much len() affecting the browse performance
         can_enter = False if item == None else item.is_folder or len(item.children) > 0
         self.enter_folder_button.is_on = can_enter
         self.leave_folder_button.is_on = self._explorer.tree_depth > 1
@@ -444,6 +587,15 @@ class BrowserComponent(Component, Renderable):
         self.jump_prev_button.is_on = self._explorer.selected_item_index > 0
 
     def _get_scroll_speed(self, trigger_count):
+        """
+        Calculate scroll acceleration factor.
+
+        Args:
+            trigger_count(int): Trigger repeat count of scroll buttons.
+
+        Returns:
+            int: Calculated acceleration factor.
+        """
         if trigger_count <= 1:
             return 1
         elif trigger_count <= 20:
@@ -453,11 +605,19 @@ class BrowserComponent(Component, Renderable):
 
     @select_encoder.value
     def _on_select_encoder_value(self, value, encoder):
+        """
+        Move forward or backward browser item pointer.
+
+        If the pointer changed, trigger item preview.
+        """
         if self._explorer.move_pointer(value):
             self._preview_item()
 
     @load_button.pressed
     def _on_load_button_pressed(self, button):
+        """
+        Load item or enter into folder, depends on the type of selected item.
+        """
         item = self._explorer.selected_item
         if item != None:
             if item.is_loadable:
@@ -469,6 +629,11 @@ class BrowserComponent(Component, Renderable):
 
     @load_button.released
     def _on_load_button_released(self, button):
+        """
+        Close browser if item load was triggered and load button was released.
+
+        Call `pop_last_mode` after the button released to detach the browser mode correctly.
+        """
         if self._close_browser:
             if self._display_modes != None:
                 pop_last_mode(self._display_modes, "browser")
@@ -508,6 +673,13 @@ class BrowserComponent(Component, Renderable):
                 
     @select_folder_buttons.pressed
     def _on_folder_buttons_pressed(self, button):
+        """
+        Perform quick jump to a collection folder or the browser home.
+
+        Args:
+            button(ButtonControl): The button that triggers action.
+        """
+        # TODO: Get length from Browser.colors
         if button.index < 7:
             for item in self._root_item.children:
                 if isinstance(item, BrowserCollectionRootItem):
@@ -523,6 +695,9 @@ class BrowserComponent(Component, Renderable):
 
     @hotswap_button.pressed
     def _on_hotswap_button_pressed(self, button):
+        """
+        Toggle hot-swap mode for selected device.
+        """
         if liveobj_valid(self._browser.hotswap_target):
             self._browser.hotswap_target = None
         else:
@@ -530,6 +705,9 @@ class BrowserComponent(Component, Renderable):
 
     @hotswap_content_button.pressed
     def _on_hotswap_content_pressed(self, button):
+        """
+        Toggle hot-swap mode for the Simpler sample and the Drum Rack pad.
+        """
         selected_device = self.song.view.selected_track.view.selected_device
 
         if liveobj_valid(self._browser.hotswap_target):
@@ -541,7 +719,9 @@ class BrowserComponent(Component, Renderable):
 
     @listens("full_refresh")
     def _on_browser_refresh_triggered(self):
-        # Refersh browser tree when 'Live.Browser.Browser.full_refersh' is triggered
+        """
+        Refersh browser tree when 'Live.Browser.Browser.full_refersh' is triggered
+        """
         logger.info("Full refresh triggered")
         self._refresh_browser()
 
@@ -551,11 +731,14 @@ class BrowserComponent(Component, Renderable):
 
     @listens("hotswap_target")
     def _on_hotswap_target_changed(self):
-        # Changing hotswap target causes browser item filtering, so refresh browser
+        """
+        Handle hotswap target change (LED feedback and triggering refresh)
+        """
         target = self._browser.hotswap_target
 
         self.hotswap_button.is_on = liveobj_valid(target)
 
+        # Check the type of hot-swap target to eliminate refresh
         if target == None:
             new_target_type = None
         elif isinstance(target, Device):

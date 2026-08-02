@@ -56,12 +56,15 @@ from .logger import logger
 
 class CustomDeviceNavigationComponent(DeviceNavigationComponent):
     """
-    Device focus navigation with extra features
+    Extended device chain navigation.
 
-    - Direct select buttons to focus on specific device in the chain
-    - Device ON / OFF control
-    - Device delete
-    - Collapse / Expand each device
+    This version has:
+        - Direct select buttons to focus on specific device
+        - Paging feature for select buttons
+        - Device ON / OFF control
+        - Delete device from chain
+        - Collapse / Expand each device
+        - Open / close plugin window (available on Live 12.4.3 or later)
     """
     bank_size = DEFAULT_BANK_SIZE
     select_buttons = control_list(ButtonControl, control_count = bank_size, color = "DefaultButton.Off", on_color = "DefaultButton.On")
@@ -103,6 +106,9 @@ class CustomDeviceNavigationComponent(DeviceNavigationComponent):
 
     @select_buttons.pressed
     def _on_select_buttons_pressed(self, target_button):
+        """
+        Perform select, delete, or toggle collapsed state operations to a device.
+        """
         index = target_button.index
         logger.info(f"Select button pressed index = {index}")
         device_index = self.scroll_position + index

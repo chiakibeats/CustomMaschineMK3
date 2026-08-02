@@ -297,7 +297,7 @@ def create_mappings(surface):
         ),
         chord = dict(
             component = "Velocity_Levels",
-            # No mapping, just placeholder
+            # No mapping, just a placeholder
         ),
         step = dict(
             component = "Step_Sequence",
@@ -317,7 +317,9 @@ def create_mappings(surface):
         browser_button = "browser",
         settings_button = "setting",
         custom_button = "channel",
-        default = dict(), # This is placeholder, first-defined mode will be default mode at initial state
+        # This is a placeholder to take the first position of dict.
+        # Because first item of dict will become a default mode.
+        default = dict(),
         device = dict(
             modes = [
                 dict(component = "Device",

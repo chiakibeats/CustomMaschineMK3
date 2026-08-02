@@ -17,7 +17,7 @@ from .logger import logger
 
 class MiscControlComponent(Component):
     """
-    Audio / MIDI / Return track manipulation
+    Miscellaneous operations for audio, MIDI, and return tracks.
     """
     new_audio_or_return_track_button = ButtonControl()
     new_midi_track_button = ButtonControl()
@@ -85,6 +85,10 @@ class MiscControlComponent(Component):
 
     @select_track_encoder.value
     def _on_encoder_value_changed(self, value, encoder):
+        """
+        Scroll around between normal, return, and master tracks.
+        """
+        # TODO: Maybe it's too complicated for track scrolling, managing track index is what I should do.
         direction = int(sign(value))
         is_normal, track_index = self._get_selected_track_info()
 
@@ -103,7 +107,7 @@ class MiscControlComponent(Component):
                 # normal track -> normal track
                 new_selected_track = self.song.visible_tracks[new_index]
             elif new_index == len(self.song.visible_tracks):
-                # normal track -> reutrn / master track
+                # normal track -> return / master track
                 new_selected_track = return_and_master_tracks[0]
 
         else:

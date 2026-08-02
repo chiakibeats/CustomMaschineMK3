@@ -50,12 +50,12 @@ from .logger import logger
 
 class CustomMixerComponent(MixerComponent, Renderable):
     """
-    Extended mixer control
+    Extended mixer control.
 
-    This version implements:
-    - Renderable inheritance for display capable
-    - Selectable pan or send amount (A to L) parameter control
-    - Reset to default value feature
+    This version has:
+        - Renderable inheritance for display capability
+        - Selectable pan or send amount (A to L) parameter control
+        - Reset parameter value to its default
     """
     pan_or_send_controls = control_list(MappedControl)
     knob_touch_buttons = control_list(ButtonControl, color = None)

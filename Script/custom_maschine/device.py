@@ -59,6 +59,9 @@ from .clip_editor import BoolWrappingParameter
 from .logger import logger
 
 class FloatParameter(WrappingParameter):
+    """
+    Python property wrapper especially for `float`.
+    """
     def __init__(
             self,
             property_host = None,
@@ -225,9 +228,9 @@ class HybridReverbDeviceDecorator(DeviceDecorator):
     def parameters(self):
         return tuple(self._live_object.parameters) + tuple(self._additional_parameters)
 
-# Device decorator is extender for device object
-# Usually wrap special parameters (wavetable index, simpler playback mode, etc.) for using them like normal device parameters
-# Wavetable device decorator is removed from v3 decorator factory (reason is unknown), so I put all decorators into this class
+# Device decorator is a extender for device object.
+# Usually wrap special parameters (wavetable index, simpler playback mode, etc.) for using them like normal device parameters.
+# Wavetable device decorator is removed from v3 decorator factory (reason is unknown), so I put all decorators into this class.
 class CustomDeviceDecoratorFactory(DeviceDecoratorFactory):
     DECORATOR_CLASSES = {
         "Delay": DelayDeviceDecorator,
@@ -479,7 +482,7 @@ CUSTOM_BANK_DEFINITIONS["Eq8"][BANK_MAIN_KEY] = {
     )
 }
 
-# We have to build the parameter bank again because IndexedDict doesn't support insert
+# We have to build the parameter bank again because IndexedDict doesn't support insert.
 HYBRID_REVERB_BANK = IndexedDict()
 for key in CUSTOM_BANK_DEFINITIONS["Hybrid"].keys():
     HYBRID_REVERB_BANK[key] = CUSTOM_BANK_DEFINITIONS["Hybrid"][key]
@@ -500,14 +503,18 @@ for key in CUSTOM_BANK_DEFINITIONS["Hybrid"].keys():
 CUSTOM_BANK_DEFINITIONS["Hybrid"] = HYBRID_REVERB_BANK
 
 def custom_mapping_sensitivities(original):
-    # Hook original function to add extra sensitivity settings
-    # Device parameter mapping sensitivity is based on the value specified in ControlSurfaceSpecification
-    # This function changes sensitivity depends on target parameter for comfortable control
-    # Full list of modifiers can be found in parameter_mapping_sensitivities.py
-
+    """
+    Hook original function to add extra sensitivity settings.
+    
+    Device parameter mapping sensitivity is based on the value specified in `ControlSurfaceSpecification`.
+    This function adjusts sensitivity by parameter basis for comfortable control.
+    Full list of modifiers are found in `parameter_mapping_sensitivities.py`.
+    
+    """
     def inner(parameter, device):
         default = original(parameter, device)
 
+        # TODO: Replace the if statements with dict for O(1) lookup.
         meld_osc_types = ("A Osc Type", "B Osc Type")
         meld_filter_types = ("A Filter Type", "B Filter Type")
         if liveobj_valid(parameter):
@@ -526,15 +533,15 @@ def custom_mapping_sensitivities(original):
 
 class CustomDeviceComponent(DeviceComponent):
     """
-    Extended device control
+    Extended device control.
 
-    This version implements:
-    - Custom device macro banks that include some special parameters such as:
-        - Simpler's playback mode selection, slice nudge, and warp mode settings
-        - Wavetable's wave table category and waveform selection
-        - EQ Eight's focus band selection
-    - Reset parameter value to its default
-    - A/B comparison switching / duplicating (available on Live 12.3 or later)
+    This version has:
+        - Custom device macro banks that include some special parameters such as:
+            - Simpler's playback mode selection, slice nudge, and warp mode settings
+            - Wavetable's wave table category and waveform selection
+            - EQ Eight's focus band selection
+        - Reset parameter value to its default
+        - A/B comparison switching / duplicating (available on Live 12.3 or later)
     """
     knob_touch_buttons = control_list(ButtonControl, color = None)
     erase_button = ButtonControl(color = None)

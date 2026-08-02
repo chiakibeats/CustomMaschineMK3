@@ -17,10 +17,9 @@ from time import time_ns
 
 class CustomTransportComponent(TransportComponent):
     """
-    Extended transport control
+    Extended transport control.
 
-    This version implements:
-    - Song position / time monitor property
+    This version has the song tempo and song time property for display.
     """
     def __init__(self, name = "Transport", *a, **k):
         super().__init__(name, *a, **k)
@@ -34,16 +33,22 @@ class CustomTransportComponent(TransportComponent):
     
     @listenable_property
     def current_song_time_in_bars(self):
+        """Current song time in `{bars}.{beats}.{sub-division}` format."""
         song_time = self.song.get_current_beats_song_time()
         return f"{song_time.bars:>4}.{song_time.beats:>2}.{song_time.sub_division:>2}"
     
     @listenable_property
     def current_song_time(self):
+        """Current song time in `HH:MM:SS` format."""
         song_time = self.song.get_current_smpte_song_time(TimeFormat.ms_time)
         return f"{song_time.hours:>02}:{song_time.minutes:>02}:{song_time.seconds:>02}"
     
     def _notify_song_time_changed(self):
-        # Make dead time to avoid too frequent update
+        """
+        Notify song time property change.
+
+        Make some interval time to avoid MIDI message overflow.
+        """
         if time_ns() - self._timestamp > 50_000_000:
             self._timestamp = time_ns()
             # self._dead_time_task.restart()

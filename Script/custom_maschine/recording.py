@@ -24,18 +24,32 @@ RECORD_LENGTH_LIST = [
     (64.0, "16 Bars"),
     (128.0, "32 Bars"),
 ]
+"""Length choices of fixed length recording."""
 
 DEFAULT_LENGTH_INDEX = 3
 
 class FixedLengthRecordingMethod(RecordingMethod):
+    """
+    Custom recording procedure in the session view.
+
+    This class enables fixed length recording in the session view.
+    """
     _record_length = RECORD_LENGTH_LIST[DEFAULT_LENGTH_INDEX][0]
     _fixed_length_enabled = False
 
     def trigger_recording(self):
+        """
+        Handle trigger event of the record button.
+        """
         if not self.stop_recording():
             self.start_recording()
 
     def start_recording(self, *_):
+        """
+        Start recording normally, or trigger fixed recording.
+
+        Variable length argument `*_` seems to be unused.
+        """
         if self._fixed_length_enabled:
             selected_slot = self.song.view.highlighted_clip_slot
             if self.can_record_into_clip_slot(selected_slot):
@@ -54,11 +68,12 @@ class FixedLengthRecordingMethod(RecordingMethod):
 
 class CustomViewBasedRecordingComponent(ViewBasedRecordingComponent):
     """
-    Extended recording control component
+    View-based recording operations.
 
-    This version implements:
-    - Fixed length record trigger
-    - Fixed length record length selector (and notification)
+    The original `RecordingComponent` has dedicated record and overdub button for both session and arrangement view.
+    The meaning of view-based is it automatically changes button assignment depends on current view.
+
+    Custom version has controls for fixed length recording that are intended to use with `FixedLengthRecordingMethod`.
     """
     fixed_button = ButtonControl(color = "RecordLength.FixedOff", on_color = "RecordLength.FixedOn")
     length_select_buttons = RadioButtonGroup(

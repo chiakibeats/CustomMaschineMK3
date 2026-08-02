@@ -55,11 +55,11 @@ MODE_PLAYABLE_LISTENABLE = 2
 SELECT_PITCH_DELAY = 0.25
 DEFAULT_NOTE_TRANSLATION_CHANNEL = 9
 
-# This control class is just for bypass pitch bend message
 class PlayableEncoderControl(SendValueEncoderControl):
-
+    """
+    Special encoder control for passing through pitch bend messages to Live's track.
+    """
     class State(SendValueEncoderControl.State):
-
         def __init__(self, mode = None, *a, **k):
             super().__init__(*a, **k)
             self._enabled = True
@@ -69,14 +69,12 @@ class PlayableEncoderControl(SendValueEncoderControl):
                 MODE_LISTENABLE: ScriptForwarding.exclusive, 
                 MODE_PLAYABLE_LISTENABLE: ScriptForwarding.non_consuming}
             
-
         def set_control_element(self, control_element):
             logger.info(f"set_control_element element = {control_element}")
             super().set_control_element(control_element)
             self._update_script_forwarding()
             if control_element != None:
                 control_element.send_value(self.value, True)
-
 
         def _update_script_forwarding(self):
             if self._control_element:
@@ -97,7 +95,7 @@ class PlayableEncoderControl(SendValueEncoderControl):
 
 class MaschinePlayableComponent(PlayableComponent, PageComponent, ClipNotesSelectMixin, Pageable, PitchProvider, Renderable):
     """
-    MIDI keyboard component with scale following, pitch bending, and octave select buttons
+    MIDI keyboard component with scale following, pitch bending, and octave select buttons.
     """
     octave_select_buttons = control_matrix(ButtonControl)
     pitchbend_encoder = PlayableEncoderControl()
@@ -315,6 +313,9 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, ClipNotesSelec
         self._update_led_feedback()
 
     def _update_scale_info(self):
+        """
+        Update list of scale notes (across the all octaves) and root notes.
+        """
         scale_mode = self._scale_system.scale_mode if self._scale_system != None else False
         scale_changed = False
         if self._scale_notes_only != scale_mode or self._root_note != self.song.root_note or self._intervals != self.song.scale_intervals:
@@ -348,7 +349,15 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, ClipNotesSelec
         return scale_changed
 
     def _adjust_position(self, first_pad_note, root_note_only = False):
-        # Adjust scroll position near to previous first pad note
+        """
+        Adjust scroll position according to note number of pad 1 and current scale configuration.
+
+        Args:
+            first_pad_note(int): Current note number of pad 1.
+            root_note_only(bool):
+                `True` if the result snaps to nearest root note.
+                Otherwise, select the note from available scale notes.
+        """
         nearest_note = 0
 
         for note in (self._octave_root_notes if root_note_only else self.available_notes):

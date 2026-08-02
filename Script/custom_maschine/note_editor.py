@@ -29,12 +29,12 @@ GRID_RESOLUTION_NAMES = {
 
 class CustomStepSequenceComponent(StepSequenceComponent, Renderable):
     """
-    Extended step sequence editor
+    Step sequencer with additional features.
      
-    This version implements:
-    - Select individual step note selection
-    - Grid resolution change notification 
-
+    This version has:
+        - Selectable new note velocity (through `CustomNoteEditorComponent`)
+        - Individual and additive step note selection (through `CustomNoteEditorComponent`)
+        - Notification for grid resolution changes
     """
     def __init__(
             self,
@@ -67,6 +67,7 @@ class CustomStepSequenceComponent(StepSequenceComponent, Renderable):
 
 class CustomNoteEditorComponent(NoteEditorComponent):
     """
+    Step sequence note editor with extra note selection feature.
     """
     select_button = ButtonControl(color = None)
 
@@ -97,6 +98,16 @@ class CustomNoteEditorComponent(NoteEditorComponent):
             return 100
         
     def _on_pad_released(self, pad, **k):
+        """
+        Perform add, remove, or select notes in the clip.
+
+        If `select_button` is pressed, select corresponding notes in the clip instead of add or remove operation.
+
+        Args:
+            pad(ButtonControl): Pad that caused release event.
+            **k: Additional arguments that pass to `_on_release_step` method.
+                Only `can_add_or_remove` entry is valid for now.
+        """
         if self.select_button.is_pressed:
             if self.is_enabled() and self._has_clip() and self._can_edit() and self._can_press_or_release_step(pad):
                 row, column = pad.coordinate

@@ -36,6 +36,11 @@ from Live.Clip import ( # type: ignore
 from .logger import logger
 
 class ClipLaunchQuantizationList():
+    """
+    Data source wrapper of `Live.Clip.ClipLaunchQuantization`.
+
+    Used by `CustomEnumWrappingParameter`.
+    """
     values = [
         ClipLaunchQuantization.q_global,
         ClipLaunchQuantization.q_none,
@@ -53,6 +58,7 @@ class ClipLaunchQuantizationList():
         ClipLaunchQuantization.q_sixteenth_triplet,
         ClipLaunchQuantization.q_thirtysecond,
     ]
+    """Enum values ordered in ascending order of underlying int value."""
 
     value_strings = [
         "Global",
@@ -71,6 +77,7 @@ class ClipLaunchQuantizationList():
         "1/16T",
         "1/32",
     ]
+    """Corresponding strings of `values`."""
 
     @staticmethod
     def to_string(value):
@@ -78,12 +85,18 @@ class ClipLaunchQuantizationList():
         return ClipLaunchQuantizationList.value_strings[index]
 
 class LaunchModeList():
+    """
+    Data source wrapper of `Live.Clip.LaunchMode`.
+
+    Used by `CustomEnumWrappingParameter`.
+    """
     values = [
         LaunchMode.trigger,
         LaunchMode.gate,
         LaunchMode.toggle,
         LaunchMode.repeat,
     ]
+    """Enum values ordered in ascending order of underlying int value."""
 
     value_strings = [
         "Trigger",
@@ -91,6 +104,7 @@ class LaunchModeList():
         "Toggle",
         "Repeat",
     ]
+    """Corresponding strings of `values`."""
 
     short_value_strings = [
         "Trig",
@@ -98,6 +112,7 @@ class LaunchModeList():
         "Tgle",
         "Rept",
     ]
+    """Corresponding short strings of `values`."""
 
     @staticmethod
     def to_string(value):
@@ -110,6 +125,11 @@ class LaunchModeList():
         return LaunchModeList.short_value_strings[index]
 
 class WarpModeList():
+    """
+    Data source wrapper of `Live.Clip.WarpMode`.
+
+    Used by `CustomEnumWrappingParameter`.
+    """
     values = [
         WarpMode.beats,
         WarpMode.tones,
@@ -119,6 +139,7 @@ class WarpModeList():
         WarpMode.rex,
         WarpMode.complex_pro,
     ]
+    """Enum values ordered in ascending order of underlying int value."""
 
     value_strings = [
         "Beats",
@@ -129,19 +150,26 @@ class WarpModeList():
         "Rex",
         "Pro",
     ]
+    """Corresponding strings of `values`."""
 
     @staticmethod
     def to_string(value):
         index = WarpModeList.values.index(value)
         return WarpModeList.value_strings[index]
 
+# TODO: Separate these parameter wrappers to dedicated file
 def bool_to_display_value(value, off_value, on_value):
     return on_value if value else off_value
 
 bool_on_off = partial(bool_to_display_value, off_value = "Off", on_value = "On")
 
 class BoolWrappingParameter(WrappingParameter):
-    is_enabled = True
+    """
+    Python property wrapper especially for `bool`.
+
+    This class is used for modifying property from `MappedSensitivitySettingControl` and `MappedButtonControl`.
+    """
+    is_enaled = True
     is_quantized = True
 
     def __init__(self,
@@ -184,6 +212,13 @@ class BoolWrappingParameter(WrappingParameter):
         return 1
     
 class CustomEnumWrappingParameter(EnumWrappingParameter):
+    """
+    Extended Python property wrapper especially for enum.
+
+    This version has:
+        - Replace property host method
+        - Replace value host (data source of available choices) method
+    """
     def __init__(self,
         index_property_host = None,
         values_host = None,
@@ -214,11 +249,15 @@ class CustomEnumWrappingParameter(EnumWrappingParameter):
         except EventError:
             pass
 
-    
 # Max clip length is 1 year in 120BPM (taken from Push 2)
 MAX_CLIP_LENGTH = 365 * 24 * 3600 * 2.0
     
 class BeatOrTimeWrappingParameter(WrappingParameter):
+    """
+    Python property wrapper especially for clip time / length parameters.
+
+    This was abandoned, maybe delete it later.
+    """
     min = -MAX_CLIP_LENGTH
     max = MAX_CLIP_LENGTH
 
@@ -242,6 +281,11 @@ class BeatOrTimeWrappingParameter(WrappingParameter):
         pass
 
 class CustomValueStepper():
+    """
+    Convert continous value movement to stepped movement.
+
+    Also, this can change step count dynamically.
+    """
     _step_count = 0
     _step_value = 0.0
 
@@ -281,25 +325,33 @@ COARSE_GAIN_RESOLUTION = 0.005
 FINE_GAIN_RESOLUTION = 0.001
 
 class EncoderCallbackSet:
+    """
+    Encoder rotation, touch, and release events callback holder.
+    """
     value_changed = None
     touched = None
     released = None
 
     def __init__(self, value_changed = nop, touched = nop, released = nop):
+        """
+        Args:
+            value_changed(Callable[[int, EncoderControl], None]): Callback for encoder value change.
+            touched(Callable[[ButtonControl], None]): Callback for encoder touch event.
+            released(Callable[[ButtonControl], None]): Callback for encoder release event.
+        """
         self.value_changed = value_changed
         self.touched = touched
         self.released = released
 
 class ClipEditorComponent(Component, Renderable):
     """
-    MIDI / Audio clip editor
+    MIDI / Audio clip editor.
 
-    This component offers functionalities almost same as Push
-    And some extra features are added:
-    - Launch quantization control
-    - Legato ON / OFF
-    - Tweak selected notes' position / length / velocity
-        - Not limited to working with step sequencer
+    Push-style clip editor with some extra features:
+        - Launch quantization control
+        - Legato ON / OFF
+        - Tweak position / length / velocity of selected notes
+            - It works as same as step sequencer, but for selected notes
     """
     bank_size = DEFAULT_BANK_SIZE
 
@@ -479,19 +531,35 @@ class ClipEditorComponent(Component, Renderable):
         return f"{minutes:>3}:{seconds:>2}.{round(float_part * 1000):>3}"
 
     def _to_bars_string(self, float_beats, numerator, denominator, is_position = False):
+        """
+        Convert float beat length to human friendly format like `1.2.3`.
+
+        Args:
+            float_beats(float): Beat count or length in float.
+            numerator(int): Numerator of time signature.
+            dneominator(int): Denominator of time signature.
+            is_position(bool): `True` if `float_beats` is position (starts from 1.1.1).
+
+        Returns:
+            str: String converted from `float_beats`.
+        """
         multiplier = denominator / 4.0
         float_beats *= multiplier
         if float_beats >= 0.0:
+            # Positive side
+            # Just calculate division and modulo with using time signature
             float_part, int_part = modf(float_beats)
             offset = 1 if is_position else 0
             bars = int(int_part / numerator) + offset
             beats = int(int_part % numerator) + offset
             sixteenth = int(float_part / (0.25 * multiplier)) + offset
         else:
+            # Negative side
+            # Number of bars is decreasing, but beats and sixteenth are increasing inside each bar
             float_beats = abs(float_beats)
             bars = ceil(float_beats / numerator)
 
-            # Calculate beats and sixteenth notes count by using relative position from start of a bar
+            # Calculate beats and sixteenth counts as relative distance from start of current bar
             sub_bar_length = bars * numerator - float_beats
             beats = int(sub_bar_length) + 1
             sixteenth = int(modf(sub_bar_length)[0] / (0.25 * multiplier)) + 1
@@ -777,6 +845,7 @@ class ClipEditorComponent(Component, Renderable):
             self._clip.apply_note_modifications(selected_notes)
 
     def _dump_clip(self, clip):
+        # For debug use only
         for attr in dir(clip):
             if not attr.startswith("__"):
                 try:

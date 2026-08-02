@@ -19,11 +19,14 @@ from .logger import logger
 
 class ClipNotesSelectMixin():
     """
-    Mix-in helper for PlayableComponent to implement clip note manipulations
+    Mix-in helper for `PlayableComponent` to implement clip note manipulations.
     """
     select_note_button = ButtonControl(color = None)
+    """Modifier button for note selection."""
     erase_note_button = ButtonControl(color = None)
-    # TODO: Add quantize selected pitch feature
+    """Button for erasing selected notes in a clip."""
+    quantize_pitch_button = ButtonControl(color = None)
+    """Modifier button for note quantize."""
 
     _sequencer_clip = None
     _trigger_deselect = True
@@ -34,6 +37,11 @@ class ClipNotesSelectMixin():
         self._sequencer_clip = sequencer_clip
 
     def select_notes(self, pitch):
+        """
+        Select notes by pitch.
+
+        This method clears note selection at the first call after `select_note_button` was pressed.
+        """
         clip = self._sequencer_clip.clip
         if clip != None:
             notes = clip.get_notes_extended(
@@ -47,6 +55,11 @@ class ClipNotesSelectMixin():
                 clip.deselect_all_notes()
                 self._trigger_deselect = False
             clip.select_notes_by_id(note_ids)
+
+    def quantize_pitch(self, pitch):
+        clip = self._sequencer_clip.clip
+        if clip != None:
+            clip.quantize_pitch(pitch, self.song.midi_recording_quantization, 1.0)
 
     @select_note_button.value
     def _on_note_select_button_changed(self, value, button):
@@ -68,10 +81,20 @@ class ClipNotesSelectMixin():
             clip.remove_notes_by_id([note.note_id for note in selected_notes])
 
     def _set_control_pads_from_script(self, takeover_pads):
+        """
+        Control script-forwarding mode by takeover mode and modifier button state.
+
+        If any of modifiers are pressed, the script prevents sending MIDI messages to Live's track by taking over the pads.
+        This method overrides the corresponding method of the `PlayableComponent`.
+        """
+        # TODO: Add quantize_pitch_button to handle correctly.
         super()._set_control_pads_from_script(takeover_pads or self.select_note_button.is_pressed)
 
     def process_pad_pressed(self, button):
         if self.select_note_button.is_pressed:
             pitch, _ = self._note_translation_for_button(button)
             self.select_notes(pitch)
+        elif self.quantize_pitch_button.is_pressed:
+            pitch, _ = self._note_translation_for_button(button)
+            self.quantize_pitch(pitch)
     

@@ -13,7 +13,6 @@ from ableton.v3.control_surface.skin import Skin, BasicColors
 from ableton.v3.control_surface.elements import SimpleColor, RgbColor, create_rgb_color
 from ableton.v3.live.util import liveobj_valid
 
-
 # Rules of color space use
 #
 # Maschine's indexed colors:
@@ -21,14 +20,14 @@ from ableton.v3.live.util import liveobj_valid
 # These colors classified as 17 base colors and 4 brightness levels.
 #
 # Live's indexed colors:
-# Live has 70 color variations, actual color of these are affected by theme settings.
+# Live has 70 color variations, actual RGB code is affected by theme settings.
 #  
 # For balancing visibility and color matching, I set up these rules.
 # 1. Colors for objects (track, clip, scene, drum pad)
 # Object colors are mapped to level 2 to 4 brightness colors with few exceptions.
 # We don't use brightest white as object color, it's used for accent of pressed or selected states.
 # And we use level 1 brightness white for displaying dark gray instead.
-# Total variation is 17 * 3 = 51, thus some colors map to same indexed color.
+# Total variation is 17 * 3 = 51, this means some Live's colors map to the same Maschine's color.
 # 
 # 2. Colors for keyboard & group buttons
 # Colors of each pads based on its track color.
@@ -69,7 +68,6 @@ LEVEL_1 = 0
 LEVEL_2 = 1
 LEVEL_3 = 2
 LEVEL_4 = 3
-
 
 def make_color(base, level):
     return SimpleColor(4 * base + level)
@@ -173,8 +171,19 @@ LIVE_COLOR_MAP = {
     68: (FUCHSIA, LEVEL_3), 
     69: (WHITE, LEVEL_1)
 }
+"""Table for associating Live's indexed colors and Maschine's LED colors."""
 
 def make_color_from_element(element):
+    """
+    Create `SimpleColor` instance that represents element's assigned color.
+
+    Args:
+        element(Any): Any Live object with `color_index` property.
+
+    Returns:
+        SimpleColor: Color instance if `element` has color, otherwise returns white color (brightness level 3).
+        Returns `BasicColors.OFF` for invalid element.
+    """
     if liveobj_valid(element):
         if element.color_index != None:
             return make_color(*LIVE_COLOR_MAP.get(element.color_index, (0, 0)))
@@ -185,6 +194,17 @@ def make_color_from_element(element):
         return BasicColors.OFF
 
 def make_keyboard_color(element, accent = False, group = False):
+    """
+    Create `SimpleColor` instance for pads and group buttons in MIDI keyboard mode.
+
+    Args:
+        element(Live.Track.Track): Track object.
+        accent(bool): `True` if a pad distincts from other pads. This flag inverts brightness of original element color.
+        group(bool): `True` if this function creates a color for group buttons. This flag slightly adjusts original element color.
+
+    Returns:
+        SimpleColor: Color instance for a pad. It inherits track color, but brightness is adjusted by options.
+    """
     if liveobj_valid(element):
         if element.color_index != None:
             base_color, brightness = LIVE_COLOR_MAP.get(element.color_index, (0, 0))
@@ -197,14 +217,47 @@ def make_keyboard_color(element, accent = False, group = False):
     return BasicColors.OFF
 
 def make_velocity_color(element, level = LEVEL_1):
+    """
+    Create `SimpleColor` instance for pads in 16 fixed level velocity mode.
+
+    Args:
+        element(Live.Track.Track): Track object.
+        level(int): Brightness level. Must be any of `LEVEL_1` to `LEVEL_4`.
+
+    Returns:
+        SimpleColor: A color inherits track color and has specific brightness.
+    """
     if liveobj_valid(element):
         if element.color_index != None:
             base_color, brightness = LIVE_COLOR_MAP.get(element.color_index, (0, 0))
             return make_color(base_color, level)
-    BasicColors.ON
+    return make_color(WHITE, level)
 
 class MaschineLEDColors:
+    """
+    Skin color definition.
 
+    Name of sub-class represents category name.
+    Category can be nested and have a different name from component.
+
+    There are 3 ways to use skin colors in components:
+    - Apply fixed color
+
+        Just set color name to control.
+        Example: `button.color = "Device.On"`
+
+    - Apply skin color based on live object to represent
+
+        Create `LiveObjSKinEntry` instance with color name and live object.
+        The skin definition needs to be a function that takes an live object as only argument.
+        Define a custom rule of color conversion from object property to controller specific color code.
+        Example: `button.color = LiveObjSkinEntry("Keyboard.ScaleNote", target_track)`
+
+    - Apply fixed color with fallback option
+
+        You can add fallback option by using `OptionalSkinEntry`.
+        Example: `button.color = OptionalSkinEntry("Keyboard.ScaleNote", "DefaultButton.On")`
+    """
     class DefaultButton:
         On = BasicColors.ON
         Off = BasicColors.OFF

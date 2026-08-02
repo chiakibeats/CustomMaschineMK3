@@ -24,9 +24,9 @@ from .clip_notes_select import ClipNotesSelectMixin
 
 class CustomSlicedSimplerComponent(ClipNotesSelectMixin, SlicedSimplerComponent):
     """
-    PlayableComponent especially for Simpler device's slice playback mode
+    Playable component for the Simpler device with slicing mode.
     
-    Like CustomDrumGroupComponent, this has page jump buttons to ensure triggering all 64 slices
+    Like the `CustomDrumGroupComponent`, this component has page jump buttons to access the all 64 slices.
     """
     _select_buttons = control_list(ButtonControl, control_count = 4, color = None)
     _has_slice_list = [False] * 4
@@ -35,14 +35,29 @@ class CustomSlicedSimplerComponent(ClipNotesSelectMixin, SlicedSimplerComponent)
         super().__init__(*a, **k, matrix_always_listenable = True)
 
     def set_select_buttons(self, matrix):
+        """
+        Assign matrix element to the internal control. 
+        Calculation of slice group depends on size of this control, so it triggers updates.
+
+        Args:
+            matrix(ButtonMatrixElement): Matrix element to assign.
+        """
         self._select_buttons.set_control_element(matrix)
         self._update_slice_group()
         self._update_led_feedback()
 
     @_select_buttons.pressed
     def _on_select_buttons_pressed(self, target_button):
+        """
+        Jump to specific slice page.
+        
+        Args:
+            target_button(ButtonControl): Button that triggered event.
+        """
         for button in self._select_buttons:
             if button == target_button:
+                # SlicedSimplersComponent arranges 64 slices in a 4 * 16 grid.
+                # To implement page jump, the scroll position moves by multiple of 4.
                 self.position = button.index * 4
                 logger.info(f"Slice group selected index = {button.index}")
 
@@ -67,6 +82,7 @@ class CustomSlicedSimplerComponent(ClipNotesSelectMixin, SlicedSimplerComponent)
             else:
                 new_color = "SlicedSimpler.Group"
 
+            # Highlight page buttons that intersect with current slice view.
             start_position = button.index * 4
             intersects = any([pos >= start_position and pos < start_position + 4 for pos in [self.position, self.position + 3]])
             if intersects:
@@ -79,6 +95,7 @@ class CustomSlicedSimplerComponent(ClipNotesSelectMixin, SlicedSimplerComponent)
         button.pressed_color = LiveObjSkinEntry("SlicedSimpler.SlicePressed", self._target_track.target_track)
 
     def _update_slice_group(self):
+        """Update slice page availability."""
         slices = self._slices()
         logger.debug(f"Update slice group slices = {slices}, length = {len(slices)}")
         for index in range(self._select_buttons.control_count):

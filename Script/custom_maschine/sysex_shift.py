@@ -13,15 +13,21 @@ from .logger import logger
 
 class SysexShiftButton(SysexElement):
     """
-    Sysex button with message forwarding to normal ButtonElement
+    Sysex button with message forwarding to normal `ButtonElement`.
     """
     def __init__(self, target_button, *a, **k):
+        """
+        Args:
+            target_button(ButtonElement): Target of MIDI message forwarding.
+        """
         super().__init__(*a, **k)
         self._target_button = target_button
+        # TODO: Delete this variable because of not used.
         self._last_receive_value = None
 
     @property
     def target_button(self):
+        """Get or set target of message forwarding."""
         return self._target_button
     
     @target_button.setter

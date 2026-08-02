@@ -25,15 +25,22 @@ from .logger import logger
 
 class ScaleSystemComponent(Component, Renderable):
     """
-    Live scale control component
+    Live's scale system control.
+
+    This component works in both Live 11 and 12.
+    In Live 11, this component has dedicated active state property because of no corresponding property in Live side.
     """
     select_encoder = StepEncoderControl(num_steps = 64)
     toggle_button = ButtonControl(color = None)
     # For LED feedback & root note control
     up_button = ButtonControl(color = "Scale.Off", on_color = "Scale.On")
+    """Button for changing the root note to 1 semitone upper."""
     down_button = ButtonControl(color = "Scale.Off", on_color = "Scale.On")
+    """Button for changing the root note to 1 semitone lower."""
     left_button = ButtonControl(color = "Scale.Off", on_color = "Scale.On")
+    """For LED feedback purpose only."""
     right_button = ButtonControl(color = "Scale.Off", on_color = "Scale.On")
+    """For LED feedback purpose only."""
 
     _all_scales_list = [name for name, intervals in Song.get_all_scales_ordered()]
     _selected_scale_index = 0
@@ -41,6 +48,10 @@ class ScaleSystemComponent(Component, Renderable):
     _internal_scale_mode = False
 
     def __init__(self, name = "Scale_System", *a, **k):
+        """
+        Args:
+            name(str): Component name. This should keep default.
+        """
         super().__init__(name, *a, **k)
         if application().get_major_version() == 11:
             # Live 11 don't have access to scale mode state.

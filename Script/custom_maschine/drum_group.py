@@ -25,12 +25,13 @@ DEFAULT_GROUP_SIZE = 16
 
 class CustomDrumGroupComponent(DrumGroupComponent, ClipNotesSelectMixin):
     """
-    PlayableComponent especially for Drum Rack device
+    Extended DrumGroupComponent (PlayableComponent for Drum Rack device).
     
-    This extended version has page jump buttons
-    
-    Which is intended to use Maschine's group buttons as quick page jump
-
+    This version has:
+        - Page jump buttons which are intended to use with Maschine's group buttons
+            - Each button's LED indicates the page has any pad with device or not
+        - Clip note manipulations (provided by mix-in class)
+        - Clear all mute / solo flags button
     """
     select_buttons = control_matrix(ButtonControl, color = None)
     clear_all_solo_button = ButtonControl(color = None)
@@ -68,8 +69,8 @@ class CustomDrumGroupComponent(DrumGroupComponent, ClipNotesSelectMixin):
         for button, has_chain in zip(self.select_buttons, self._has_chain_list):
             row, column = button.coordinate
 
-            # check visible pads window intersects each group regions
-            # testing lower row (position) and upper row (position + 3) 
+            # Check visible pads window intersects each group region
+            # Testing lower row (position) and upper row (position + 3)
             start_position = int(self._group_start_notes[row * self.width + column] / 4)
             position = self._drum_group_scroller.position
             intersects = any([pos >= start_position and pos < start_position + 4 for pos in [position, position + 3]])
@@ -134,6 +135,6 @@ class CustomDrumGroupComponent(DrumGroupComponent, ClipNotesSelectMixin):
         self._update_led_feedback()
 
     def _get_actual_group_scroll_position(self, group_index):
-        # make sure not exceeding max scroll position when selecting last group
+        # Make sure not exceeding max scroll position when selecting last group
         start_note = min(self._group_start_notes[group_index], 128 - self.matrix.control_count)
         return int(start_note / 4)

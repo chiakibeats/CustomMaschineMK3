@@ -86,8 +86,19 @@ from .pageable_background import PageableBackgroundComponent
 from .logger import logger
 from . import config
 
+# TODO: Reconsider is this modification matters or not.
 class CustomTargetTrackComponent(TargetTrackComponent):
-        
+    """
+    TargetTrackComponent with custom behaviour.
+
+    When the selected track was changed in the session view, TargetTrackComponent update the target clip.
+    Target clip is the property of which clip is focused on.
+    It is referenced from various components like step sequencer, clip editor, and clip manipulation mix-in.
+
+    The original version always selects playing clip in the clip slots, that is a bit confusing.
+
+    This version selects the clip based on selected scene index to match the selection of Live's UI.
+    """
     def _target_clip_from_session(self):
         slot_index = scene_index()
         if slot_index < len(self._target_track.clip_slots):
@@ -106,21 +117,46 @@ class CustomTargetTrackComponent(TargetTrackComponent):
 
 
 class Specification(ControlSurfaceSpecification):
+    """
+    Collection of control surface characteristics.
+    """
     elements_type = ControlElements
+    """Class name of the repository of elements (MIDI button / knob representation)."""
     control_surface_skin = MaschineSkin
+    """Instance of `Skin` class, that contains a definition of LED feedback."""
     display_specification = MaschineDisplay if config.LCD_ENABLED else None
+    """Instance of `DisplaySpecification` class, that contains procedures of composing views."""
     num_scenes = 4
+    """Height of the session box."""
     num_tracks = 4
+    """Width of the session box."""
     include_returns = True
+    """If the session box can intersect with return tracks, set to `True`."""
     include_master = True
+    """If the session box can intersect with the master track, set to `True`."""
     include_auto_arming = True
+    """Related to auto arm, but it seems to be not used."""
     target_track_component_type = CustomTargetTrackComponent
+    """Class that manages the behaviour of selecting and changing the target track."""
     continuous_parameter_sensitivity = 2.0
+    """Continuous parameter sensitivity (e.g. filter frequency, delay feedback)."""
     quantized_parameter_sensitivity = 0.2
+    """Quantized parameter sensitivity (e.g. filter type, delay length in beats)."""
     identity_response_id_bytes = [0x00, 0x00, 0x00]
+    """
+    Response data of identification process.
+
+    This process is usually done by sending MIDI identity request of the MIDI specification.
+    Unfortunately, maschine controllers don't respond to this message, so it's just a placeholder.
+    
+    Note: You can use custom identification process by changing `identity_request` and `custom_identity_response` value.
+    """
     create_mappings_function = create_mappings
+    """Function to build mappings between components and control elements."""
     recording_method_type = FixedLengthRecordingMethod
+    """Class that manages behaviour of the recording mode in session view."""
     feedback_channels = [DEFAULT_NOTE_TRANSLATION_CHANNEL, DEFAULT_SIMPLER_TRANSLATION_CHANNEL, DEFAULT_DRUM_TRANSLATION_CHANNEL]
+    """MIDI channels used in playing note feedback."""
     component_map = {
         "Pageable_Background": PageableBackgroundComponent,
         "Settings": SettingsComponent,
@@ -143,12 +179,20 @@ class Specification(ControlSurfaceSpecification):
         "Maschine_Playable": MaschinePlayableComponent,
         "Misc_Control": MiscControlComponent,
         "Device_Navigation": CustomDeviceNavigationComponent,
+        # TODO: Bring custom component initializations into this class.
     }
+    """
+    List of components used at control surface.
+
+    Each key value must be equal to a name specified in component's constructor.
+    """
     parameter_bank_definitions = CUSTOM_BANK_DEFINITIONS
+    """Parameter bank definitions used at DeviceComponent."""
 
 class BypassIdentification(IdentificationComponent):
     def request_identity(self):
         logger.info("Request identity")
+        # Toggle the identified flag to notify being identified to Live.
         self.is_identified = False
         sleep(0.01)
         self.is_identified = True
@@ -168,11 +212,11 @@ CUSTOM_GRID_RESOLUTIONS = (
 #    GridResolution("1/32", 0.125, GridQuantization.g_thirtysecond, False),
 #    GridResolution("1/32t", 0.08333333333333333, GridQuantization.g_thirtysecond, True),
 )
-GRID_DEFAULT_INDEX = 4
+GRID_DEFAULT_INDEX = 4 # 1/16
 
 class CustomMaschineBase(ControlSurface):
     """
-    Base class of all Maschine control surfaces
+    Base class of all Maschine control surfaces.
     """
     _grid_resolution = None
     _sequencer_clip = None
@@ -190,6 +234,10 @@ class CustomMaschineBase(ControlSurface):
     _settings = None
 
     def __init__(self, *a, **k):
+        """
+        Args:
+            c_instance: (Keyword argument) Special object came from Live app.
+        """
         # Settings must be loaded before initialization
         self._settings = SettingsRepository()
         self._init_specification()
@@ -202,6 +250,9 @@ class CustomMaschineBase(ControlSurface):
         self.register_slot(self.component_map["Display_Modes"], self._on_display_mode_changed, "selected_mode")
     
     def _init_specification(self):
+        """
+        Add components to `Specification` class according to setting value.
+        """
         Specification.component_map["Device"] = partial(
             CustomDeviceComponent,
             device_decorator_factory = CustomDeviceDecoratorFactory(),
@@ -232,9 +283,12 @@ class CustomMaschineBase(ControlSurface):
         Specification.component_map["Mixer"] = mixer_component
 
     def _on_update_triggered(self):
+        """
+        Refresh all LED states & component states.
+
+        It takes long time because of recursive process.
+        """
         if self.elements.variation.is_pressed:
-            # Refresh all LED states & component states
-            # It takes long time because of recursive process
             logger.info("Display update triggered")
             self.refresh_state()
 
@@ -248,10 +302,14 @@ class CustomMaschineBase(ControlSurface):
         # This wait doesn't affect response speed, unless if you can play pads at 999 BPM...
         sleep(0.0005)
 
-    # Session ring highlight is enabled only if hardware is identified by identity request
-    # Unfortunately, maschine doesn't respond to this message, so this process is bypassed
-    # TODO: Replace this with monkey patch for smarter solution
     def _create_identification(self, specification):
+        """
+        Create `IdentificationComponent` and do some patching to disable identification.
+        
+        Live's session box appears only when the identification process succeeded.
+        But Maschine doesn't respond to sysex identification request, so I made it bypassed.
+        """
+        # TODO: Replace this with monkey patch for smarter solution
         #return super()._create_identification(specification)
         identification = BypassIdentification(
             identity_request = specification.identity_request,
@@ -262,6 +320,7 @@ class CustomMaschineBase(ControlSurface):
 
         return identification
 
+    # lazy_attribute means the function will be called only once, and its return value is cached for subsequent calls.
     @lazy_attribute
     def _create_grid_resolution(self):
         self._grid_resolution = GridResolutionComponent(resolutions = CUSTOM_GRID_RESOLUTIONS, default_index = GRID_DEFAULT_INDEX)
@@ -279,10 +338,22 @@ class CustomMaschineBase(ControlSurface):
         return self._blinker
     
     def _get_knob_mapped_parameter(self, index):
+        """
+        Return `DeviceParameter` object mapped to Maschine's 8x knobs.
+
+        Args:
+            index(int): Index of knob.
+        
+        Returns:
+            DeviceParameter | None: A parameter currently mapped to specified knob, or `None` if no parameter is mapped.
+        """
         if index >= 0 and index < len(self.elements.knobs_raw):
             return self.elements.knobs_raw[index].mapped_parameter()
 
     def _get_additional_dependencies(self):
+        """
+        Create additional objects for DI container.
+        """
         # TODO: Call original version and add objects to return value
         # Register objects to DI container
         # Dict key name came from @depends decorator of each component classes
@@ -300,6 +371,11 @@ class CustomMaschineBase(ControlSurface):
         return inject_dict
 
     def setup(self):
+        """
+        Setup components.
+
+        This function is called inside `ControlSurface.__init__()`.
+        """
         super().setup()
         # This enables pad note feedback
         self.set_can_update_controlled_track(True)
@@ -321,6 +397,12 @@ class CustomMaschineBase(ControlSurface):
             self.component_map["Note_Repeat"].set_group_button_control(group_button_control)
 
     def disconnect(self):
+        """
+        Perform cleanup.
+
+        This function is called when the control surface is about to dispose.
+        After `disconnect` method of super class was called, all components and control elements are disposed.
+        """
         super().disconnect()
 
         # Save settings
@@ -335,6 +417,9 @@ class CustomMaschineBase(ControlSurface):
         self._send_midi((0xE0, 0x00, 0x00))
 
     def _on_playable_mode_selected(self):
+        """
+        Dispatch a suitable mode according to the instrument on the device chain.
+        """
         logger.info(f"keyboard button state = {self.elements.keyboard.is_pressed}")
         if self.elements.keyboard.is_pressed:
             with self.component_guard():
@@ -351,6 +436,9 @@ class CustomMaschineBase(ControlSurface):
         self.elements.keyboard.send_value(MaschineSkin[f"DefaultButton.{state}"].midi_value)
 
     def _on_display_mode_changed(self, component):
+        """
+        Perform actions associated with mode changes of upper half of the Maschine controller.
+        """
         mode = self.component_map["Display_Modes"].selected_mode
         if self._display_mode == "custom":
             self._refresh_track_buttons_state(mode)
@@ -371,9 +459,12 @@ class CustomMaschineBase(ControlSurface):
         self.application.view.focus_view(target_view)
 
     def _refresh_track_buttons_state(self, mode):
-        # LED state sync failure happens when the display mode switched from the MIDI mapping mode to an another mode
-        # Triggering update manually to sync LED state
-        # It only refreshes newly selected mode, to reduce frequent update
+        """
+        Triggering update manually to sync LED state.
+        
+        LED state sync failure happens when the display mode switched from the MIDI mapping mode to an another mode.
+        It only refreshes newly selected mode to avoid frequently update.
+        """
         logger.info("Trigger upper button state update")
 
         with self.component_guard():

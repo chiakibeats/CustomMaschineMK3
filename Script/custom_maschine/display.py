@@ -79,13 +79,24 @@ def to_pan_or_gain_value(knob):
         return adjust_gain_string(knob.parameter_value)
 
 class Content:
+    """Display content container."""
     lines = [""] * 4
 
+# TODO: Having both variables for knobs and encoder is redundant, replace with 2 TouchStates instances.
+# TODO: The name TouchStates is questionable, maybe ActiveKnobDetector or something is more favorable.
 class TouchStates:
     """
-    Active touch knob detector
+    Active knob detection.
+
+    Active knob is a knob that was touched most recently, and stays touched until now.
+    Release delay sustains the calculated active state a little bit longer.
     """
     def __init__(self, release_delay = 0.4, knob_count = 8):
+        """
+        Args:
+            release_delay(float): Delay time from actual release event to applying its change in seconds.
+            knob_count(int): Total count of the grouped knobs.
+        """
         self._knob_count = knob_count
         self._knobs = [False] * self._knob_count
         self._encoder = False
@@ -97,6 +108,11 @@ class TouchStates:
 
     @property
     def active_index(self):
+        """
+        Active knob index from `0`.
+
+        Return `-1` if any knobs are touched.
+        """
         return self._active_index
         
     @active_index.setter
@@ -113,6 +129,7 @@ class TouchStates:
 
     def update(self, knobs_touched, encoder_touched):
         for index in range(min(self._knob_count, len(knobs_touched))):
+            # Calculate "now - before" to detect touched (positive), released (negative), or unchanged (zero).
             result = (1 if knobs_touched[index] else 0) - (1 if self._knobs[index] else 0)
             self._knobs[index] = knobs_touched[index]
 
@@ -156,13 +173,28 @@ class TouchStates:
 
 TOUCH_STATES = TouchStates()
 
+from ableton.v3.control_surface.display.notifications.all import Notifications
+
 class Notifications(DefaultNotifications):
     """
-    Custom notification messages
+    Custom notifications.
 
-    DefaultNotifications.DefaultText() means use default message
+    Live's V3 API allows us to customize notifications partially from its default.
 
-    These messages will send to NotificationView
+    Basic definition of notification is like this:
+    ```
+    class Category:
+        subject = "Ding, ding!\\n{}".format
+        subject: "Notification[Fn[str]]"
+    ```
+    Notification entry is a member of a class. It should (probably must) have type annotation.
+    `Notifications` class can have entries directly, but it should be in child class to organize better.
+    Each notification entry can be a function to receive contextual parameters, instead of a plain string.
+    
+    To trigger notification, call `notify` method in a component, that is inherited from `Renderable` class.
+    ```
+    self.notify(self.notifications.Category.subject, "Hi~")
+    ```
     """
     class Device(DefaultNotifications.Device):
         lock = DefaultNotifications.DefaultText()
@@ -258,7 +290,7 @@ def create_root_view():
                 warp = WarpModeList.to_string(clip.warp_mode) if clip.warping else "No Warp"
                 pitch = f"{clip.pitch_coarse + clip.pitch_fine * 0.01:+.2f}st"
                 gain = adjust_gain_string(clip.gain_display_string)
-                # 7 + 9 + 9 = 25
+                # 6 + 1 + 8 + 1 + 8 = 24
                 content.lines[3] = f"{gain:<6}|{pitch:>8}|{warp:<8}"
             else:
                 content.lines[1] = f"{launch_mode:<6}|{quantize:<6}|Legato|"
@@ -294,6 +326,9 @@ def create_root_view():
         content.lines[3] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[page * 8 + i for i in [5, 6, 7, 8]])
 
     def knob_control_view(state, content):
+        """
+        Show details of active controlled parameter in selected mode.
+        """
         #logger.info(f"index = {TOUCH_STATES.active_index}")
         display_mode = state.display_modes.selected_mode
         if display_mode == DEVICE_CONTROL and liveobj_valid(state.device.device):
@@ -375,6 +410,9 @@ def create_root_view():
 
     @View
     def main_view(state):
+        """
+        Root view of the display.
+        """
         TOUCH_STATES.update([k.is_pressed for k in state.elements.knob_touch_buttons], state.elements.encodercap.is_pressed)
         content = Content()
         display_mode = state.display_modes.selected_mode
@@ -400,6 +438,11 @@ def create_root_view():
         return content    
 
     def notification_content(state, event):
+        """
+        The notification text sent from components pass to this function.
+
+        This enables additional adoptation for presentation medium.
+        """
         logger.debug(f"notification: {event}")
         content = main_view(state)
         messages = str.splitlines(event)
@@ -414,6 +457,15 @@ def create_root_view():
         main_view)
 
 def protocol(elements):
+    """
+    Display protocol definition.
+
+    Args:
+        elements(Elements): Container of all control elements in the control surface.
+
+    Returns:
+        function((Content) -> None): Function that performs data transfer to MIDI controller.
+    """
 
     def display(content: Content):
         if content:
