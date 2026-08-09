@@ -8,7 +8,7 @@
 #
 # ==================================================
 
-import math
+import re
 from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.display import Renderable
 from ableton.v3.control_surface.mode import pop_last_mode
@@ -29,36 +29,44 @@ from .logger import logger
 
 COLLECTION_COLORS = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Gray"]
 
-# TODO: Consolidate these classes to WrapBrowserItem
-class BrowserCollectionRootItem:
+class BrowserItemListWrapper:
     """
-    Root item of Collections (colored) folders.
+    Wrapper for item list in `Live.Browser.Browser`.
     """
-    def __init__(self, browser):
-        self.name = "Collections"
-        self.children = []
-        self.is_folder = True
-        self.is_device = False
-        self.is_loadable = False
-        self.uri = type(self).__name__
+    def __init__(self, item_list, name, uri = None, source = None):
+        """
+        Args:
+            item_list(list): Item list to hold.
+            name(str): Name of this wrapper object. It appears on display.
+            uri(str | None):
+                URI of this item.
+                Default value is `"ItemList_" + name`.
+                All spaces and path delimiters in `name` are replaced with `_`.
+            source(str | None):
+                Source location of the item.
+                Default value is this class name.
+        """
+        escaped_name = re.sub(r"[\s\\/]", "_", name)
+        self.__item_list = item_list
+        self.__properties = dict(
+            name = name,
+            is_folder = True,
+            is_device = False,
+            is_loadable = False,
+            is_selected = False,
+            uri = uri or f"ItemList_{escaped_name}",
+            source = source or type(self).__name__,
+            children = item_list,
+        )
 
-        for item in browser.colors:
-            self.children.append(item)
+    def __getattr__(self, name):
+        if name in self.__properties:
+            return self.__properties[name]
+        return AttributeError(name)
 
-class BrowserUserFoldersRootItem:
-    """
-    Root item of user folders.
-    """
-    def __init__(self, browser):
-        self.name = "User Files"
-        self.children = []
-        self.is_folder = True
-        self.is_device = False
-        self.is_loadable = False
-        self.uri = type(self).__name__
-
-        for item in browser.user_folders:
-            self.children.append(item)
+    @property
+    def iter_children(self):
+        return iter(self.__item_list)
 
 class WrapBrowserItem:
     """
@@ -75,44 +83,15 @@ class WrapBrowserItem:
             item(Live.Browser.BrowserItem): Browser item to wrap.
             name(str): Name to display instead of its original.
         """
-        self._wrapped_item = item
-        self._name = name
+        self.__item = item
+        self.__name = name
+
+    def __getattr__(self, name):
+        return getattr(self.__item, name)
     
     @property
-    def children(self):
-        return self._wrapped_item.children
-
-    @property
-    def is_device(self):
-        return self._wrapped_item.is_device
-
-    @property
-    def is_folder(self):
-        return self._wrapped_item.is_folder
-
-    @property
-    def is_loadable(self):
-        return self._wrapped_item.is_loadable
-
-    @property
-    def is_selected(self):
-        return self._wrapped_item.is_selected
-
-    @property
-    def iter_children(self):
-        return self._wrapped_item.iter_children
-
-    @property
     def name(self):
-        return self._name
-
-    @property
-    def source(self):
-        return self._wrapped_item.source
-
-    @property
-    def uri(self):
-        return self._wrapped_item.uri
+        return self.__name
 
 class BrowserRootItem:
     """
@@ -131,9 +110,9 @@ class BrowserRootItem:
         """
 
         self.uri = type(self).__name__
-        """URI"""
-        self.children = [BrowserCollectionRootItem(browser)]
-        """List of child items"""
+        """URI of item."""
+        self.children = [BrowserItemListWrapper(browser.colors, "Collections")]
+        """List of child items."""
 
         audio_effects = WrapBrowserItem(browser.audio_effects, "Audio Effects")
         if target_is_midi_track:
@@ -149,7 +128,7 @@ class BrowserRootItem:
             WrapBrowserItem(browser.plugins, "Plug-Ins"),
             browser.packs,
             WrapBrowserItem(browser.current_project, "Current Project"),
-            BrowserUserFoldersRootItem(browser)]
+            BrowserItemListWrapper(browser.user_folders, "User Files")]
 
 
 class BrowserTreeExplorer:
@@ -211,7 +190,6 @@ class BrowserTreeExplorer:
         self._selected_item = root_item.children[0]
         self._selected_item_index = 0
         self._root_item = root_item
-        # TODO: store URI for accurate traverse (items have identical name can be in same folder)
         self._tree_stack = [root_item]
         self._tree_item_count = len(self._tree_stack[-1].children)
     
@@ -386,7 +364,9 @@ class BrowserTreeExplorer:
         Args:
             new_tree_stack(list): New breadcrumb-list. First item of `new_tree_stack` must be same as current root item.
         """
-        # TODO: Add root item check
+        if self._tree_stack[0] != new_tree_stack:
+            return
+        
         self._tree_stack = new_tree_stack
         self._tree_item_count = len(self._tree_stack[-1].children)
         if self._tree_item_count > 0:
@@ -579,8 +559,9 @@ class BrowserComponent(Component, Renderable):
         Refresh LED states.
         """
         item = self._explorer.selected_item
-        # TODO: Check how much len() affecting the browse performance
-        can_enter = False if item == None else item.is_folder or len(item.children) > 0
+        can_enter = False
+        if item != None:
+            can_enter = item.is_folder or len(item.children) > 0
         self.enter_folder_button.is_on = can_enter
         self.leave_folder_button.is_on = self._explorer.tree_depth > 1
         self.jump_next_button.is_on = self._explorer.selected_item_index < self._explorer.item_count - 1
@@ -679,12 +660,12 @@ class BrowserComponent(Component, Renderable):
         Args:
             button(ButtonControl): The button that triggers action.
         """
-        # TODO: Get length from Browser.colors
-        if button.index < 7:
+        if button.index < self.select_folder_buttons.control_count - 1:
             for item in self._root_item.children:
-                if isinstance(item, BrowserCollectionRootItem):
-                    target = item.children[min(button.index, len(item.children) - 1)]
-                    self._explorer.force_navigate_to([self._root_item, item, target])
+                if isinstance(item, BrowserItemListWrapper) and item.uri == "ItemList_Collections":
+                    if button.index < len(item.children):
+                        target = item.children[button.index]
+                        self._explorer.force_navigate_to([self._root_item, item, target])
                     break
         else:
             self._explorer.force_navigate_to([self._root_item])

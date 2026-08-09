@@ -36,6 +36,13 @@ class PageableBackgroundComponent(BackgroundComponent, ScrollComponent, Renderab
     knob_touch_buttons = InputControl
 
     def __init__(self, name = "Pageable_Background", translation_channel = 2, page_count = 2, *a, **k):
+        """
+        Args:
+            name(str): Component name. This should keep default.
+            translation_channel(int): First channel number used in MIDI channel translation (0 based).
+            page_count(int): Total count of custom control pages.
+        """
+
         super().__init__(name, *a, **k)
         self._base_translation_channel = translation_channel
         self._page_count = page_count
@@ -65,10 +72,14 @@ class PageableBackgroundComponent(BackgroundComponent, ScrollComponent, Renderab
 
     def set_learn_button(self, button):
         """
-        Assign element to 
+        Assign element to learn button.
+
+        Learn mode is disabled automatically when the assignment was removed.
+
+        Args:
+            button(ButtonElement): Control element to assign. `None` removes assignment.
         """
         if button == None:
-            # If user leaves from custom mapping mode, learn mode is disabled automatically
             self._learn_enabled = False
             self.learn_button.is_on = False
         self.learn_button.set_control_element(button)
@@ -79,6 +90,11 @@ class PageableBackgroundComponent(BackgroundComponent, ScrollComponent, Renderab
         self._update_learn_state()
 
     def _update_learn_state(self):
+        """
+        Enable / disable learn mode for knobs.
+
+        If learn mode is enabled, touch sensors use the same MIDI CC as the corresponding knob rotation.
+        """
         self.learn_button.is_on = self._learn_enabled
         element_count = min(len(self.user_knobs.control_element), len(self.knob_touch_buttons.control_element))
         if self._learn_enabled:
