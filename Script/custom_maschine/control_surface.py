@@ -11,6 +11,7 @@
 from functools import partial
 from itertools import product
 from time import sleep
+import types
 
 from ableton.v3.base import lazy_attribute, const, listens
 from ableton.v3.live import liveobj_valid, scene_index
@@ -189,14 +190,6 @@ class Specification(ControlSurfaceSpecification):
     parameter_bank_definitions = CUSTOM_BANK_DEFINITIONS
     """Parameter bank definitions used at DeviceComponent."""
 
-class BypassIdentification(IdentificationComponent):
-    def request_identity(self):
-        logger.info("Request identity")
-        # Toggle the identified flag to notify being identified to Live.
-        self.is_identified = False
-        sleep(0.01)
-        self.is_identified = True
-
 DEFAULT_MODE = "default"
 KEYBOARD_MODE = "keyboard"
 DRUMRACK_MODE = "drum_rack"
@@ -309,14 +302,16 @@ class CustomMaschineBase(ControlSurface):
         Live's session box appears only when the identification process succeeded.
         But Maschine doesn't respond to sysex identification request, so I made it bypassed.
         """
-        # TODO: Replace this with monkey patch for smarter solution
-        #return super()._create_identification(specification)
-        identification = BypassIdentification(
-            identity_request = specification.identity_request,
-            identity_request_delay = specification.identity_request_delay,
-            identity_response_id_bytes = specification.identity_response_id_bytes,
-            custom_identity_response = specification.custom_identity_response)
-        self._ControlSurface__on_is_identified_changed.subject = identification
+
+        def bypass_request_identity(self):
+            logger.info("Request identity")
+            # Toggle the flag to notify being identified to Live.
+            self.is_identified = False
+            sleep(0.01)
+            self.is_identified = True
+
+        identification = super()._create_identification(specification)
+        identification.request_identity = types.MethodType(bypass_request_identity, identification)
 
         return identification
 
@@ -353,11 +348,12 @@ class CustomMaschineBase(ControlSurface):
     def _get_additional_dependencies(self):
         """
         Create additional objects for DI container.
+        
+        V3 API has a dependency injection mechanism.
+        Each object instance has a specific name.
+        Other components can use them by add `@depends` decorator at `__init__` method of components.
         """
-        # TODO: Call original version and add objects to return value
-        # Register objects to DI container
-        # Dict key name came from @depends decorator of each component classes
-        # Registered components pass to appropriate components on demand
+        # There's no documentation of this method, probably overriding is a proper way to use. 
         inject_dict = {
             "grid_resolution": lambda: self._create_grid_resolution,
             "sequencer_clip": lambda: self._create_sequencer_clip,

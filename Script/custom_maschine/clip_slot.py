@@ -15,6 +15,7 @@ from ableton.v3.base import (
     listens,
     EventObject
 )
+from ableton.v3.live import liveobj_valid
 from ableton.v3.control_surface import (
     LiveObjSkinEntry,
     OptionalSkinEntry
@@ -90,6 +91,12 @@ class CustomClipSlotComponent(ClipSlotComponent):
         """Trigger updating color of clip launch button."""
         self._blink_state = self._blinker.blink_state
         # Call update if the component has mapped element
-        # TODO: Check assigned slot state to reduce redundant calls.
-        if self.launch_button.control_element != None:
-            self._update_launch_button_color()
+        
+        if self.launch_button.control_element != None and liveobj_valid(self.clip_slot) != None:
+            clip_or_slot = self.clip_slot
+            if liveobj_valid(clip_or_slot) and clip_or_slot.has_clip:
+                clip_or_slot = clip_or_slot.clip
+
+            # Perform color update if the associated clip or slot is in playing or recording state.
+            if clip_or_slot.is_playing or clip_or_slot.is_recording:
+                self._update_launch_button_color()

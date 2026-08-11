@@ -8,6 +8,7 @@
 #
 # ==================================================
 
+from copy import deepcopy
 from ableton.v3.base import listens, listenable_property, nop
 from ableton.v2.base.collection import IndexedDict
 from ableton.v3.live import find_parent_track, liveobj_valid
@@ -107,6 +108,12 @@ class Eq8DeviceDecorator(DeviceDecorator):
             max_value = 7,
             show_as_quantized = False,
             display_value_conversion = (lambda x: str(x + 1))))
+
+        # HACK: Return additional parameters as a tuple to be aware of API changes.
+        # I found custom decorators not working in Live 12.4.3.
+        # Actual cause is an internal change that requires this function to return additional parameters.
+        # The return value will be ignored in Live 12.3 or earlier.
+        return tuple(self._additional_parameters)
     
     @property
     def parameters(self):
@@ -151,6 +158,8 @@ class MeldDeviceDecorator(DeviceDecorator):
             index_property = "unison_voices",
             values_host = self.available_unison_counts,
             values_property = "available_values"))
+
+        return tuple(self._additional_parameters)
 
     @property
     def parameters(self):
@@ -208,6 +217,8 @@ class HybridReverbDeviceDecorator(DeviceDecorator):
             property_host = self._live_object,
             source_property = "ir_time_shaping_on",
             display_value_conversion = lambda x: "On" if x else "Off"))
+
+        return tuple(self._additional_parameters)
     
     def _to_time_display_value(self, value):
         if value >= 10.0:
@@ -242,7 +253,13 @@ class CustomDeviceDecoratorFactory(DeviceDecoratorFactory):
         "Hybrid": HybridReverbDeviceDecorator
     }
 
-CUSTOM_BANK_DEFINITIONS = BANK_DEFINITIONS.copy()
+CUSTOM_BANK_DEFINITIONS = deepcopy(BANK_DEFINITIONS)
+"""
+Custom parameter bank for device control.
+
+The original `BANK_DEFINITIONS` is shared across **all control surfaces**.
+If you want modify it, you must do deepcopy to avoid conflict.
+"""
 CUSTOM_BANK_DEFINITIONS["InstrumentVector"]["Oscillator 1"] = {
     BANK_PARAMETERS_KEY: (
         "Osc 1 Category",
@@ -434,53 +451,63 @@ CUSTOM_BANK_DEFINITIONS["OriginalSimpler"] = IndexedDict((
     ),
 ))
 
-CUSTOM_BANK_DEFINITIONS["Eq8"][BANK_MAIN_KEY] = {
-    BANK_PARAMETERS_KEY: (
-        "Band",
-        use("1 Filter On A").if_parameter("Band").has_value("1")
-            .else_use("2 Filter On A").if_parameter("Band").has_value("2")
-            .else_use("3 Filter On A").if_parameter("Band").has_value("3")
-            .else_use("4 Filter On A").if_parameter("Band").has_value("4")
-            .else_use("5 Filter On A").if_parameter("Band").has_value("5")
-            .else_use("6 Filter On A").if_parameter("Band").has_value("6")
-            .else_use("7 Filter On A").if_parameter("Band").has_value("7")
-            .else_use("8 Filter On A").if_parameter("Band").has_value("8"),
-        use("1 Filter Type A").if_parameter("Band").has_value("1")
-            .else_use("2 Filter Type A").if_parameter("Band").has_value("2")
-            .else_use("3 Filter Type A").if_parameter("Band").has_value("3")
-            .else_use("4 Filter Type A").if_parameter("Band").has_value("4")
-            .else_use("5 Filter Type A").if_parameter("Band").has_value("5")
-            .else_use("6 Filter Type A").if_parameter("Band").has_value("6")
-            .else_use("7 Filter Type A").if_parameter("Band").has_value("7")
-            .else_use("8 Filter Type A").if_parameter("Band").has_value("8"),
-        use("1 Frequency A").if_parameter("Band").has_value("1")
-            .else_use("2 Frequency A").if_parameter("Band").has_value("2")
-            .else_use("3 Frequency A").if_parameter("Band").has_value("3")
-            .else_use("4 Frequency A").if_parameter("Band").has_value("4")
-            .else_use("5 Frequency A").if_parameter("Band").has_value("5")
-            .else_use("6 Frequency A").if_parameter("Band").has_value("6")
-            .else_use("7 Frequency A").if_parameter("Band").has_value("7")
-            .else_use("8 Frequency A").if_parameter("Band").has_value("8"),
-        use("1 Resonance A").if_parameter("Band").has_value("1")
-            .else_use("2 Resonance A").if_parameter("Band").has_value("2")
-            .else_use("3 Resonance A").if_parameter("Band").has_value("3")
-            .else_use("4 Resonance A").if_parameter("Band").has_value("4")
-            .else_use("5 Resonance A").if_parameter("Band").has_value("5")
-            .else_use("6 Resonance A").if_parameter("Band").has_value("6")
-            .else_use("7 Resonance A").if_parameter("Band").has_value("7")
-            .else_use("8 Resonance A").if_parameter("Band").has_value("8"),
-        use("1 Gain A").if_parameter("Band").has_value("1")
-            .else_use("2 Gain A").if_parameter("Band").has_value("2")
-            .else_use("3 Gain A").if_parameter("Band").has_value("3")
-            .else_use("4 Gain A").if_parameter("Band").has_value("4")
-            .else_use("5 Gain A").if_parameter("Band").has_value("5")
-            .else_use("6 Gain A").if_parameter("Band").has_value("6")
-            .else_use("7 Gain A").if_parameter("Band").has_value("7")
-            .else_use("8 Gain A").if_parameter("Band").has_value("8"),
-        "Scale",
-        "Output Gain"
-    )
-}
+def create_eq8_custom_bank(bank_definitions, major_version, minor_version, bugfix_version):
+
+    if major_version >= 12 and minor_version >= 4:
+        # In Live 12.4 or later, some EQ8 parameter names have changed to make them more consistent.
+        output = "Output"
+        q_names = [f"{band + 1} Q A" for band in range(8)]
+    else:
+        output = "Output Gain"
+        q_names = [f"{band + 1} Resonance A" for band in range(8)]
+
+    bank_definitions["Eq8"][BANK_MAIN_KEY] = {
+        BANK_PARAMETERS_KEY: (
+            "Band",
+            use("1 Filter On A").if_parameter("Band").has_value("1")
+                .else_use("2 Filter On A").if_parameter("Band").has_value("2")
+                .else_use("3 Filter On A").if_parameter("Band").has_value("3")
+                .else_use("4 Filter On A").if_parameter("Band").has_value("4")
+                .else_use("5 Filter On A").if_parameter("Band").has_value("5")
+                .else_use("6 Filter On A").if_parameter("Band").has_value("6")
+                .else_use("7 Filter On A").if_parameter("Band").has_value("7")
+                .else_use("8 Filter On A").if_parameter("Band").has_value("8"),
+            use("1 Filter Type A").if_parameter("Band").has_value("1")
+                .else_use("2 Filter Type A").if_parameter("Band").has_value("2")
+                .else_use("3 Filter Type A").if_parameter("Band").has_value("3")
+                .else_use("4 Filter Type A").if_parameter("Band").has_value("4")
+                .else_use("5 Filter Type A").if_parameter("Band").has_value("5")
+                .else_use("6 Filter Type A").if_parameter("Band").has_value("6")
+                .else_use("7 Filter Type A").if_parameter("Band").has_value("7")
+                .else_use("8 Filter Type A").if_parameter("Band").has_value("8"),
+            use("1 Frequency A").if_parameter("Band").has_value("1")
+                .else_use("2 Frequency A").if_parameter("Band").has_value("2")
+                .else_use("3 Frequency A").if_parameter("Band").has_value("3")
+                .else_use("4 Frequency A").if_parameter("Band").has_value("4")
+                .else_use("5 Frequency A").if_parameter("Band").has_value("5")
+                .else_use("6 Frequency A").if_parameter("Band").has_value("6")
+                .else_use("7 Frequency A").if_parameter("Band").has_value("7")
+                .else_use("8 Frequency A").if_parameter("Band").has_value("8"),
+            use(q_names[0]).if_parameter("Band").has_value("1")
+                .else_use(q_names[1]).if_parameter("Band").has_value("2")
+                .else_use(q_names[2]).if_parameter("Band").has_value("3")
+                .else_use(q_names[3]).if_parameter("Band").has_value("4")
+                .else_use(q_names[4]).if_parameter("Band").has_value("5")
+                .else_use(q_names[5]).if_parameter("Band").has_value("6")
+                .else_use(q_names[6]).if_parameter("Band").has_value("7")
+                .else_use(q_names[7]).if_parameter("Band").has_value("8"),
+            use("1 Gain A").if_parameter("Band").has_value("1")
+                .else_use("2 Gain A").if_parameter("Band").has_value("2")
+                .else_use("3 Gain A").if_parameter("Band").has_value("3")
+                .else_use("4 Gain A").if_parameter("Band").has_value("4")
+                .else_use("5 Gain A").if_parameter("Band").has_value("5")
+                .else_use("6 Gain A").if_parameter("Band").has_value("6")
+                .else_use("7 Gain A").if_parameter("Band").has_value("7")
+                .else_use("8 Gain A").if_parameter("Band").has_value("8"),
+            "Scale",
+            output
+        )
+    }
 
 # We have to build the parameter bank again because IndexedDict doesn't support insert.
 HYBRID_REVERB_BANK = IndexedDict()
@@ -502,6 +529,17 @@ for key in CUSTOM_BANK_DEFINITIONS["Hybrid"].keys():
 
 CUSTOM_BANK_DEFINITIONS["Hybrid"] = HYBRID_REVERB_BANK
 
+CUSTOM_SENSITIVITY_FACTORS = {
+    "OriginalSimpler": {"Mode": 6},
+    "InstrumentMeld": {
+        "Engine": 4,
+        "A Osc Type": 0.25,
+        "B Osc Type": 0.25,
+        "A Filter Type": 0.25,
+        "B Filter Type": 0.25,
+    }
+}
+
 def custom_mapping_sensitivities(original):
     """
     Hook original function to add extra sensitivity settings.
@@ -513,21 +551,12 @@ def custom_mapping_sensitivities(original):
     """
     def inner(parameter, device):
         default = original(parameter, device)
-
-        # TODO: Replace the if statements with dict for O(1) lookup.
-        meld_osc_types = ("A Osc Type", "B Osc Type")
-        meld_filter_types = ("A Filter Type", "B Filter Type")
-        if liveobj_valid(parameter):
-            if device.class_name == "OriginalSimpler" and parameter.name == "Mode":
-                default = tuple(x * 6 for x in default)
-            elif device.class_name == "InstrumentMeld" and parameter.name == "Engine":
-                default = tuple(x * 4 for x in default)
-            elif device.class_name == "InstrumentMeld" and parameter.name in meld_osc_types:
-                default = tuple(x / 4 for x in default)
-            elif device.class_name == "InstrumentMeld" and parameter.name in meld_filter_types:
-                default = tuple(x / 4 for x in default)
-        
-        return default
+        try:
+            factor = CUSTOM_SENSITIVITY_FACTORS[device.class_name][parameter.name]
+            return tuple(x * factor for x in default)  
+        except KeyError:
+            # Return default if multiplier wasn't found.
+            return default
     
     return inner
 
@@ -549,7 +578,13 @@ class CustomDeviceComponent(DeviceComponent):
     copy_to_other_button = ButtonControl(color = None)
     
     def __init__(self, name = "Device", *a, **k):
-        if self.application.get_major_version() >= 12:
+        app = self.application
+        create_eq8_custom_bank(
+            CUSTOM_BANK_DEFINITIONS,
+            app.get_major_version(),
+            app.get_minor_version(),
+            app.get_bugfix_version())
+        if app.get_major_version() >= 12:
             self._add_live_12_device_definitions()
 
         super().__init__(name, *a, **k)

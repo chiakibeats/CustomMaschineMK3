@@ -8,6 +8,7 @@
 #
 # ==================================================
 
+from Live.Song import RecordingQuantization # type: ignore
 from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.controls import (
     ButtonControl,
@@ -59,7 +60,10 @@ class ClipNotesSelectMixin():
     def quantize_pitch(self, pitch):
         clip = self._sequencer_clip.clip
         if clip != None:
-            clip.quantize_pitch(pitch, self.song.midi_recording_quantization, 1.0)
+            quantization = self.song.midi_recording_quantization
+            if quantization == RecordingQuantization.rec_q_no_q:
+                quantization = RecordingQuantization.rec_q_sixtenth
+            clip.quantize_pitch(pitch, quantization, 1.0)
 
     @select_note_button.value
     def _on_note_select_button_changed(self, value, button):
@@ -80,6 +84,10 @@ class ClipNotesSelectMixin():
             selected_notes = clip.get_selected_notes_extended()
             clip.remove_notes_by_id([note.note_id for note in selected_notes])
 
+    @quantize_pitch_button.value
+    def _on_quantize_pitch_button_changed(self, value, button):
+        self._set_control_pads_from_script(button.is_pressed)
+
     def _set_control_pads_from_script(self, takeover_pads):
         """
         Control script-forwarding mode by takeover mode and modifier button state.
@@ -87,8 +95,8 @@ class ClipNotesSelectMixin():
         If any of modifiers are pressed, the script prevents sending MIDI messages to Live's track by taking over the pads.
         This method overrides the corresponding method of the `PlayableComponent`.
         """
-        # TODO: Add quantize_pitch_button to handle correctly.
-        super()._set_control_pads_from_script(takeover_pads or self.select_note_button.is_pressed)
+        takeover = takeover_pads or self.select_note_button.is_pressed or self.quantize_pitch_button.is_pressed
+        super()._set_control_pads_from_script(takeover)
 
     def process_pad_pressed(self, button):
         if self.select_note_button.is_pressed:

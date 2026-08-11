@@ -194,11 +194,16 @@ class SettingsRepository(EventObject):
     """
     def __init__(self, file_name = SETTINGS_FILE_NAME, schema = SETTINGS):
         self._file_path = Path(__file__).absolute().parent.joinpath(file_name)
-        self._schema = {}
-        for entry in schema:
-            self._schema[entry["key"]] = entry
+        self._schema = schema
+        self._schema_with_key = {}
+        for entry in self._schema:
+            self._schema_with_key[entry["key"]] = entry
         self._settings = {}
         self.load()
+
+    @property
+    def schema(self):
+        return self._schema
 
     @listenable_property
     def value_changed(self):
@@ -213,7 +218,7 @@ class SettingsRepository(EventObject):
     def load(self):
         if self._file_path.exists():
             settings = json.loads(self._file_path.read_text())
-            for key, entry in self._schema.items():
+            for key, entry in self._schema_with_key.items():
                 if key.startswith("__"):
                     # Ignore special items
                     continue
@@ -234,7 +239,7 @@ class SettingsRepository(EventObject):
             settings_file.write(json.dumps(self._settings, indent = 4))
 
     def clear_settings(self):
-        for key, entry in self._schema.items():
+        for key, entry in self._schema_with_key.items():
             if entry["key"].startswith("__"):
                 # Skip options which start with double underscore(__)
                 pass
@@ -277,14 +282,14 @@ class SettingsRepository(EventObject):
         return entry["default_value"]
         
     def set_value(self, key, value):
-        if key in self._schema:
-            self._settings[key] = self.sanitize_value(value, self._schema[key])
+        if key in self._schema_with_key:
+            self._settings[key] = self.sanitize_value(value, self._schema_with_key[key])
         
         self.notify_value_changed()
 
     def get_value(self, key):
         if key.startswith("__"):
-            return self._schema[key]["default_value"]
+            return self._schema_with_key[key]["default_value"]
         else:
             return self._settings[key]
 
@@ -297,24 +302,20 @@ class SettingsComponent(Component, Renderable):
     value_encoder = StepEncoderControl(num_steps = 8)
     """Option value scroll encoder."""
 
-    # TODO: Get schema from repository
     @depends(settings = None)
-    def __init__(self, name = "Settings", settings = None, schema = SETTINGS, *a, **k):
+    def __init__(self, name = "Settings", settings = None, *a, **k):
         """
         Args:
-            name(str): Component name. This should keep default.
+            name(str):
+                Component name. This should keep default.
             settings(SettingsRepository):
-                Repository of settings. 
-                DI container will supply actual value.
-            schema(list[dict]):
-                Schema of settings.
-                This must be same as the value specified in `SettingsRepository`.
+                Repository of settings. DI container will supply actual value.
         """
         super().__init__(name, *a, **k)
 
         self._current_index = 0
-        self._schema = schema
         self._settings = settings
+        self._schema = self._settings.schema
 
     @listenable_property
     def current_description(self):

@@ -8,8 +8,6 @@
 #
 # ==================================================
 
-from faulthandler import is_enabled
-from math import inf
 from Live.Clip import MidiNoteSpecification, GridQuantization # type: ignore
 from ableton.v3.base import EventObject, clamp, depends, in_range, listenable_property, listens
 from ableton.v3.control_surface.components.note_editor import DEFAULT_STEP_TRANSLATION_CHANNEL

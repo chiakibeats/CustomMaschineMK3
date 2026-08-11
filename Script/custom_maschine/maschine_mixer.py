@@ -185,8 +185,7 @@ class MaschineMixerComponent(ScrollComponent, Renderable, Scrollable):
         """
         if name.startswith("set_"):
             return partial(self._set_strip_controls, name[4:-1])
-        # TODO: Add name parameter to the error
-        raise AttributeError
+        raise AttributeError(f"No attribute named {name}")
 
     def can_scroll_up(self):
         return self.track_position - self._track_count >= 0

@@ -82,29 +82,24 @@ class Content:
     """Display content container."""
     lines = [""] * 4
 
-# TODO: Having both variables for knobs and encoder is redundant, replace with 2 TouchStates instances.
-# TODO: The name TouchStates is questionable, maybe ActiveKnobDetector or something is more favorable.
-class TouchStates:
+class ActiveKnobDetector:
     """
     Active knob detection.
 
     Active knob is a knob that was touched most recently, and stays touched until now.
     Release delay sustains the calculated active state a little bit longer.
     """
-    def __init__(self, release_delay = 0.4, knob_count = 8):
+    def __init__(self, knob_count, release_delay = 0.4):
         """
         Args:
-            release_delay(float): Delay time from actual release event to applying its change in seconds.
             knob_count(int): Total count of the grouped knobs.
+            release_delay(float): Delay time from actual release event to applying its change in seconds.
         """
         self._knob_count = knob_count
         self._knobs = [False] * self._knob_count
-        self._encoder = False
         self._active_index = -1
-        self._encoder_active = False
         self._delay_time = release_delay * 1000
         self._knob_timer = Timer(callback = self.delayed_knob_release, interval = int(self._delay_time), start = False)
-        self._encoder_timer = Timer(callback = self.delayed_encoder_release, interval = int(self._delay_time), start = False)
 
     @property
     def active_index(self):
@@ -119,33 +114,22 @@ class TouchStates:
     def active_index(self, value):
         self._active_index = value
 
-    @property
-    def encoder_active(self):
-        return self._encoder_active
+    def update(self, touch_states):
+        """
+        Update touch state of each knob.
 
-    @encoder_active.setter
-    def encoder_active(self, value):
-        self._encoder_active = value
-
-    def update(self, knobs_touched, encoder_touched):
-        for index in range(min(self._knob_count, len(knobs_touched))):
+        Args:
+            touch_states(list[bool]): List of touch states. `True` means knob is touched.
+        """
+        for index in range(min(self._knob_count, len(touch_states))):
             # Calculate "now - before" to detect touched (positive), released (negative), or unchanged (zero).
-            result = (1 if knobs_touched[index] else 0) - (1 if self._knobs[index] else 0)
-            self._knobs[index] = knobs_touched[index]
+            result = (1 if touch_states[index] else 0) - (1 if self._knobs[index] else 0)
+            self._knobs[index] = touch_states[index]
 
             if result > 0:
                 self.on_knob_touched(index)
             elif result < 0:
                 self.on_knob_released(index)
-
-        result = (1 if encoder_touched else 0) - (1 if self._encoder else 0)
-        self._encoder = encoder_touched
-
-        if result > 0:
-            self._encoder_timer.stop()
-            self.encoder_active = True
-        elif result < 0:
-            self._encoder_timer.restart()
 
     def on_knob_touched(self, index):
         if self.active_index == -1 or self._knob_timer.running:
@@ -167,11 +151,8 @@ class TouchStates:
         self._knob_timer.stop()
         self.active_index = -1
 
-    def delayed_encoder_release(self):
-        self._encoder_timer.stop()
-        self.encoder_active = False
-
-TOUCH_STATES = TouchStates()
+KNOB_TOUCH_STATE = ActiveKnobDetector(8)
+ENCODER_TOUCH_STATE = ActiveKnobDetector(1)
 
 from ableton.v3.control_surface.display.notifications.all import Notifications
 
@@ -332,7 +313,7 @@ def create_root_view():
         #logger.info(f"index = {TOUCH_STATES.active_index}")
         display_mode = state.display_modes.selected_mode
         if display_mode == DEVICE_CONTROL and liveobj_valid(state.device.device):
-            index = TOUCH_STATES.active_index
+            index = KNOB_TOUCH_STATE.active_index
             if index != -1:
                 info = state.device.current_parameters[index]
                 if liveobj_valid(info.parameter):
@@ -341,7 +322,7 @@ def create_root_view():
                     content.lines[0 if index < 4 else 1] = name
                     content.lines[2 if index < 4 else 3] = value
         elif display_mode == TRACK_MIXER:
-            index = TOUCH_STATES.active_index
+            index = KNOB_TOUCH_STATE.active_index
             if index != -1:
                 parameter = state.elements.knob_touch_buttons[index].controlled_parameter
                 if liveobj_valid(parameter):
@@ -352,7 +333,7 @@ def create_root_view():
                     content.lines[2 if index < 4 else 3] = f"{param_name}:{value}"
         elif display_mode == CLIP_CONTROL:
             clip = state.target_track.target_clip
-            index = TOUCH_STATES.active_index
+            index = KNOB_TOUCH_STATE.active_index
             if liveobj_valid(clip):
                 if clip.looping:
                     if index == 0:
@@ -383,14 +364,14 @@ def create_root_view():
                         content.lines[1] = "Warp mode"
                         content.lines[3] = WarpModeList.to_string(clip.warp_mode) if clip.warping else "No Warp"
         elif display_mode == BROWSER:
-            index = TOUCH_STATES.active_index
+            index = KNOB_TOUCH_STATE.active_index
             if index == 0:
                 parameter = state.elements.knob_touch_buttons[index].controlled_parameter
                 if liveobj_valid(parameter):
                     content.lines[0] = "Preview Volume"
                     content.lines[2] = get_display_value(parameter)
 
-        if TOUCH_STATES.encoder_active:
+        if ENCODER_TOUCH_STATE.active_index == 0:
             encoder_mode = state.encoder_modes.selected_mode
             if encoder_mode == MASTER_VOLUME:
                 content.lines[0] = "Master Volume"
@@ -413,7 +394,8 @@ def create_root_view():
         """
         Root view of the display.
         """
-        TOUCH_STATES.update([k.is_pressed for k in state.elements.knob_touch_buttons], state.elements.encodercap.is_pressed)
+        KNOB_TOUCH_STATE.update([k.is_pressed for k in state.elements.knob_touch_buttons])
+        ENCODER_TOUCH_STATE.update([state.elements.encodercap.is_pressed])
         content = Content()
         display_mode = state.display_modes.selected_mode
         if display_mode == TRACK_MIXER:

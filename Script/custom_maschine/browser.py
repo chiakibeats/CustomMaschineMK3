@@ -60,9 +60,11 @@ class BrowserItemListWrapper:
         )
 
     def __getattr__(self, name):
-        if name in self.__properties:
-            return self.__properties[name]
-        return AttributeError(name)
+        try:
+            value = self.__properties[name]
+            return value
+        except KeyError:
+            raise AttributeError(f"No attribute named {name}")
 
     @property
     def iter_children(self):
@@ -364,7 +366,7 @@ class BrowserTreeExplorer:
         Args:
             new_tree_stack(list): New breadcrumb-list. First item of `new_tree_stack` must be same as current root item.
         """
-        if self._tree_stack[0] != new_tree_stack:
+        if self._tree_stack[0] != new_tree_stack[0]:
             return
         
         self._tree_stack = new_tree_stack
