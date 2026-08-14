@@ -166,7 +166,7 @@ def create_mappings(surface):
             pitchbend_reset = "touchstripcap"
         ),
         mod = dict(
-            component = "Selected_Parameter",
+            component = "TouchStrip_Parameter",
             modulation_encoder = "touchstrip",
             select_buttons = "track_buttons_with_mod"
         ),
@@ -445,7 +445,7 @@ def create_mappings(surface):
         accent_button = "fixedvel"
     )
 
-    mappings["Selected_Parameter"] = dict(
+    mappings["TouchStrip_Parameter"] = dict(
         reset_value_button = "mod_with_erase",
         select_modifier = "mod"
     )

@@ -217,7 +217,13 @@ class SettingsRepository(EventObject):
 
     def load(self):
         if self._file_path.exists():
-            settings = json.loads(self._file_path.read_text())
+            try:
+                settings = json.loads(self._file_path.read_text())
+            except Exception as ex:
+                logger.error(f"Error while loading settings: exception = {type(ex).__name__}, args = {ex.args}")
+                logger.info(f"Load default settings")
+                settings = {}
+                
             for key, entry in self._schema_with_key.items():
                 if key.startswith("__"):
                     # Ignore special items
@@ -261,7 +267,6 @@ class SettingsRepository(EventObject):
         """
         value_type = entry["type"]
         if value_type == "bool":
-            # TODO: Fix incorrect bool value sanitization
             if isinstance(value, bool):
                 return value
         elif value_type == "int":

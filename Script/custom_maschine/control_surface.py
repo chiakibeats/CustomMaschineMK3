@@ -72,7 +72,7 @@ from .sliced_simpler import CustomSlicedSimplerComponent
 from .note_repeat import NoteRepeatComponent
 from .velocity_levels import VelocityLevelsComponent
 from .scale_system import ScaleSystemComponent
-from .selected_parameter_control import SelectedParameterControlComponent
+from .touchstrip_parameter_control import TouchStripParameterControlComponent
 from .note_editor import CustomNoteEditorComponent, CustomStepSequenceComponent
 from .clip_editor import ClipEditorComponent
 from .browser import BrowserComponent
@@ -81,9 +81,10 @@ from .encoder_mode_control import EncoderModeControlComponent
 from .group_button_mode_control import GroupButtonModeControlComponent
 from .transport import CustomTransportComponent
 from .settings import SettingsRepository, SettingsComponent
-from .clip_slot import LEDBlinker, CustomClipSlotComponent
+from .clip_slot import CustomClipSlotComponent
 from .pageable_background import PageableBackgroundComponent
 
+from .util import LEDBlinker
 from .logger import logger
 from . import config
 
@@ -168,7 +169,7 @@ class Specification(ControlSurfaceSpecification):
         "View_Based_Recording": partial(CustomViewBasedRecordingComponent, recording_method_type = recording_method_type),
         "Browser": BrowserComponent,
         "Clip_Editor": ClipEditorComponent,
-        "Selected_Parameter": SelectedParameterControlComponent,
+        "TouchStrip_Parameter": TouchStripParameterControlComponent,
         "Scale_System": ScaleSystemComponent,
         "Velocity_Levels": VelocityLevelsComponent,
         "Note_Repeat": NoteRepeatComponent,

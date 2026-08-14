@@ -9,11 +9,19 @@
 # ==================================================
 
 from functools import partial
-from math import modf, ceil
-from ableton.v3.base import clamp, depends, listens, nop, sign, listenable_property, EventObject
-from ableton.v2.base import EventError
-from ableton.v2.control_surface import WrappingParameter, EnumWrappingParameter, IntegerParameter
-from ableton.v3.control_surface import ParameterInfo
+from math import (
+    modf,
+    ceil
+)
+from ableton.v3.base import (
+    clamp,
+    depends,
+    listens,
+    nop,
+    sign,
+    listenable_property,
+)
+from ableton.v2.control_surface import WrappingParameter
 from ableton.v3.control_surface.display import Renderable
 from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.components.device import DEFAULT_BANK_SIZE
@@ -22,7 +30,7 @@ from ableton.v3.control_surface.controls import (
     EncoderControl,
     MappedButtonControl,
     MappedSensitivitySettingControl,
-    control_list
+    control_list,
 )
 from ableton.v3.live.util import liveobj_valid
 
@@ -33,6 +41,12 @@ from Live.Clip import ( # type: ignore
     WarpMarker
 )
 
+from .util import (
+    bool_to_display_value,
+    BoolWrappingParameter,
+    CustomEnumWrappingParameter,
+    CustomValueStepper,
+)
 from .logger import logger
 
 class ClipLaunchQuantizationList():
@@ -157,166 +171,6 @@ class WarpModeList():
         index = WarpModeList.values.index(value)
         return WarpModeList.value_strings[index]
 
-# TODO: Separate these parameter wrappers to dedicated file
-def bool_to_display_value(value, off_value, on_value):
-    return on_value if value else off_value
-
-bool_on_off = partial(bool_to_display_value, off_value = "Off", on_value = "On")
-
-class BoolWrappingParameter(WrappingParameter):
-    """
-    Python property wrapper especially for `bool`.
-
-    This class is used for modifying property from `MappedSensitivitySettingControl` and `MappedButtonControl`.
-    """
-    is_enaled = True
-    is_quantized = True
-
-    def __init__(self,
-        property_host,
-        source_property,
-        display_value_conversion,
-        invert = False, *a, **k):
-        super().__init__(
-            property_host,
-            source_property,
-            self._from_bool_invert if invert else self._from_bool,
-            self._to_bool_invert if invert else self._to_bool,
-            display_value_conversion,
-            [], *a, **k)
-        self._parent = property_host
-
-    def set_property_host(self, new_host):
-        super().set_property_host(new_host)
-        self._parent = new_host
-        self.notify_value()
-
-    def _to_bool(self, value, parent):
-        return bool(value)
-    
-    def _from_bool(self, value, parent):
-        return int(value)
-    
-    def _to_bool_invert(self, value, parent):
-        return not bool(value)
-    
-    def _from_bool_invert(self, value, parent):
-        return int(not value)
-
-    @property
-    def min(self):
-        return 0
-
-    @property
-    def max(self):
-        return 1
-    
-class CustomEnumWrappingParameter(EnumWrappingParameter):
-    """
-    Extended Python property wrapper especially for enum.
-
-    This version has:
-        - Replace property host method
-        - Replace value host (data source of available choices) method
-    """
-    def __init__(self,
-        index_property_host = None,
-        values_host = None,
-        values_property = None,
-        index_property = None,
-        value_type = int,
-        to_index_conversion = None,
-        from_index_conversion = None, *a, **k):
-        super().__init__(
-            index_property_host,
-            index_property_host,
-            values_host,
-            values_property,
-            index_property,
-            value_type,
-            to_index_conversion,
-            from_index_conversion, *a, **k)
-
-    def set_property_host(self, new_host):
-        super().set_property_host(new_host)
-        self._parent = new_host
-        self.notify_value()
-
-    def set_values_host(self, new_host):
-        self._values_host = new_host
-        try:
-            self.register_slot(self._values_host, self.notify_value_items, self._values_property)
-        except EventError:
-            pass
-
-# Max clip length is 1 year in 120BPM (taken from Push 2)
-MAX_CLIP_LENGTH = 365 * 24 * 3600 * 2.0
-    
-class BeatOrTimeWrappingParameter(WrappingParameter):
-    """
-    Python property wrapper especially for clip time / length parameters.
-
-    This was abandoned, maybe delete it later.
-    """
-    min = -MAX_CLIP_LENGTH
-    max = MAX_CLIP_LENGTH
-
-    def __init__(self, property_host, source_property, display_value_conversion, *a, **k):
-        super().__init__(
-            property_host = property_host,
-            source_property = source_property,
-            display_value_conversion = display_value_conversion, *a, **k)
-        self._parent = property_host
-
-    @listens("signature_denominator")
-    def _on_denominator_changed(self):
-        pass
-
-    @listens("signature_numerator")
-    def _on_numerator_changed(self):
-        pass
-
-    @listens("warping")
-    def _on_warping_changed(self):
-        pass
-
-class CustomValueStepper():
-    """
-    Convert continous value movement to stepped movement.
-
-    Also, this can change step count dynamically.
-    """
-    _step_count = 0
-    _step_value = 0.0
-
-    def __init__(self, step_count = 64):
-        self._step_count = step_count
-
-    @property
-    def step_count(self):
-        return self._step_count
-    
-    @step_count.setter
-    def step_count(self, value):
-        self._step_count = value
-        self.reset()
-
-    def update(self, value):
-        if sign(value) != sign(self._step_value):
-            self.reset()
-
-        new_step_value = self._step_value + value * self._step_count
-        if int(new_step_value) != int(self._step_value):
-            self.reset()
-            return int(new_step_value)
-        else:
-            self._step_value = new_step_value
-
-        return 0
-    
-    def reset(self):
-        self._step_value = 0.0
-
 BAR_LENGTH_VALUE_STEPS = 16
 TIME_LENGTH_FINE_STEPS = 32
 COARSE_TIME_RESOLUTION = 0.1
@@ -354,6 +208,7 @@ class ClipEditorComponent(Component, Renderable):
             - It works as same as step sequencer, but for selected notes
     """
     bank_size = DEFAULT_BANK_SIZE
+    bool_on_off = partial(bool_to_display_value, off_value = "Off", on_value = "On")
 
     mute_button = MappedButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
     loop_button = MappedButtonControl(color = "DefaultButton.Off", on_color = "DefaultButton.On")
@@ -436,12 +291,12 @@ class ClipEditorComponent(Component, Renderable):
             EncoderCallbackSet(self._change_note_velocity),
         ]
 
-        self._mute_parameter = BoolWrappingParameter(None, "muted", bool_on_off, True)
-        self._loop_parameter = BoolWrappingParameter(None, "looping", bool_on_off)
+        self._mute_parameter = BoolWrappingParameter(None, "muted", self.bool_on_off, True)
+        self._loop_parameter = BoolWrappingParameter(None, "looping", self.bool_on_off)
         self._launch_mode_parameter = CustomEnumWrappingParameter(None, LaunchModeList, "values", "launch_mode")
         self._launch_quantize_parameter = CustomEnumWrappingParameter(None, ClipLaunchQuantizationList, "values", "launch_quantization")
-        self._legato_parameter = BoolWrappingParameter(None, "legato", bool_on_off)
-        self._warp_parameter = BoolWrappingParameter(None, "warping", bool_on_off)
+        self._legato_parameter = BoolWrappingParameter(None, "legato", self.bool_on_off)
+        self._warp_parameter = BoolWrappingParameter(None, "warping", self.bool_on_off)
         self._warp_mode_parameter = CustomEnumWrappingParameter(None, None, "available_warp_modes", "warp_mode", int, self._to_warp_mode, self._from_warp_mode)
 
         self.mute_button.mapped_parameter = self._mute_parameter

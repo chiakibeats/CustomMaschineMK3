@@ -26,8 +26,7 @@ from ableton.v3.live import liveobj_valid
 
 from .logger import logger
 
-# TODO: Change class name to more intuitive one.
-class SelectedParameterControlComponent(Component, Renderable):
+class TouchStripParameterControlComponent(Component, Renderable):
     """
     Device parameter control with Maschine's touch strip.
 
@@ -46,7 +45,7 @@ class SelectedParameterControlComponent(Component, Renderable):
     _show_message = None
 
     @depends(get_knob_mapped_parameter = None, show_message = None)
-    def __init__(self, name = "Selected_Parameter", get_knob_mapped_parameter = None, show_message = None, *a, **k):
+    def __init__(self, name = "TouchStrip_Parameter", get_knob_mapped_parameter = None, show_message = None, *a, **k):
         """
         Args:
             name(str):
