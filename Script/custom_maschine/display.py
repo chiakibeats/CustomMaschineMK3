@@ -233,7 +233,10 @@ def create_root_view():
         content.lines[2] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[to_pan_or_gain_value(knob) for knob in state.elements.knobs[:4]])
 
         content.lines[1] = f"{'Lock' if state.target_track.is_locked_to_track else 'Track'}:"
-        content.lines[1] += state.target_track.target_track.name[:LCD_LINE_LENGTH - len(content.lines[1])]
+        track_name = ""
+        if liveobj_valid(state.target_track.target_track):
+            track_name = state.target_track.target_track.name
+        content.lines[1] += track_name[:LCD_LINE_LENGTH - len(content.lines[1])]
         content.lines[3] = "{:<6}|{:<6}|{:<6}|{:<6}".format(*[to_pan_or_gain_value(knob) for knob in state.elements.knobs[4:]])
 
     def device_view(state, content):

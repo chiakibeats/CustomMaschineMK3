@@ -203,7 +203,7 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, ClipNotesSelec
 
     def _on_matrix_pressed(self, target_button):
         self.process_pad_pressed(target_button)
-        if self._takeover_pads:
+        if self.select_button.is_pressed:
             pitch, _ = self._note_translation_for_button(target_button)
             self.pitches = [pitch]
             self._update_led_feedback()
@@ -317,32 +317,36 @@ class MaschinePlayableComponent(PlayableComponent, PageComponent, ClipNotesSelec
         Update list of scale notes (across the all octaves) and root notes.
         """
         scale_mode = self._scale_system.scale_mode if self._scale_system != None else False
-        scale_changed = False
-        if self._scale_notes_only != scale_mode or self._root_note != self.song.root_note or self._intervals != self.song.scale_intervals:
+        scale_changed = (
+            self._scale_notes_only != scale_mode or
+            self._root_note != self.song.root_note or
+            self._intervals != self.song.scale_intervals)
+
+        if scale_changed:
             self._scale_notes_only = scale_mode
             self._root_note = self.song.root_note
-            self._intervals = [note for note in self.song.scale_intervals]
-            self._all_scale_notes = []
+            # The original type Base.IntVector doesn't support some list manipulations.
+            self._intervals = list(self.song.scale_intervals)
 
-            octaves = [octave + self._root_note for octave in range(-12, 12 * 11, 12)]
+            # Calculate all root notes.
+            all_root_notes = [octave + self._root_note for octave in range(-12, 128, 12)]
             self._octave_notes_count = len(self._intervals)
+            self._octave_root_notes = [note for note in all_root_notes if 0 <= note < 128]
 
-            self._octave_root_notes = list(filter(lambda note: note >= 0 and note < 128, octaves))
-            
-            for octave in octaves:
-                octave_notes = filter(lambda note: note >= 0 and note < 128, (octave + interval for interval in self._intervals))
-                self._all_scale_notes += list(octave_notes)
+            # Calculate all scale notes.
+            # Negative numbers in all_root_notes are used to calculate notes under the lowest root notes.
+            self._all_scale_notes = []
+            for octave in all_root_notes:
+                self._all_scale_notes += [octave + interval for interval in self._intervals if 0 <= octave + interval < 128]
 
             self._first_root_note_index = self.available_notes.index(self._octave_root_notes[0])
             self._total_position_count = self.available_notes.index(self._octave_root_notes[-1])
             self._total_position_count += len(self._intervals) if self._scale_notes_only else 12
 
-            scale_changed = True
-
-        if not scale_changed:
+        else:
             logger.info("Scale unchanged")
 
-        logger.info(f"Scale Enabled = {scale_mode}, Root = {self.song.root_note}, Name = {self.song.scale_name}, Intervals = {[i for i in self.song.scale_intervals]}")
+        logger.info(f"Scale Enabled = {scale_mode}, Root = {self._root_note}, Name = {self.song.scale_name}, Intervals = {self._intervals}")
         logger.debug(f"All scale notes = {self._all_scale_notes}")
         logger.debug(f"Octave root notes = {self._octave_root_notes}")
 

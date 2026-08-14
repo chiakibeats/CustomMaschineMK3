@@ -11,7 +11,7 @@
 from ableton.v3.control_surface.component import Component
 from ableton.v3.control_surface.display import Renderable
 from ableton.v3.control_surface.controls import ButtonControl, StepEncoderControl
-from ableton.v3.base import sign
+from ableton.v3.base import sign, clamp
 from .logger import logger
 
 
@@ -27,99 +27,86 @@ class MiscControlComponent(Component):
     select_track_encoder = StepEncoderControl(num_steps = 64)
     exclusive_arm_button = ButtonControl(color = None)
     arm_button = ButtonControl(color = None)
-    _selected_track = None
 
     def __init__(self, name = "Misc_Control", *a, **k):
         super().__init__(name, *a, **k)
 
-    def _get_selected_track_info(self):
-        selected_track = self.song.view.selected_track
+    def _get_all_tracks(self):
+        all_tracks = []
+        all_tracks += self.song.visible_tracks
+        all_tracks += self.song.return_tracks
+        all_tracks.append(self.song.master_track)
+        return all_tracks
 
-        # Return True if selected track is midi or audio track
-        # If track is return or master track, return False
-        for index, track in enumerate(self.song.visible_tracks):
-            if track == selected_track:
-                return (True, index)
-        
-        for index, track in enumerate(self.song.return_tracks):
-            if track == selected_track:
-                return (False, index)
+    def _get_track_index(self, track_list, target_track):
+        """
+        Get track index of specified track.
 
-        # This is master track
-        return (False, -1)            
+        Args:
+            track_list(list): List of all tracks.
+            target_track(Live.Track.Track): Target track to find.
+
+        Returns:
+            int: Track index of `target_track`.
+        """
+        for index, track in enumerate(track_list):
+            if track == target_track:
+                return index
+
+        # In case of track is not found.
+        return -1
 
     @new_audio_or_return_track_button.pressed
     def _create_audio_track(self, button):
-        is_normal, track_index = self._get_selected_track_info()
+        all_tracks = self._get_all_tracks()
+        track_index = self._get_track_index(all_tracks, self.song.view.selected_track)
 
-        if is_normal:
+        if track_index < len(self.song.visible_tracks):
             self.song.create_audio_track(track_index + 1)
         else:
             self.song.create_return_track()
 
     @new_midi_track_button.pressed
     def _create_midi_track(self, button):
-        # insert if selected track is not return nor master track
-        is_normal, track_index = self._get_selected_track_info()
+        all_tracks = self._get_all_tracks()
+        track_index = self._get_track_index(all_tracks, self.song.view.selected_track)
 
-        if is_normal:
+        if track_index < len(self.song.visible_tracks):
             self.song.create_midi_track(track_index + 1)
 
     @duplicate_track_button.pressed
     def _duplicate_selected_track(self, button):
-        is_normal, track_index = self._get_selected_track_info()
+        all_tracks = self._get_all_tracks()
+        track_index = self._get_track_index(all_tracks, self.song.view.selected_track)
 
-        if is_normal:
+        if track_index < len(self.song.visible_tracks):
             self.song.duplicate_track(track_index)
-        elif track_index != -1:
-            self.song.duplicate_return_track(track_index)
 
     @delete_track_button.pressed
     def _delete_selected_track(self, button):
-        is_normal, track_index = self._get_selected_track_info()
+        all_tracks = self._get_all_tracks()
+        track_index = self._get_track_index(all_tracks, self.song.view.selected_track)
 
-        if is_normal and len(self.song.tracks) > 1:
+        normal_track_count = len(self.song.visible_tracks)
+        return_track_count = len(self.song.return_tracks)
+
+        logger.info(f"Delete track index = {track_index}, Total = {len(all_tracks)}, Normal = {normal_track_count}, Return = {return_track_count}")
+        if normal_track_count > 1 and track_index < normal_track_count:
             self.song.delete_track(track_index)
-        elif not is_normal and track_index != -1:
-            self.song.delete_return_track(track_index)
+        elif return_track_count > 0 and normal_track_count <= track_index < normal_track_count + return_track_count:
+            self.song.delete_return_track(track_index - normal_track_count)
 
     @select_track_encoder.value
     def _on_encoder_value_changed(self, value, encoder):
-        """
-        Scroll around between normal, return, and master tracks.
-        """
-        # TODO: Maybe it's too complicated for track scrolling, managing track index is what I should do.
-        direction = int(sign(value))
-        is_normal, track_index = self._get_selected_track_info()
+        """Scroll around between normal, return, and master tracks."""
+        all_tracks = self._get_all_tracks()
+        all_track_count = len(all_tracks)
+        selected_index = self._get_track_index(all_tracks, self.song.view.selected_track)
 
-        return_and_master_tracks = self.song.return_tracks + [self.song.master_track]
-        if not is_normal and track_index == -1:
-            track_index = len(return_and_master_tracks) - 1
+        logger.info(f"Total tracks = {all_track_count}, Selected index = {selected_index}, Offset = {value}")
 
-        new_selected_track = None
-
-        new_index = track_index + direction
-
-        logger.info(f"is_normal = {is_normal}, track_index = {track_index}, direction = {direction}, new_index = {new_index}, len(visible_tracks) = {len(self.song.visible_tracks)}")
-
-        if is_normal:
-            if new_index >= 0 and new_index < len(self.song.visible_tracks):
-                # normal track -> normal track
-                new_selected_track = self.song.visible_tracks[new_index]
-            elif new_index == len(self.song.visible_tracks):
-                # normal track -> return / master track
-                new_selected_track = return_and_master_tracks[0]
-
-        else:
-            if new_index >= 0 and new_index < len(return_and_master_tracks):
-                # return / master track -> return / master track
-                new_selected_track = return_and_master_tracks[new_index]
-            elif new_index < 0:
-                # return / master track -> normal track
-                new_selected_track = self.song.visible_tracks[-1]
-
-        if new_selected_track is not None:
-            self.song.view.selected_track = new_selected_track
+        new_selected_index = clamp(selected_index + value, 0, all_track_count - 1)
+        self.song.view.selected_track = all_tracks[new_selected_index]
 
     @exclusive_arm_button.pressed
     def _on_exclusive_arm_button_pressed(self, button):
