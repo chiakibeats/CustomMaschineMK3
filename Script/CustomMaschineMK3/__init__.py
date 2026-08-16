@@ -8,15 +8,6 @@
 #
 # ==================================================
 
-from ableton.v3.control_surface import (
-    ControlSurface,
-    ControlSurfaceSpecification
-)
-
-from ableton.v3.control_surface.component import (
-    Component
-)
-
 from ableton.v3.control_surface.capabilities import (
     CONTROLLER_ID_KEY,
     HIDDEN, NOTES_CC,
@@ -31,6 +22,10 @@ from ableton.v3.control_surface.capabilities import (
 
 from custom_maschine.logger import logger
 from custom_maschine.control_surface import CustomMaschineBase
+from custom_maschine.settings import SettingsRepository
+from custom_maschine.util import SETTINGS_FILE_NAME
+from .specification import CustomMaschineMK3Spec, init_specification, SCHEMA
+
 
 def get_capabilities():
     return {
@@ -48,4 +43,6 @@ def get_capabilities():
 
 def create_instance(c_instance):
     logger.info("Create instance")
-    return CustomMaschineBase(c_instance = c_instance)
+    settings = SettingsRepository(SETTINGS_FILE_NAME, SCHEMA)
+    init_specification(settings)
+    return CustomMaschineBase(specification = CustomMaschineMK3Spec, c_instance = c_instance)

@@ -9,21 +9,18 @@
 # ==================================================
 
 from functools import partial
-from itertools import product
 from time import sleep
 import types
+import typing
 
 from ableton.v3.base import lazy_attribute, const, listens
 from ableton.v3.live import liveobj_valid, scene_index
 from ableton.v3.control_surface import (
     ControlSurface,
     ControlSurfaceSpecification,
-    IdentificationComponent
 )
 
-from ableton.v3.control_surface.component import (
-    Component
-)
+from ableton.v3.control_surface.component import Component
 
 from ableton.v3.control_surface.display import DisplaySpecification
 
@@ -46,43 +43,13 @@ from Live.Clip import GridQuantization # type: ignore
 
 from ableton.v3.control_surface.elements import SimpleColor, RgbColor, create_rgb_color
 
-from .elements import ControlElements
-from .mappings import create_mappings
 from .skin import MaschineSkin
 from .display import (
     MaschineDisplay,
     make_mcu_display_header,
     make_display_sysex_message
 )
-from .groove_pool import GroovePoolComponent
-from .master_volume import MasterVolumeComponent
-from .maschine_playable import MaschinePlayableComponent, DEFAULT_NOTE_TRANSLATION_CHANNEL
-from .drum_group import CustomDrumGroupComponent
-from .misc_control import MiscControlComponent
-from .device import (
-    CUSTOM_BANK_DEFINITIONS,
-    CustomDeviceDecoratorFactory,
-    CustomDeviceComponent
-)
-from .device_navigation import CustomDeviceNavigationComponent
-from .mixer import CustomMixerComponent
-from .maschine_mixer import MaschineMixerComponent
-from .clip_actions import CustomClipActionsComponent
-from .sliced_simpler import CustomSlicedSimplerComponent
-from .note_repeat import NoteRepeatComponent
-from .velocity_levels import VelocityLevelsComponent
-from .scale_system import ScaleSystemComponent
-from .touchstrip_parameter_control import TouchStripParameterControlComponent
-from .note_editor import CustomNoteEditorComponent, CustomStepSequenceComponent
-from .clip_editor import ClipEditorComponent
-from .browser import BrowserComponent
-from .recording import FixedLengthRecordingMethod, CustomViewBasedRecordingComponent
-from .encoder_mode_control import EncoderModeControlComponent
-from .group_button_mode_control import GroupButtonModeControlComponent
-from .transport import CustomTransportComponent
-from .settings import SettingsRepository, SettingsComponent
-from .clip_slot import CustomClipSlotComponent
-from .pageable_background import PageableBackgroundComponent
+from .settings import SettingsRepository
 
 from .util import LEDBlinker
 from .logger import logger
@@ -117,34 +84,36 @@ class CustomTargetTrackComponent(TargetTrackComponent):
     def _on_clip_slot_state_changed(self):
         self._update_target_clip()
 
-
-class Specification(ControlSurfaceSpecification):
+class CustomMaschineBaseSpec(ControlSurfaceSpecification):
     """
     Collection of control surface characteristics.
+
+    Some properties are added for `CustomMaschineBase`.
+    All values are stored as class variable, so every spec must be new derived class.
     """
-    elements_type = ControlElements
+    elements_type: typing.Any
     """Class name of the repository of elements (MIDI button / knob representation)."""
-    control_surface_skin = MaschineSkin
+    control_surface_skin: typing.Any
     """Instance of `Skin` class, that contains a definition of LED feedback."""
-    display_specification = MaschineDisplay if config.LCD_ENABLED else None
+    display_specification: DisplaySpecification
     """Instance of `DisplaySpecification` class, that contains procedures of composing views."""
-    num_scenes = 4
+    num_scenes: int
     """Height of the session box."""
-    num_tracks = 4
+    num_tracks: int
     """Width of the session box."""
-    include_returns = True
+    include_returns: bool
     """If the session box can intersect with return tracks, set to `True`."""
-    include_master = True
+    include_master: bool
     """If the session box can intersect with the master track, set to `True`."""
-    include_auto_arming = True
+    include_auto_arming: bool
     """Related to auto arm, but it seems to be not used."""
-    target_track_component_type = CustomTargetTrackComponent
-    """Class that manages the behaviour of selecting and changing the target track."""
-    continuous_parameter_sensitivity = 2.0
+    target_track_component_type: Component
+    """Component class that manages the behaviour of selecting and changing the target track."""
+    continuous_parameter_sensitivity: float
     """Continuous parameter sensitivity (e.g. filter frequency, delay feedback)."""
-    quantized_parameter_sensitivity = 0.2
+    quantized_parameter_sensitivity: float
     """Quantized parameter sensitivity (e.g. filter type, delay length in beats)."""
-    identity_response_id_bytes = [0x00, 0x00, 0x00]
+    identity_response_id_bytes: bytes
     """
     Response data of identification process.
 
@@ -153,43 +122,24 @@ class Specification(ControlSurfaceSpecification):
     
     Note: You can use custom identification process by changing `identity_request` and `custom_identity_response` value.
     """
-    create_mappings_function = create_mappings
+    create_mappings_function: typing.Any
     """Function to build mappings between components and control elements."""
-    recording_method_type = FixedLengthRecordingMethod
+    recording_method_type: typing.Any
     """Class that manages behaviour of the recording mode in session view."""
-    feedback_channels = [DEFAULT_NOTE_TRANSLATION_CHANNEL, DEFAULT_SIMPLER_TRANSLATION_CHANNEL, DEFAULT_DRUM_TRANSLATION_CHANNEL]
+    feedback_channels: list[int]
     """MIDI channels used in playing note feedback."""
-    component_map = {
-        "Pageable_Background": PageableBackgroundComponent,
-        "Settings": SettingsComponent,
-        "Transport": CustomTransportComponent,
-        "Session": partial(SessionComponent, clip_slot_component_type = CustomClipSlotComponent),
-        "Encoder_Mode_Control": EncoderModeControlComponent,
-        "Group_Button_Mode_Control": GroupButtonModeControlComponent,
-        "View_Based_Recording": partial(CustomViewBasedRecordingComponent, recording_method_type = recording_method_type),
-        "Browser": BrowserComponent,
-        "Clip_Editor": ClipEditorComponent,
-        "TouchStrip_Parameter": TouchStripParameterControlComponent,
-        "Scale_System": ScaleSystemComponent,
-        "Velocity_Levels": VelocityLevelsComponent,
-        "Note_Repeat": NoteRepeatComponent,
-        "Sliced_Simpler": CustomSlicedSimplerComponent,
-        "Drum_Group": CustomDrumGroupComponent,
-        "Clip_Actions": CustomClipActionsComponent,
-        "Groove_Pool": GroovePoolComponent,
-        "Master_Volume": MasterVolumeComponent,
-        "Maschine_Playable": MaschinePlayableComponent,
-        "Misc_Control": MiscControlComponent,
-        "Device_Navigation": CustomDeviceNavigationComponent,
-        # TODO: Bring custom component initializations into this class.
-    }
+    component_map: dict[str, Component]
     """
     List of components used at control surface.
 
     Each key value must be equal to a name specified in component's constructor.
     """
-    parameter_bank_definitions = CUSTOM_BANK_DEFINITIONS
+    parameter_bank_definitions: dict
     """Parameter bank definitions used at DeviceComponent."""
+
+    # Properties below are used in CustomMaschineBase class only.
+    settings_repository: SettingsRepository
+    """Instance of `SettingsRepository`."""
 
 DEFAULT_MODE = "default"
 KEYBOARD_MODE = "keyboard"
@@ -227,64 +177,33 @@ class CustomMaschineBase(ControlSurface):
     _display_mode = None
     _settings = None
 
-    def __init__(self, *a, **k):
+    def __init__(self, specification, *a, **k):
         """
         Args:
+            specification(CustomMaschineBaseSpec): Hardware specific specification.
             c_instance: (Keyword argument) Special object came from Live app.
         """
         # Settings must be loaded before initialization
-        self._settings = SettingsRepository()
-        self._init_specification()
-        super().__init__(Specification, *a, **k)
+        self._settings = specification.settings_repository
+        super().__init__(specification, *a, **k)
         #logger.info(dir(self._c_instance))
 
         #self.register_slot(self.elements.variation, self._on_update_triggered, "is_pressed")
         self.register_slot(self.elements.keyboard, self._on_playable_mode_selected, "is_pressed")
         self.register_slot(self.component_map["Pad_Modes"], self._on_pad_mode_changed, "selected_mode")
         self.register_slot(self.component_map["Display_Modes"], self._on_display_mode_changed, "selected_mode")
+
+    def get_setting_value(self, key):
+        return self._settings.get_value(key)
     
-    def _init_specification(self):
-        """
-        Add components to `Specification` class according to setting value.
-        """
-        Specification.component_map["Device"] = partial(
-            CustomDeviceComponent,
-            device_decorator_factory = CustomDeviceDecoratorFactory(),
-            bank_definitions = Specification.parameter_bank_definitions,
-            bank_size = Specification.parameter_bank_size,
-            continuous_parameter_sensitivity = Specification.continuous_parameter_sensitivity,
-            quantized_parameter_sensitivity = Specification.quantized_parameter_sensitivity)
-
-        pad_row_notes = list(range(60, 76, 4))
-        if self._settings.get_value("sequencer_style") == "Push":
-            pad_row_notes = pad_row_notes[::-1]
-        playhead_notes = [base_note + offset for base_note, offset in product(pad_row_notes, range(4))]
-        triplet_playhead_notes = [base_note + offset for base_note, offset in product(pad_row_notes, range(3))]
-
-        Specification.component_map["Step_Sequence"] = partial(
-            CustomStepSequenceComponent,
-            note_editor_component_type = CustomNoteEditorComponent,
-            playhead_notes = tuple(playhead_notes),
-            playhead_triplet_notes = tuple(triplet_playhead_notes),
-            playhead_channels = [1])
-        
-        mixer_mode = self._settings.get_value("mixer_mode")
-        if mixer_mode == "4Track":
-            mixer_component = CustomMixerComponent
-        elif mixer_mode == "8Track":
-            mixer_component = MaschineMixerComponent
-
-        Specification.component_map["Mixer"] = mixer_component
-
-    def _on_update_triggered(self):
+    def _trigger_refresh(self):
         """
         Refresh all LED states & component states.
 
         It takes long time because of recursive process.
         """
-        if self.elements.variation.is_pressed:
-            logger.info("Display update triggered")
-            self.refresh_state()
+        logger.info("Full refresh triggered")
+        self.refresh_state()
 
     def _do_send_midi(self, midi_event_bytes):
         logger.debug(f"_do_send_midi {midi_event_bytes}")

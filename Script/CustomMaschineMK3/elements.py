@@ -39,10 +39,10 @@ from ableton.v2.control_surface.elements.encoder import ENCODER_VALUE_NORMALIZER
 from ableton.v3.base import in_range
 import Live # type: ignore
 
-from .logger import logger
-from .sysex_shift import SysexShiftButton
-from . import config
-from .display import (
+from custom_maschine.logger import logger
+from custom_maschine.sysex_shift import SysexShiftButton
+from custom_maschine import config
+from custom_maschine.display import (
     LCD_LINES,
     LCD_LINE_LENGTH,
     make_mcu_display_header,

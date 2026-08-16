@@ -30,40 +30,6 @@ from ableton.v2.control_surface.internal_parameter import EnumWrappingParameter
 
 from .logger import logger
 
-def beat_ratio(denominator):
-    return 4.0 / denominator
-
-SETTINGS_FILE_NAME = "settings.json"
-BASE_LENGTH_LIST = [1, 2, 4, 8, 16, 32, 64, 128]
-
-NOTE_REPEAT_RATES = []
-"""List of repeat rate value and name string."""
-# Add normal length values
-NOTE_REPEAT_RATES += [(beat_ratio(l), f"1/{l}") for l in BASE_LENGTH_LIST]
-# Add triplet length values
-NOTE_REPEAT_RATES += [(beat_ratio(l * 1.5), f"1/{l}T") for l in BASE_LENGTH_LIST]
-# Add dotted length values
-NOTE_REPEAT_RATES += [(beat_ratio(l) * 1.5, f"1/{l}D") for l in BASE_LENGTH_LIST]
-
-REPEAT_RATE_KEYS = [x[1] for x in NOTE_REPEAT_RATES]
-"""Repeat rate name list for settings."""
-
-def get_repeat_rate_value(name, definition = NOTE_REPEAT_RATES):
-    """
-    Get repeat rate value from name string.
-
-    Args:
-        name(str): Repeat rate name. (like 1/4, 1/16T, etc.)
-        definition(list): List contains association of rate value and name string.
-
-    Returns:
-        number: Repeat rate value calculated by one quarter note = 1.0 basis.
-    """
-    for value, rate_name in definition:
-        if name == rate_name:
-            return value
-    
-    return NOTE_REPEAT_RATES[0][0]
 
 # Settings schema example
 # Bool
@@ -102,97 +68,18 @@ def get_repeat_rate_value(name, definition = NOTE_REPEAT_RATES):
 # },
 #
 
-SETTINGS = [
-    {
-        "key": "automatic_selector_switching",
-        "description": "Automatic Rate Selector Switching",
-        "type": "bool",
-        "default_value": False,
-    },
-    {
-        "key": "repeat_rate_a",
-        "description": "Note Repeat Rate A",
-        "type": "enum",
-        "default_value": "1/4",
-        "enum": REPEAT_RATE_KEYS,
-    },
-    {
-        "key": "repeat_rate_b",
-        "description": "Note Repeat Rate B",
-        "type": "enum",
-        "default_value": "1/8",
-        "enum": REPEAT_RATE_KEYS,
-    },
-    {
-        "key": "repeat_rate_c",
-        "description": "Note Repeat Rate C",
-        "type": "enum",
-        "default_value": "1/16",
-        "enum": REPEAT_RATE_KEYS,
-    },
-    {
-        "key": "repeat_rate_d",
-        "description": "Note Repeat Rate D",
-        "type": "enum",
-        "default_value": "1/32",
-        "enum": REPEAT_RATE_KEYS,
-    },
-    {
-        "key": "repeat_rate_e",
-        "description": "Note Repeat Rate E",
-        "type": "enum",
-        "default_value": "1/4T",
-        "enum": REPEAT_RATE_KEYS,
-    },
-    {
-        "key": "repeat_rate_f",
-        "description": "Note Repeat Rate F",
-        "type": "enum",
-        "default_value": "1/8T",
-        "enum": REPEAT_RATE_KEYS,
-    },
-    {
-        "key": "repeat_rate_g",
-        "description": "Note Repeat Rate G",
-        "type": "enum",
-        "default_value": "1/16T",
-        "enum": REPEAT_RATE_KEYS,
-    },
-    {
-        "key": "repeat_rate_h",
-        "description": "Note Repeat Rate H",
-        "type": "enum",
-        "default_value": "1/32T",
-        "enum": REPEAT_RATE_KEYS,
-    },
-    {
-        "key": "sequencer_style",
-        "description": "Sequencer Style (Reload required)",
-        "type": "enum",
-        "default_value": "Maschine",
-        "enum": ["Maschine", "Push"]
-    },
-    {
-        "key": "mixer_mode",
-        "description": "Mixer Mode (Reload required)",
-        "type": "enum",
-        "default_value": "8Track",
-        "enum": ["8Track", "4Track"]
-    },
-    {
-        "key": "__version",
-        "description": "CustomMaschineMK3 by chiaki",
-        "type": "none",
-        "default_value": "Version 1.4",
-    },    
-]
-
-
 class SettingsRepository(EventObject):
     """
     Encapsulation of settings load / store.
+
+    This class uses JSON as serialization format.
     """
-    def __init__(self, file_name = SETTINGS_FILE_NAME, schema = SETTINGS):
+    def __init__(self, file_name, schema):
+        """
+        Args:
+            file_name(str): File name of settings JSON file.
+            schema(list[dict]): Schema of settings.
+        """
         self._file_path = Path(__file__).absolute().parent.joinpath(file_name)
         self._schema = schema
         self._schema_with_key = {}

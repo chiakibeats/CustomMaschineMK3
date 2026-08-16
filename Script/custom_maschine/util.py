@@ -25,6 +25,41 @@ from .logger import logger
 # Max clip length (from Push 2)
 MAX_CLIP_LENGTH = 365 * 24 * 3600 * 2.0
 
+def beat_ratio(denominator):
+    return 4.0 / denominator
+
+SETTINGS_FILE_NAME = "settings.json"
+BASE_LENGTH_LIST = [1, 2, 4, 8, 16, 32, 64, 128]
+
+NOTE_REPEAT_RATES = []
+"""List of repeat rate value and name string."""
+# Add normal length values
+NOTE_REPEAT_RATES += [(beat_ratio(l), f"1/{l}") for l in BASE_LENGTH_LIST]
+# Add triplet length values
+NOTE_REPEAT_RATES += [(beat_ratio(l * 1.5), f"1/{l}T") for l in BASE_LENGTH_LIST]
+# Add dotted length values
+NOTE_REPEAT_RATES += [(beat_ratio(l) * 1.5, f"1/{l}D") for l in BASE_LENGTH_LIST]
+
+REPEAT_RATE_KEYS = [x[1] for x in NOTE_REPEAT_RATES]
+"""Repeat rate name list for settings."""
+
+def get_repeat_rate_value(name, definition = NOTE_REPEAT_RATES):
+    """
+    Get repeat rate value from name string.
+
+    Args:
+        name(str): Repeat rate name. (like 1/4, 1/16T, etc.)
+        definition(list): List contains association of rate value and name string.
+
+    Returns:
+        number: Repeat rate value calculated by one quarter note = 1.0 basis.
+    """
+    for value, rate_name in definition:
+        if name == rate_name:
+            return value
+    
+    return NOTE_REPEAT_RATES[0][0]
+
 def bool_to_display_value(value, off_value, on_value):
     return on_value if value else off_value
 
