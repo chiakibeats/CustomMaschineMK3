@@ -8,10 +8,9 @@
 #
 # ==================================================
 
-from functools import partial
 from time import sleep
-import types
-import typing
+from types import MethodType
+from typing import Any, List, Dict
 
 from ableton.v3.base import lazy_attribute, const, listens
 from ableton.v3.live import liveobj_valid, scene_index
@@ -19,41 +18,22 @@ from ableton.v3.control_surface import (
     ControlSurface,
     ControlSurfaceSpecification,
 )
-
 from ableton.v3.control_surface.component import Component
-
-from ableton.v3.control_surface.display import DisplaySpecification
-
 from ableton.v3.control_surface.components import (
-    SessionRingComponent,
-    PlayableComponent,
-    NoteEditorComponent,
-    NoteEditorPaginator,
-    StepSequenceComponent,
     SequencerClip,
     GridResolutionComponent,
-    SessionComponent,
     TargetTrackComponent,
-    DEFAULT_SIMPLER_TRANSLATION_CHANNEL,
-    DEFAULT_DRUM_TRANSLATION_CHANNEL
 )
-
 from ableton.v3.control_surface.components.grid_resolution import GridResolution
+from ableton.v3.control_surface.display import DisplaySpecification
+
 from Live.Clip import GridQuantization # type: ignore
 
-from ableton.v3.control_surface.elements import SimpleColor, RgbColor, create_rgb_color
-
 from .skin import MaschineSkin
-from .display import (
-    MaschineDisplay,
-    make_mcu_display_header,
-    make_display_sysex_message
-)
+from .display import make_display_sysex_message
 from .settings import SettingsRepository
-
 from .util import LEDBlinker
 from .logger import logger
-from . import config
 
 # TODO: Reconsider is this modification matters or not.
 class CustomTargetTrackComponent(TargetTrackComponent):
@@ -91,9 +71,9 @@ class CustomMaschineBaseSpec(ControlSurfaceSpecification):
     Some properties are added for `CustomMaschineBase`.
     All values are stored as class variable, so every spec must be new derived class.
     """
-    elements_type: typing.Any
+    elements_type: Any
     """Class name of the repository of elements (MIDI button / knob representation)."""
-    control_surface_skin: typing.Any
+    control_surface_skin: Any
     """Instance of `Skin` class, that contains a definition of LED feedback."""
     display_specification: DisplaySpecification
     """Instance of `DisplaySpecification` class, that contains procedures of composing views."""
@@ -122,19 +102,19 @@ class CustomMaschineBaseSpec(ControlSurfaceSpecification):
     
     Note: You can use custom identification process by changing `identity_request` and `custom_identity_response` value.
     """
-    create_mappings_function: typing.Any
+    create_mappings_function: Any
     """Function to build mappings between components and control elements."""
-    recording_method_type: typing.Any
+    recording_method_type: Any
     """Class that manages behaviour of the recording mode in session view."""
-    feedback_channels: list[int]
+    feedback_channels: List[int]
     """MIDI channels used in playing note feedback."""
-    component_map: dict[str, Component]
+    component_map: Dict[str, Component]
     """
     List of components used at control surface.
 
     Each key value must be equal to a name specified in component's constructor.
     """
-    parameter_bank_definitions: dict
+    parameter_bank_definitions: Dict
     """Parameter bank definitions used at DeviceComponent."""
 
     # Properties below are used in CustomMaschineBase class only.
@@ -223,6 +203,7 @@ class CustomMaschineBase(ControlSurface):
         But Maschine doesn't respond to sysex identification request, so I made it bypassed.
         """
 
+        # HACK: Monkey-patch for identification bypass.
         def bypass_request_identity(self):
             logger.info("Request identity")
             # Toggle the flag to notify being identified to Live.
@@ -231,7 +212,7 @@ class CustomMaschineBase(ControlSurface):
             self.is_identified = True
 
         identification = super()._create_identification(specification)
-        identification.request_identity = types.MethodType(bypass_request_identity, identification)
+        identification.request_identity = MethodType(bypass_request_identity, identification)
 
         return identification
 

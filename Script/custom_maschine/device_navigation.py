@@ -52,6 +52,8 @@ from ableton.v3.control_surface.parameter_mapping_sensitivities import DEFAULT_C
 from ableton.v3.control_surface.components.device import get_on_off_parameter
 from ableton.v3.control_surface.components.device_navigation import DeviceNavigationComponent
 
+from Live.PluginDevice import PluginDevice # type: ignore
+
 from .logger import logger
 
 class CustomDeviceNavigationComponent(DeviceNavigationComponent):
@@ -130,8 +132,14 @@ class CustomDeviceNavigationComponent(DeviceNavigationComponent):
             elif self.view_button.is_pressed:
                 target_device.view.is_collapsed = not target_device.view.is_collapsed
             else:
-                self.song.view.select_device(target_device)
-                self.notify(self.notifications.Device.select, target_device.name)
+                selected_device = self.song.view.selected_track.view.selected_device
+                if selected_device == target_device:
+                    if isinstance(target_device, PluginDevice) and hasattr(target_device, "is_editor_open"):
+                        # Opening or closing plugin editor is supported on Live 12.4.3 or later
+                        target_device.is_editor_open = not target_device.is_editor_open
+                else:
+                    self.song.view.select_device(target_device)
+                    self.notify(self.notifications.Device.select, target_device.name)
 
     @select_encoder.value
     def _on_select_encoder_value_changed(self, value, encoder):
