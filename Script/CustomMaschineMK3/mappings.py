@@ -12,18 +12,10 @@ from ableton.v3.control_surface.component_map import ComponentMap
 from ableton.v3.control_surface.mode import (
     ToggleBehaviour,
     MomentaryBehaviour,
-    LatchingBehaviour as LatchingBehaviourBase,
     ImmediateBehaviour
 )
 
-class LatchingBehaviour(LatchingBehaviourBase):
-    def __init__(self, return_on_hold = False):
-        super().__init__()
-        self._return_on_hold = return_on_hold
-
-    def release_delayed(self, component, mode):
-        if self._return_on_hold:
-            super().release_delayed(component, mode)
+from custom_maschine.util import LatchingBehaviour
 
 def create_mappings(surface):
     # Load settings

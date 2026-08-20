@@ -5,7 +5,7 @@ from custom_maschine.control_surface import CustomMaschineBaseSpec, CustomTarget
 from custom_maschine.display import MaschineDisplay
 from custom_maschine.skin import MaschineSkin
 
-from .elements import ControlElements
+from .elements import MaschineMK3Elements
 from .mappings import create_mappings
 
 from custom_maschine.groove_pool import GroovePoolComponent
@@ -132,7 +132,7 @@ SCHEMA = [
 ]
 
 class CustomMaschineMK3Spec(CustomMaschineBaseSpec):
-    elements_type = ControlElements
+    elements_type = MaschineMK3Elements
     control_surface_skin = MaschineSkin
     display_specification = MaschineDisplay
     num_scenes = 4

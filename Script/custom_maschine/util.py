@@ -8,16 +8,31 @@
 #
 # ==================================================
 
+from ableton.v2.base import EventError
+from ableton.v2.control_surface import WrappingParameter, EnumWrappingParameter
+from ableton.v2.control_surface.elements.encoder import ENCODER_VALUE_NORMALIZER
 from ableton.v3.base import (
+    in_range,
     listens,
     sign,
     listenable_property,
-    EventObject
+    EventObject,
 )
-from ableton.v2.base import EventError
-from ableton.v2.control_surface import WrappingParameter, EnumWrappingParameter
-from ableton.v3.live.util import liveobj_valid
+from ableton.v3.control_surface.elements import (
+    ButtonElement,
+    EncoderElement,
+    TouchElement,
+    ButtonMatrixElement,
+    DisplayLineElement,
+)
+from ableton.v3.control_surface.mode import (
+    ToggleBehaviour,
+    MomentaryBehaviour,
+    LatchingBehaviour as LatchingBehaviourBase,
+    ImmediateBehaviour
+)
 
+import Live # type: ignore
 from Live.Base import Timer # type: ignore
 
 from .logger import logger
@@ -233,3 +248,54 @@ class LEDBlinker(EventObject):
         self._timer.restart()
         self.notify_blink_state()
 
+# HACK: Patch Live's framework to fix bug.
+# There's a miscalculation in signed_bit_delta function.
+# The original version chooses different acceleration factor between increment and decrement side.
+# To fix problem, replace function to correct one.
+# TODO: This bug only affects to ClipEditorComponent, try fixing it on component side.
+SIGNED_BIT_DEFAULT_DELTA = 20.0
+SIGNED_BIT_VALUE_MAP = (1, 2, 3, 4, 5, 8, 10, 20, 50)
+
+def fixed_signed_bit_delta(value):
+    delta = SIGNED_BIT_DEFAULT_DELTA
+    is_increment = value <= 64
+    index = (value if is_increment else value - 64) - 1 # Original version subtracts 1 only increment side
+    if in_range(index, 0, len(SIGNED_BIT_VALUE_MAP)):
+        delta = SIGNED_BIT_VALUE_MAP[index]
+    if is_increment:
+        return delta
+    return -delta
+
+def install_signed_bit_delta_patch():
+    ENCODER_VALUE_NORMALIZER[Live.MidiMap.MapMode.relative_signed_bit] = fixed_signed_bit_delta
+
+class ForceToggleButtonElement(ButtonElement):
+    _internal_received_value = 0
+    
+    def receive_value(self, value):
+        logger.debug(f"ForceToggle receive_value value = {value}")
+        prev_value = int(self._internal_received_value) > 0
+        self._internal_received_value = value
+        if not prev_value and int(self._internal_received_value) > 0:
+            value = 0 if int(self._last_received_value) > 0 else 1
+            logger.debug(f"Trigger toggle value = {value}")
+            super().receive_value(value)
+
+class HookedButtonElement(ButtonElement):
+    button_id = 0
+
+    def __init__(self, *a, **k):
+        super().__init__(*a, **k)
+
+    def send_value(self, value, force = False, channel = None):
+        logger.debug(f"button {self.button_id} value = {value}, force = {force}, channel = {channel}")
+        return super().send_value(value, force, channel)
+
+class LatchingBehaviour(LatchingBehaviourBase):
+    def __init__(self, return_on_hold = False):
+        super().__init__()
+        self._return_on_hold = return_on_hold
+
+    def release_delayed(self, component, mode):
+        if self._return_on_hold:
+            super().release_delayed(component, mode)
